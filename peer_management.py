@@ -37,14 +37,14 @@ class Torrent(Base):
 	info_hash = sqlalchemy.Column(sqlalchemy.String) # Bytes
 	
 # TESTING
-Base.metadata.create_all(engine)
-mytor = Torrent(announce_url = 'http:/x/a', info_hash='hash')
-session = Session()
-session.add(mytor)
-session.commit()
+#Base.metadata.create_all(engine)
+#mytor = Torrent(announce_url = 'http:/x/a', info_hash='hash')
+#session = Session()
+#session.add(mytor)
+#session.commit()
 
-# Create session_storage class for extern usage
-class session_database:
+# TODO description
+class peer_database:
 	## Prepare SQLAlchemy backend
 	def __init__(self):
 		# Expecting version 0.9
@@ -79,7 +79,32 @@ class session_database:
 		
 		new_peer = Peer(partial_ip_address=anonym_ip, pieces_bitmap=bitmap, torrent=torrent_id, country_code)
 
-class session_storage
+# Cache of peers in different conection and progress states
+class peer_cache:
+	## Initialization of peer lists
+	def __init__(self):
+		self.new = list()
+		self.in_progress = list()
+		self.finished = list()
+		self.error = list()
+	
+	## Add a new peer with unknown connectivity status
+	#  @param peer Tuple of IP address and port number
+	def add_new_peer(self, peer):
+		self.new.append(peer)
+	
+	## Add a peer to whom a successfull connection was established and a bitmap message was received
+	#  @param peer Tuple of IP address and port number
+	#  @param peer_id Self given identification byte string the peer gave itself
+	#  @param bitmap Pices bitmap received by the peer as a bytes string
+	def add_in_progress_peer(self, peer, peer_id, bitmap):
+		self.in_progress.append((peer[0], peer[1], peer_id, bitmap))
+	
+	## Add a peer to whom a successfull connection was established and the reception of the full torrent is confirmed
+	#  @param peer Tuple of IP address and port number
+	#  @param peer_id Self given identification byte string the peer gave itself
+	def add_finished_peer(self, peer, peer_id):
+		self.finished.append((peer[0], peer[1], peer_id))
 		
 ## Shortens IPv4 and IPv6 address to 20 Bit
 #  @param ip_port Tuple of ip address as string and port

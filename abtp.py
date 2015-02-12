@@ -6,8 +6,6 @@ import time
 import logging
 import urllib.request
 import urllib.parse
-import hashlib
-import base64
 import random
 import string
 import sys
@@ -27,28 +25,14 @@ logging.basicConfig(level = logging.INFO)
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015')
-parser.add_argument('-t', '--torrent', type=argparse.FileType(mode='rb'), required=True, help='Specifies the torrent file to be examined', metavar='filename', dest='torrent_file')
+parser.add_argument('-t', '--torrent', required=True, help='Specifies the torrent file to be examined', metavar='filename', dest='torrent_file')
 args = parser.parse_args()
 args_dict = vars(args)
 
-# Decode torrent file
-torrent_file_bencoded = args_dict['torrent_file'].read()
-args_dict['torrent_file'].close()
-torrent_file = bencodepy.decode(torrent_file_bencoded)
-
-# Extract announce URL
-announce_url_bytes = torrent_file[b'announce']
-announce_url = announce_url_bytes.decode()
-logging.info('Announce URL is ' + announce_url)
-
-# Extract info hash
-info_dict = torrent_file[b'info']
-info_dict_bencoded = bencodepy.encode(info_dict)
-sha1_hasher = hashlib.sha1(info_dict_bencoded)
-info_hash = sha1_hasher.digest()
-info_hash_hex_bytes = base64.b16encode(info_hash)
-info_hash_hex = info_hash_hex_bytes.decode()
-logging.info('Info hash is ' + info_hash_hex)
+# Extract announce URL and info hash
+torrent = torrent_operator.torrent_file(args_dict['torrent_file'])
+announce_url = torrent.get_announce_url()
+info_hash = torrent.get_info_hash()
 
 # Generate peer id
 possible_chars = string.ascii_letters + string.digits
@@ -131,7 +115,7 @@ for peer_ip in peer_ips:
 			session.send_bytes(handshake)
 			received_peer_id = session.receive_handshake(info_hash)
 			logging.info('ID of connected peer is ' + str(received_peer_id))
-		
+
 			# Collect all messages from peer
 			while session.has_message():
 				message = session.receive_message()
