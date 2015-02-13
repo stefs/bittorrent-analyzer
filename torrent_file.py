@@ -5,11 +5,10 @@ import hashlib
 import bencodepy
 
 ## Providing methods for analysis of torrent files
-class torrent_file:
-	## Reads a torrent file from the file system
+class torrent:
+	## Reads and decodes a torrent file from the file system
 	#  @param path File path
 	def __init__(self, path):
-		# Read and decode file content
 		try:
 			torrent_file_object = open(path, mode='rb')
 			torrent_file_bencoded = torrent_file_object.read()
@@ -35,15 +34,4 @@ class torrent_file:
 ## Exception for a unreachable or bad torrent file
 class BadFile(Exception):
 	pass
-
-## Communicating with a torrent tracker
-class tracker_session:
-	def __init__():
-		pass
-	
-	def __enter__():
-		pass
-	
-	def __exit__():
-		pass
 
