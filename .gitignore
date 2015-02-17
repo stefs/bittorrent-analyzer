@@ -56,3 +56,10 @@ target/
 # Gedit backup copies
 *~
 
+# input and output folder
+output/
+input/
+
+# virtualenv
+py3env/
+

@@ -1,129 +1,117 @@
 # Built-in modules
 import logging
+import queue
+import collections
+import socket
+
+# Project modules
+import peer_storage
 
 # Extern modules
-import sqlalchemy
-import sqlalchemy.ext.declarative
-import sqlalchemy.orm
+import geoip2.database
 
-# Create declarative base class, from which table classes are inherited
-Base = sqlalchemy.ext.declarative.declarative_base()
+## Create named tuple
+CachedPeer = collections.namedtuple('CachedPeer', 'ip_address port id bitfield')
 
-# Declarative class for peer session table
-class Peer(Base):
-	__tablename__ = 'peer'
-	
-	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-	partial_ip_address = sqlalchemy.Column(sqlalchemy.String)
-	client_name = sqlalchemy.Column(sqlalchemy.String)
-	pieces_bitmap = sqlalchemy.Column(sqlalchemy.String) # Bytes
-	progress = sqlalchemy.Column(sqlalchemy.Integer) # Float
-	autonomous_system = sqlalchemy.Column(sqlalchemy.String)
-	country_code = sqlalchemy.Column(sqlalchemy.String)
-	session_count = sqlalchemy.Column(sqlalchemy.Integer)
-	first_occurrence = sqlalchemy.Column(sqlalchemy.Integer) # Date
-	last_seen = sqlalchemy.Column(sqlalchemy.Integer) # Date
-	torrent = sqlalchemy.Column(sqlalchemy.Integer) # foreign key of torrent
-
-	def __repr__(self):
-		return 'implement __repr__!'
-
-# Declarative class for the torrent file table
-class Torrent(Base):
-	__tablename__ = 'torrent'
-	
-	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-	announce_url = sqlalchemy.Column(sqlalchemy.String)
-	info_hash = sqlalchemy.Column(sqlalchemy.String) # Bytes
-	
-# TESTING
-#Base.metadata.create_all(engine)
-#mytor = Torrent(announce_url = 'http:/x/a', info_hash='hash')
-#session = Session()
-#session.add(mytor)
-#session.commit()
-
-# TODO description
-class peer_database:
-	## Prepare SQLAlchemy backend
-	def __init__(self):
-		# Expecting version 0.9
-		if not sqlalchemy.__version__.startswith('0.9'):
-			logging.warning('Expected SQLAlchemy version is at least 0.9')
-
-		# Create engine, usable with SQLAlchemy Expression Language, used via SQLAlchemy Object Relational Mapper
-		self.engine = sqlalchemy.create_engine('sqlite:///:memory:', echo=True) # TODO use file with dated name
-
-		# Create session factory class
-		self.Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
+## Cache of peers in different conection and progress states
+#  @warn Not threadsafe, calls must be guarded with locks
+# TODO make threadsafe, especially peer_storage.PeerDatabase
+class PeerCache:
+	## Initialization of a cache for peers
+	def __init__(self, torrent_id):
+		# Store torrent id associated with this peer cache
+		self.torrent_id = torrent_id
 		
-		# Create session object for database access
-		self.session = self.Session()
+	## Open GeoIP2 database
+	def __enter__(self):
+		# Open MaxMind GeoIP2 database from http://dev.maxmind.com/geoip/geoip2/geolite2/
+		# according to http://geoip2.readthedocs.org/en/latest/#database-example
+		geoip2_country_location = 'input/GeoLite2-Country.mmdb'
+		self.reader = geoip2.database.Reader(geoip2_country_location)
+		logging.debug('Opened GeoIP2 database at ' + geoip2_country_location)
 
-	## Store new peer statistic or update if peer already present
-	#  @param peer_ip Tuple of ip address and port number
-	#  @param peer_id The ID the peer has given itself
-	#  @param bitmap Torrent parts this peer is known to hold
-	#  @param torrent_id Database ID of the related torrent
-	def store_in_database(self, peer_ip, peer_id, bitmap, torrent_id):
-		anonym_ip = ip_anonymizer(peer_ip)
-		client_name = peer_id # TODO can store bytes?
-		country = country_of_ip(peer_ip[0])
-		isp = isp_of_ip(peer_ip[0])
-		
-		# TODO implement
-		if peer_already_sotred:
-			update
-		else:
-			new_peer
-		
-		new_peer = Peer(partial_ip_address=anonym_ip, pieces_bitmap=bitmap, torrent=torrent_id, country_code)
-
-# Cache of peers in different conection and progress states
-class peer_cache:
-	## Initialization of peer lists
-	def __init__(self):
-		self.new = list()
-		self.in_progress = list()
-		self.finished = list()
+		# Lists with CachedPeer tuples used at runtime
+		self.in_progress = queue.Queue()
 		self.error = list()
-	
+		self.finished_count = 0
+		
+		# Storage database for export purposes
+		self.database = peer_storage.PeerDatabase()
+
+		# Enter method returns self to with-target
+		return self
+
 	## Add a new peer with unknown connectivity status
 	#  @param peer Tuple of IP address and port number
-	def add_new_peer(self, peer):
-		self.new.append(peer)
-	
-	## Add a peer to whom a successfull connection was established and a bitmap message was received
-	#  @param peer Tuple of IP address and port number
-	#  @param peer_id Self given identification byte string the peer gave itself
-	#  @param bitmap Pices bitmap received by the peer as a bytes string
-	def add_in_progress_peer(self, peer, peer_id, bitmap):
-		self.in_progress.append((peer[0], peer[1], peer_id, bitmap))
-	
-	## Add a peer to whom a successfull connection was established and the reception of the full torrent is confirmed
-	#  @param peer Tuple of IP address and port number
-	#  @param peer_id Self given identification byte string the peer gave itself
-	def add_finished_peer(self, peer, peer_id):
-		self.finished.append((peer[0], peer[1], peer_id))
+	def add_new(self, peer):
+		new_peer = CachedPeer(peer[0], peer[1], id=b'', bitfield=b'')
+		self.in_progress.put(new_peer)
+
+	## Add a peer to whom a successfull connection was established and evaluate the bitmap
+	def add_success(self, peer, pieces_number):
+		# Count finished pieces
+		pieces_count = 0
+		for byte in peer.bitfield:
+			pieces_count += count_bits(byte)
+		percentage = round(pieces_count * 100 / pieces_number)
+		remaining = pieces_number - pieces_count
+		logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
 		
-## Shortens IPv4 and IPv6 address to 20 Bit
-#  @param ip_port Tuple of ip address as string and port
-#  @return Shortened IP address as a string
-def ip_anonymizer(ip_port):
-	# TODO implement
-	return ip_port[0]
+		# Get two letter ISO country code via GeoIP2
+		try:
+			response = self.reader.country(peer.ip_address)
+		except geoip2.errors.AddressNotFoundError as err:
+			logging.warning('IP address is not in the database: ' + str(err))
+			country_code = ''
+		else:
+			country_code = response.country.iso_code
+			logging.info('Country is ' + country_code + ', ' + response.country.name)
 
-## Perform a country look up for the given IP address
-#  @param ip_address The addres to be analyzed
-#  @return Two letter country code according to TODO
-def country_of_ip(ip_address):
-	# TODO implement
-	return '?'
+		# Get the ISP via reverse DNS
+		try:
+			host = socket.gethostbyaddr(peer.ip_address)[0]
+		except OSError as err:
+			logging.warning('Get host by address failed: ' + str(err))
+			host = ''
+		else:
+			logging.info('Host name is ' + host)
+		# TODO only keep last two parts
+		
+		# Anonymize IP address
+		# TODO
+		anonymized_ip = peer.ip_address
 
-## Perform a ISP look up for the given IP address
-#  @param ip_address The addres to be analyzed
-#  @return ISP as a string # TODO specify
-def isp_of_ip(ip_address):
-	# TODO implement
-	return '?'
+		# Store finished peer in database
+		if pieces_count == pieces_number:
+			self.finished_count += 1
+		self.database.store_peer(anonymized_ip, peer.id, peer.bitfield, pieces_count, host, country_code, self.torrent_id)
+
+		# Put peer in progress back in the list and store in database
+		#else:
+		#	# TODO put with wait
+		#	self.in_progress.put(peer)
+
+	## Add a peer to whom communication failed
+	def add_error(self, peer):
+		self.error.append(peer)
+	
+	## Relase resources
+	def __exit__(self, exception_type, exception_value, traceback):
+		# Close GeoIP2 database reader
+		self.reader.close()
+		logging.debug('GeoIP2 database closed')
+	
+## Returns the numbers of bits set in an integer
+#  @param byte An arbitrary integer between 0 and 255
+#  @return Count of 1 bits in the binary representation of byte
+def count_bits(byte):
+	assert 0 <= byte <= 255, 'Only values between 0 and 255 allowed'
+	mask = 1
+	count = 0
+	for i in range(0,8):
+		masked_byte = byte & mask
+		if masked_byte > 0:
+			count += 1
+		mask *= 2
+	return count
 

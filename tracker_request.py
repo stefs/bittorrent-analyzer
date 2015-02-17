@@ -12,7 +12,7 @@ import urllib.parse
 import bencodepy
 
 ## Communicating with a torrent tracker
-class tracker:
+class TrackerCommunicator:
 	## Initialize a tracker
 	#  @param peer_id Own peer id
 	#  @param announce_url The announce URL representing the tracker
@@ -23,6 +23,7 @@ class tracker:
 	## Issue a HTTP GET request on the announce URL
 	#  @param info_hash Info hash for the desired torrent
 	#  @return Tuples list of IPv4 or IPv6 addresses and port numbers
+	# TODO raise TrackerErrors where appropriate
 	def get_peers(self, info_hash):
 		# Assemble tracker request
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': '30301', 'uploaded': '0', 'downloaded': '0', 'left': '23'}
@@ -31,7 +32,7 @@ class tracker:
 		request_parameters_encoded = urllib.parse.urlencode(request_parameters)
 		request_parameters_bytes = request_parameters_encoded
 		request_url = self.announce_url + '?' + request_parameters_bytes
-		logging.info('Request URL is ' + request_url)
+		logging.debug('Request URL is ' + request_url)
 
 		# Issue GET request
 		http_response = urllib.request.urlopen(request_url)
@@ -39,8 +40,7 @@ class tracker:
 		if http_response.status == http.client.OK:
 			logging.info('HTTP response status code is OK')
 		else:
-			logging.error('HTTP response status code is ' + http_response.status)
-			sys.exit(1)
+			raise TrackerException('HTTP response status code is ' + http_response.status)
 		http_response.close()
 
 		# Decode response
@@ -88,14 +88,20 @@ class tracker:
 			peer_port_tuple = struct.unpack("!H", raw_peer[1])
 			peer_port = peer_port_tuple[0]
 			peer_ips.append((peer_ip, peer_port))
-		logging.info('Total number of received peers is ' + str(len(peer_ips)))
 
 		# Return combined IPv4 and IPv6 list
 		return peer_ips
 
+## Exception for bad tracker response
+class TrackerError(Exception):
+	pass
+
 ## Generate a random peer id without client software information
+#  @return A random peer id as a string
 def generate_peer_id():
 	possible_chars = string.ascii_letters + string.digits
 	peer_id_list = random.sample(possible_chars, 20)
-	return ''.join(peer_id_list)
-	
+	peer_id = ''.join(peer_id_list)
+	logging.info('Generated peer id is ' + peer_id)
+	return peer_id
+
