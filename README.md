@@ -17,20 +17,20 @@ These are the standard installation steps on a Debian based system.
 1. `sudo apt-get install python3 python3-pip`
 2. `sudo pip3 install virtualenv`
 3. `virtualenv -p /usr/bin/python3 py3env`
-4. `source ./py3env/bin/activate`
+4. `source py3env/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`
-7. Download the [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `./input/GeoLite2-Country.mmdb`
+7. Download the [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-Country.mmdb`
 
 ## Usage
 1. `source py3env/bin/activate`
 2. `./main.py [-h] -f <filename> [-t <seconds>] [-l <level>] [-j <number>]`
 3. `deactivate`
-4. Statistics are saved in `./output/` directory as a SQLite database.
+4. Statistics are saved in `output/` directory as a SQLite database.
 
 ### Command Line Arguments:
 * `-h, --help`  
-show this help message and exit
+Show this help message and exit
 * `-f <filename>, --file <filename>`  
 Torrent file to be examined
 * `-t <seconds>, --timeout <seconds>`  

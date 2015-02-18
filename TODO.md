@@ -1,6 +1,9 @@
 # TODO
 ## Next steps
-- Revisit in progress peers
+- Revisit in progress peers (save time, extract download speed)
+- Wurde der Download während der Beobachtungszeit abgeschlossen? (Anzahl pieces bei erstem Kontakt in die DB)
+- Speichere maximale Download Geschwindigkeit zwischen Snapshots
+
 - Make database usage thread safe
 - Magnet link support
 - Peer exchange message support
