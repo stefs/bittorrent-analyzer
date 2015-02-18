@@ -12,12 +12,12 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 * [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/)
 
 ## Installation
-These steps describe standard installation steps on a Debian based system.
+These are the standard installation steps on a Debian based system.
 
 1. `sudo apt-get install python3 python3-pip`
 2. `sudo pip3 install virtualenv`
 3. `virtualenv -p /usr/bin/python3 py3env`
-4. `source py3env/bin/activate`
+4. `source ./py3env/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`
 7. Download the [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `./input/GeoLite2-Country.mmdb`
