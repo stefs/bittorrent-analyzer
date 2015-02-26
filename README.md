@@ -30,9 +30,8 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 * [virtualenv](https://virtualenv.pypa.io/) 1.11+
 * [BencodePy](https://github.com/eweast/BencodePy) 0.9+
 * [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
-* Database
+* Database <!-- TODO -->
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
-* [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/)
 
 ### Steps
 These are the standard installation steps on a Debian based system.
@@ -66,5 +65,5 @@ These are the standard installation steps on a Debian based system.
   Time delay for revisiting unfinished peers in minutes
 
 ## Licence
-© Copyright 2014 Stefan Schindler  
-Licensed under [GNU GPL v3.0](LICENSE.txt)
+© Copyright 2015 Stefan Schindler  
+Licensed under GNU General Public License Version 3
