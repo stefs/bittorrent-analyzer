@@ -23,7 +23,7 @@ class TrackerCommunicator:
 	## Issue a HTTP GET request on the announce URL
 	#  @param info_hash Info hash for the desired torrent
 	#  @return Tuples list of IPv4 or IPv6 addresses and port numbers
-	# TODO raise TrackerErrors where appropriate
+	#  @exception urllib.error.URLError,http.client.HTTPException,TrackerException,bencodepy.DecodingError
 	def get_peers(self, info_hash):
 		# Assemble tracker request
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': '30301', 'uploaded': '0', 'downloaded': '0', 'left': '23'}
@@ -35,31 +35,35 @@ class TrackerCommunicator:
 		logging.debug('Request URL is ' + request_url)
 
 		# Issue GET request
-		http_response = urllib.request.urlopen(request_url)
-		response_bencoded = http_response.read()
-		if http_response.status == http.client.OK:
-			logging.info('HTTP response status code is OK')
-		else:
-			raise TrackerException('HTTP response status code is ' + http_response.status)
-		http_response.close()
+		with urllib.request.urlopen(request_url) as http_response: # urllib.error.URLError
+			response_bencoded = http_response.read() # http.client.HTTPException
+			if http_response.status == http.client.OK:
+				logging.info('HTTP response status code is OK')
+			else:
+				raise TrackerError('HTTP response status code is ' + http_response.status)
 
 		# Decode response
-		response = bencodepy.decode(response_bencoded)
+		response = bencodepy.decode(response_bencoded) # DecodingError
 		if b'failure reason' in response:
 			failure_reason_bytes = response[b'failure reason']
 			failure_reason = failure_reason_bytes.decode()
-			logging.error('Query failed: ' + failure_reason)
-			sys.exit(1)
+			raise TrackerException('Query failed: ' + failure_reason)
 
 		# Extract request interval
-		# TODO interval is not exported at the moment
-		interval = response[b'interval']
-		logging.info('Recommended request interval in seconds is ' + str(interval))
+		try:
+			interval = response[b'interval']
+		except KeyError as err:
+			logging.debug('Tracker did not send a request interval: ' + str(err))
+		else:
+			logging.info('Recommended request interval in seconds is ' + str(interval))
 
 		# Extract list of IPv4 peers in byte form
-		peers_bytes = response[b'peers']
+		try:
+			peers_bytes = response[b'peers'] # KeyError
+		except KeyError as err:
+			raise TrackerError('Tracker did not send any peers: ' + str(err))
 		peers_count = int(len(peers_bytes) / 6)
-		peer_bytes = []
+		peer_bytes = list()
 		for peer in range(0, peers_count):
 			peer_start_byte = peer * 6
 			peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 4]
@@ -68,26 +72,27 @@ class TrackerCommunicator:
 		logging.info('Received number of IPv4 peers is ' + str(peers_count))
 
 		# Extract list of IPv6 peers in byte form
-		peers_bytes = response[b'peers6']
-		peers_count = int(len(peers_bytes) / 18)
-		for peer in range(0, peers_count):
-			peer_start_byte = peer * 18
-			peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 16]
-			peer_port_bytes = peers_bytes[peer_start_byte + 16:peer_start_byte + 18]
-			peer_bytes.append((peer_ip_bytes, peer_port_bytes))
-		logging.info('Received number of IPv6 peers is ' + str(peers_count))
+		if b'peers6' in response:
+			peers_bytes = response[b'peers6']
+			peers_count = int(len(peers_bytes) / 18)
+			for peer in range(0, peers_count):
+				peer_start_byte = peer * 18
+				peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 16]
+				peer_port_bytes = peers_bytes[peer_start_byte + 16:peer_start_byte + 18]
+				peer_bytes.append((peer_ip_bytes, peer_port_bytes))
+			logging.info('Received number of IPv6 peers is ' + str(peers_count))
 		
 		# Parse IP adresses and ports
 		peer_ips = []
 		for raw_peer in peer_bytes:
 			try:
-				peer_ip = str(ipaddress.ip_address(raw_peer[0]))
+				peer_ip = str(ipaddress.ip_address(raw_peer[0])) # ValueError
 			except ValueError as err:
 				logging.warning('Tracker sent invalid ip address: ' + str(err))
-				continue
-			peer_port_tuple = struct.unpack("!H", raw_peer[1])
-			peer_port = peer_port_tuple[0]
-			peer_ips.append((peer_ip, peer_port))
+			else:
+				peer_port_tuple = struct.unpack("!H", raw_peer[1])
+				peer_port = peer_port_tuple[0]
+				peer_ips.append((peer_ip, peer_port))
 
 		# Return combined IPv4 and IPv6 list
 		return peer_ips

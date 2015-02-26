@@ -1,17 +1,40 @@
 # bittorrent-analyzer
 Bachelor thesis about the analysis of BitTorrent trackers and peers
 
-## Requirements
+## TODO
+### Next steps
+- ! Revisit in progress peers (save time, extract download speed)
+- ! Wurde der Download während der Beobachtungszeit abgeschlossen? (Anzahl pieces bei erstem Kontakt in die DB)
+- ! Speichere maximale Download Geschwindigkeit zwischen Snapshots
+- Make database usage thread safe
+- Magnet link support
+- Peer exchange message support
+- Support incoming connections to include people without an open port
+- Add a licence
+
+### Code quality
+- Refactor main
+- Review logging messages
+- Review exception flow
+- Review imports
+- Review doxygen comments
+- Review documentation references
+- Compact some statements
+- Implement unit tests
+
+## Installation
+### Requirements
 * Unix-like operating system
 * Python 3.4+
 * [pip](https://pip.pypa.io/) 1.5+
 * [virtualenv](https://virtualenv.pypa.io/) 1.11+
 * [BencodePy](https://github.com/eweast/BencodePy) 0.9+
 * [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
+* Database
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
 * [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/)
 
-## Installation
+### Steps
 These are the standard installation steps on a Debian based system.
 
 1. `sudo apt-get install python3 python3-pip`
@@ -30,15 +53,15 @@ These are the standard installation steps on a Debian based system.
 
 ### Command Line Arguments:
 * `-h, --help`  
-Show this help message and exit
+  Show this help message and exit
 * `-f <filename>, --file <filename>`  
-Torrent file to be examined
+  Torrent file to be examined
 * `-t <seconds>, --timeout <seconds>`  
-Timeout in seconds for network connections
+  Timeout in seconds for network connections
 * `-l <level>, --loglevel <level>`  
-Level of detail for log messages
+  Level of detail for log messages
 * `-j <number>, --jobs <number>`  
-Number of threads used for peer connections
+  Number of threads used for peer connections
 
 ## Licence
 All rights reserved. This is subject to change.

@@ -157,7 +157,7 @@ class PeerSession:
 			try:
 				message = self.receive_message() # OSError
 			except OSError as err:
-				logging.info('No more message: ' + str(err))
+				logging.info('No more messages: ' + str(err))
 				break
 			else:
 				messages.append(message)
