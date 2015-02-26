@@ -62,6 +62,9 @@ These are the standard installation steps on a Debian based system.
   Level of detail for log messages
 * `-j <number>, --jobs <number>`  
   Number of threads used for peer connections
+* `-d <minutes>, --delay <minutes>`  
+  Time delay for revisiting unfinished peers in minutes
 
 ## Licence
-All rights reserved. This is subject to change.
+© Copyright 2014 Stefan Schindler  
+Licensed under [GNU GPL v3.0](LICENSE.txt)
