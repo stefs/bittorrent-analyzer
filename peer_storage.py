@@ -10,6 +10,9 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 import geoip2.database
 
+# Project modules
+import peer_management
+
 # Create declarative base class, from which table classes are inherited
 Base = sqlalchemy.ext.declarative.declarative_base()
 
@@ -83,7 +86,7 @@ class PeerDatabase:
 		# Enter method returns self to with-target
 		return self
 	
-	## Returnes thread safe scoped session object
+	## Returnes thread safe scoped session object according to http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html
 	def get_session(self):
 		# Create session factory class
 		session_factory = sqlalchemy.orm.sessionmaker(bind=self.engine)
@@ -95,46 +98,61 @@ class PeerDatabase:
 	#  @param peer CachedPeer named tuple
 	#  @param torrent Database ID of the related torrent
 	#  @param session Database session, must only be used in one thread
+	#  @return CachedPeer named tuple with completed database id of peer
 	def store(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
-		# Get two letter ISO country code via GeoIP2
-		try:
-			response = self.reader.country(peer.ip_address)
-		except geoip2.errors.AddressNotFoundError as err:
-			logging.warning('IP address is not in the database: ' + str(err))
-			country = ''
-		else:
-			country = response.country.iso_code
-			logging.info('Country is ' + country + ', ' + response.country.name)
+		# Check if this is a new peer
+		if peer.key is None:
+			# Get two letter ISO country code via GeoIP2
+			try:
+				response = self.reader.country(peer.ip_address)
+			except geoip2.errors.AddressNotFoundError as err:
+				logging.warning('IP address is not in the database: ' + str(err))
+				country = ''
+			else:
+				country = response.country.iso_code
+				logging.info('Country is ' + country + ', ' + response.country.name)
 
-		# Get the ISP via reverse DNS
-		try:
-			long_host = socket.gethostbyaddr(peer.ip_address)[0]
-		except OSError as err:
-			logging.warning('Get host by address failed: ' + str(err))
-			host = ''
-		else:
-			host_list = long_host.split('.')
-			host = host_list[-2] + '.' + host_list[-1]
-			logging.info('Host name is ' + host)
+			# Get the ISP via reverse DNS
+			try:
+				long_host = socket.gethostbyaddr(peer.ip_address)[0]
+			except OSError as err:
+				logging.warning('Get host by address failed: ' + str(err))
+				host = ''
+			else:
+				host_list = long_host.split('.')
+				host = host_list[-2] + '.' + host_list[-1]
+				logging.info('Host name is ' + host)
 		
-		# Anonymize IP address
-		# TODO according to https://support.google.com/analytics/answer/2763052?hl=en
-		partial_ip = peer.ip_address
+			# Anonymize IP address
+			# TODO according to https://support.google.com/analytics/answer/2763052?hl=en
+			partial_ip = peer.ip_address
 
-		# Check types before export in database
-		assert type(partial_ip) is str, 'partial ip is of type ' + str(type(partial_ip))
-		assert type(peer.id) is bytes, 'peer id is of type ' + str(type(peer.id))
-		assert type(peer.bitfield) is bytearray, 'bitfield is of type ' + str(type(peer.bitfield))
-		assert type(peer.pieces) is int, 'pieces is of type ' + str(type(peer.pieces))
-		assert type(host) is str, 'hostname is of type ' + str(type(host))
-		assert type(country) is str, 'country is of type ' + str(type(country))
-		assert type(torrent) is int, 'torrent is of type ' + str(type(torrent))
+			# Check types before export in database
+			assert type(partial_ip) is str, 'partial ip is of type ' + str(type(partial_ip))
+			assert type(peer.id) is bytes, 'peer id is of type ' + str(type(peer.id))
+			assert type(peer.bitfield) is bytearray, 'bitfield is of type ' + str(type(peer.bitfield))
+			assert type(peer.pieces) is int, 'pieces is of type ' + str(type(peer.pieces))
+			assert type(host) is str, 'hostname is of type ' + str(type(host))
+			assert type(country) is str, 'country is of type ' + str(type(country))
+			assert type(torrent) is int, 'torrent is of type ' + str(type(torrent))
 		
-		# Write to database
-		new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, progress=peer.pieces, isp=host, country=country, torrent=torrent)
-		session.add(new_peer)
-		session.commit()
-		logging.info('Stored peer: ' + str(new_peer))
+			# Write to database
+			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, progress=peer.pieces, isp=host, country=country, torrent=torrent)
+			session.add(new_peer)
+			session.commit()
+			
+			# Return CachedPeer with key
+			database_id = new_peer.id
+			logging.info('Stored new peer with database id ' + str(database_id))
+			*old_peer, key = peer
+			new_peer = peer_management.CachedPeer(*old_peer, key=database_id)
+			return new_peer
+			
+		# Update former stored peer
+		else:
+			# TODO implement
+			logging.info('*updating*') # debug
+			return peer
 
 	## Relase resources
 	def __exit__(self, exception_type, exception_value, traceback):

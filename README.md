@@ -30,7 +30,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 * [virtualenv](https://virtualenv.pypa.io/) 1.11+
 * [BencodePy](https://github.com/eweast/BencodePy) 0.9+
 * [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
-* Database <!-- TODO -->
+* Database <!--- TODO -->
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
 
 ### Steps

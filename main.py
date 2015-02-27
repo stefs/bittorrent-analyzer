@@ -22,7 +22,7 @@ parser.add_argument('-f', '--file', required=True, help='Torrent file to be exam
 parser.add_argument('-t', '--timeout', type=int, default='10', help='Timeout in seconds for network connections', metavar='<seconds>')
 parser.add_argument('-l', '--loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Level of detail for log messages', metavar='<level>')
 parser.add_argument('-j', '--jobs', type=int, default='1', help='Number of threads used for peer connections', metavar='<number>')
-parser.add_argument('-d', '--delay', type=int, default='10', help='Time delay for revisiting unfinished peers in minutes', metavar='<minutes>')
+parser.add_argument('-d', '--delay', type=float, default='10', help='Time delay for revisiting unfinished peers in minutes', metavar='<minutes>')
 args = parser.parse_args()
 
 # Set logging level
@@ -50,8 +50,8 @@ try:
 	peer_ips = tracker.get_peers(info_hash) # URLError, HTTPException, TrackerException, DecodingError
 except (URLError, http.client.HTTPException, TrackerException, bencodepy.DecodingError) as err:
 	ArgumentParser.error('Unable to get peers from tracker: ' + str(err))
-#max_peers = 5 # debug
-#del peer_ips[5:] # debug
+max_peers = 5 # debug
+del peer_ips[5:] # debug
 
 # Statistic counters
 statistic_lock = threading.Lock()
@@ -71,8 +71,10 @@ with peer_storage.PeerDatabase() as database:
 		while True:
 			# Get new peer
 			peer = peers.in_progress.get()
-			peer_tuple = (peer.ip_address, peer.port)
-			logging.info('******************************** NEXT PEER ********************************')
+			if peer.key is None:
+				logging.info('******** NEXT PEER: Evaluating for the first time ********')
+			else:
+				logging.info('******** NEXT PEER: Revisiting peer with database id ' + str(peer.key) + ' ********')
 		
 			# Delay evaluation
 			delay = peer.revisit - time.perf_counter()
@@ -81,6 +83,7 @@ with peer_storage.PeerDatabase() as database:
 				time.sleep(delay)
 	
 			# Receive messages and peer_id
+			peer_tuple = (peer.ip_address, peer.port)
 			try:
 				# Use peer_session in with clause to ensure socket close
 				with peer_wire_protocol.PeerSession(peer_tuple, args.timeout, info_hash, own_peer_id) as session: # OSError
@@ -103,20 +106,24 @@ with peer_storage.PeerDatabase() as database:
 				pieces_count = 0
 				for byte in bitfield:
 					pieces_count += peer_management.count_bits(byte)
-				percentage = round(pieces_count * 100 / pieces_number)
+				percentage = int(pieces_count * 100 / pieces_number)
 				remaining = pieces_number - pieces_count
 				logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
 
 				# Save results
 				delay_seconds = args.delay * 60
 				revisit_time = time.perf_counter() + delay_seconds
-				peer = peer_management.CachedPeer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count)
-				database.store(peer, 0, database_session) # TODO give torrent id
+				peer = peer_management.CachedPeer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
+				updated_peer = database.store(peer, 0, database_session) # TODO give torrent id
+				
+				# Write back in progress peers
 				if peer.pieces < pieces_number:
 					global revisit_count
 					with statistic_lock:
 						revisit_count += 1
-					peers.add_in_progress(peer)
+					peers.add_in_progress(updated_peer)
+				
+				# Discard finished peers
 				else:
 					global finished_count
 					with statistic_lock:
@@ -130,7 +137,7 @@ with peer_storage.PeerDatabase() as database:
 	for i in range(args.jobs):
 		# Get thread safe session object
 		database_session = database.get_session()
-		# Create a thread with worker callable
+		# Create a thread with worker callable and pass it it's own session
 		thread = threading.Thread(target=worker, args=(database_session,))
 		# Thread dies when main thread exits, requires Queue.join()
 		thread.daemon = True
@@ -143,6 +150,8 @@ with peer_storage.PeerDatabase() as database:
 	except KeyboardInterrupt as err:
 		logging.info('Caught keyboard interrupt, exiting')
 		# TODO close connections in subthreads via a signal
+	else:
+		logging.info('Evaluation finished, exiting')
 	finally:
 		# Log some statistics
 		logging.info('Number of peers marked to revisit is ' + str(revisit_count))
