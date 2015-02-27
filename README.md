@@ -3,14 +3,14 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## TODO
 ### Next steps
-- ! Revisit in progress peers (save time, extract download speed)
-- ! Wurde der Download während der Beobachtungszeit abgeschlossen? (Anzahl pieces bei erstem Kontakt in die DB)
-- ! Speichere maximale Download Geschwindigkeit zwischen Snapshots
+- ! Update peers (via ID) und Zeitrechnung in peer_storage (first seen, first pieces, last seen, last pieces, max speed)
+- ! Get new peers from tracker
+- ! Merge peers via IP, ISP, Client, evtl. bitfields
 - Make database usage thread safe
 - Magnet link support
 - Peer exchange message support
 - Support incoming connections to include people without an open port
-- Add a licence
+- Document database needed
 
 ### Code quality
 - Refactor main

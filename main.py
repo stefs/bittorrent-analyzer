@@ -50,113 +50,102 @@ try:
 	peer_ips = tracker.get_peers(info_hash) # URLError, HTTPException, TrackerException, DecodingError
 except (URLError, http.client.HTTPException, TrackerException, bencodepy.DecodingError) as err:
 	ArgumentParser.error('Unable to get peers from tracker: ' + str(err))
-max_peers = 5 # debug
-del peer_ips[5:] # debug
-
-# Create output queue for database output
-database_peers = queue.Queue()
-
-# Consumes peers and stores them in the database
-def db_worker():
-	# Create new database
-	with peer_storage.PeerDatabase() as database:
-		# Ends when daemon thread dies
-		while True:
-			peer = database_peers.get()
-			database.store(peer, 0) # TODO give torrent id
-			database_peers.task_done()
-
-# Start database thread
-thread = threading.Thread(target=db_worker)
-thread.daemon = True
-thread.start()
+#max_peers = 5 # debug
+#del peer_ips[5:] # debug
 
 # Statistic counters
 statistic_lock = threading.Lock()
-revisit_count = 0
-error_count = 0
-finished_count = 0
+revisit_count = error_count = finished_count = 0
 
 # Create peer cache
 peers = peer_management.PeerCache()
 for peer_ip in peer_ips:
 	peers.add_new(peer_ip)
 
-## Worker method to be started as a thread
-def worker():
-	# Ends when daemon thread dies
-	while True:
-		# Get new peer
-		peer = peers.in_progress.get()
-		peer_tuple = (peer.ip_address, peer.port)
-		logging.info('******************************** NEXT PEER ********************************')
+# Create new database
+with peer_storage.PeerDatabase() as database:
+	## Worker method to be started as a thread
+	#  @param SQLAlchemy database scoped session object
+	def worker(database_session):
+		# Ends when daemon thread dies
+		while True:
+			# Get new peer
+			peer = peers.in_progress.get()
+			peer_tuple = (peer.ip_address, peer.port)
+			logging.info('******************************** NEXT PEER ********************************')
 		
-		# Delay evaluation
-		if peer.delay > 0:
-			logging.info('Delaying peer evaluation for ' + str(peer.delay) + ' seconds ...')
-			time.sleep(peer.delay)
+			# Delay evaluation
+			delay = peer.revisit - time.perf_counter()
+			if delay > 0:
+				logging.info('Delaying peer evaluation for ' + str(delay) + ' seconds ...')
+				time.sleep(delay)
 	
-		# Receive messages and peer_id
-		try:
-			# Use peer_session in with clause to ensure socket close
-			with peer_wire_protocol.PeerSession(peer_tuple, args.timeout, info_hash, own_peer_id) as session: # OSError
-				peer_id = session.exchange_handshakes()[0] # OSError, PeerError
-				messages = session.receive_all_messages(100)
-		except (OSError, peer_wire_protocol.PeerError) as err:
-			global error_count
-			with statistic_lock:
-				error_count += 1
-			logging.warning('Peer evaluation failed: ' + str(err))
-		except Exception as err:
-			# Catch all exceptions to enable ongoing analysis
-			logging.critical('Unexpected error during peer evaluation: ' + str(err))
-			traceback.print_tb(err.__traceback__)
-		else:
-			# Receive bitfield
-			bitfield = peer_wire_protocol.bitfield_from_messages(messages, pieces_number)
-			
-			# Count finished pieces
-			pieces_count = 0
-			for byte in bitfield:
-				pieces_count += peer_management.count_bits(byte)
-			percentage = round(pieces_count * 100 / pieces_number)
-			remaining = pieces_number - pieces_count
-			logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
-
-			# Save results
-			delay_seconds = args.delay * 60
-			peer = peer_management.CachedPeer(delay_seconds, peer.ip_address, peer.port, peer_id, bitfield, pieces_count)
-			database_peers.put(peer)
-			if peer.pieces < pieces_number:
-				global revisit_count
+			# Receive messages and peer_id
+			try:
+				# Use peer_session in with clause to ensure socket close
+				with peer_wire_protocol.PeerSession(peer_tuple, args.timeout, info_hash, own_peer_id) as session: # OSError
+					peer_id = session.exchange_handshakes()[0] # OSError, PeerError
+					messages = session.receive_all_messages(100)
+			except (OSError, peer_wire_protocol.PeerError) as err:
+				global error_count
 				with statistic_lock:
-					revisit_count += 1
-				peers.add_in_progress(peer)
+					error_count += 1
+				logging.warning('Peer evaluation failed: ' + str(err))
+			except Exception as err:
+				# Catch all exceptions to enable ongoing analysis
+				logging.critical('Unexpected error during peer evaluation: ' + str(err))
+				traceback.print_tb(err.__traceback__)
 			else:
-				global finished_count
-				with statistic_lock:
-					finished_count += 1
+				# Receive bitfield
+				bitfield = peer_wire_protocol.bitfield_from_messages(messages, pieces_number)
+			
+				# Count finished pieces
+				pieces_count = 0
+				for byte in bitfield:
+					pieces_count += peer_management.count_bits(byte)
+				percentage = round(pieces_count * 100 / pieces_number)
+				remaining = pieces_number - pieces_count
+				logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
 
-		# Queue.task_done() to allow Queue.join()
-		finally:
-			peers.in_progress.task_done()
+				# Save results
+				delay_seconds = args.delay * 60
+				revisit_time = time.perf_counter() + delay_seconds
+				peer = peer_management.CachedPeer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count)
+				database.store(peer, 0, database_session) # TODO give torrent id
+				if peer.pieces < pieces_number:
+					global revisit_count
+					with statistic_lock:
+						revisit_count += 1
+					peers.add_in_progress(peer)
+				else:
+					global finished_count
+					with statistic_lock:
+						finished_count += 1
 
-# Create thread pool
-for i in range(args.jobs):
-	# Create a thread with worker callable
-	thread = threading.Thread(target=worker)
-	# Thread dies when main thread exits, requires Queue.join()
-	thread.daemon = True
-	# Start thread
-	thread.start()
+			# Queue.task_done() to allow Queue.join()
+			finally:
+				peers.in_progress.task_done()
 
-# Wait for all peers to be parsed
-# TODO allow connection termination in subthreads when main thread terminates (e.g. on KeyboardInterrupt) via signal.signal
-peers.in_progress.join()
-database_peers.join()
+	# Create thread pool
+	for i in range(args.jobs):
+		# Get thread safe session object
+		database_session = database.get_session()
+		# Create a thread with worker callable
+		thread = threading.Thread(target=worker, args=(database_session,))
+		# Thread dies when main thread exits, requires Queue.join()
+		thread.daemon = True
+		# Start thread
+		thread.start()
 
-# Log some statistics
-logging.info('Number of revisited peers is ' + str(revisit_count))
-logging.info('Number of error peers is ' + str(error_count))
-logging.info('Number of finished peers is ' + str(finished_count))
+	try:
+		# Wait for all peers to be parsed
+		peers.in_progress.join()
+	except KeyboardInterrupt as err:
+		logging.info('Caught keyboard interrupt, exiting')
+		# TODO close connections in subthreads via a signal
+	finally:
+		# Log some statistics
+		logging.info('Number of peers marked to revisit is ' + str(revisit_count))
+		logging.info('Number of error peers is ' + str(error_count))
+		logging.info('Number of finished peers is ' + str(finished_count))
 

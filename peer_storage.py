@@ -72,12 +72,6 @@ class PeerDatabase:
 		# Create empty tables
 		Base.metadata.create_all(self.engine)
 
-		# Create session factory class
-		self.Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
-		
-		# Create session object for database access
-		self.session = self.Session()
-
 	## Open GeoIP2 database
 	def __enter__(self):
 		# Open MaxMind GeoIP2 database from http://dev.maxmind.com/geoip/geoip2/geolite2/
@@ -88,11 +82,20 @@ class PeerDatabase:
 		
 		# Enter method returns self to with-target
 		return self
+	
+	## Returnes thread safe scoped session object
+	def get_session(self):
+		# Create session factory class
+		session_factory = sqlalchemy.orm.sessionmaker(bind=self.engine)
+		
+		# Return thread local proxy
+		return sqlalchemy.orm.scoped_session(session_factory)
 
 	## Store new peer statistic
 	#  @param peer CachedPeer named tuple
 	#  @param torrent Database ID of the related torrent
-	def store(self, peer, torrent): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
+	#  @param session Database session, must only be used in one thread
+	def store(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
 		# Get two letter ISO country code via GeoIP2
 		try:
 			response = self.reader.country(peer.ip_address)
@@ -115,27 +118,27 @@ class PeerDatabase:
 			logging.info('Host name is ' + host)
 		
 		# Anonymize IP address
-		# TODO
+		# TODO according to https://support.google.com/analytics/answer/2763052?hl=en
 		partial_ip = peer.ip_address
 
 		# Check types before export in database
 		assert type(partial_ip) is str, 'partial ip is of type ' + str(type(partial_ip))
-		assert type(peer.id) is bytes, 'peer id is of type ' + str(type(id))
-		assert type(peer.bitfield) is bytearray, 'bitfield is of type ' + str(type(bitfield))
-		assert type(peer.pieces) is int, 'pieces is of type ' + str(type(pieces))
-		assert type(host) is str, 'hostname is of type ' + str(type(hostname))
+		assert type(peer.id) is bytes, 'peer id is of type ' + str(type(peer.id))
+		assert type(peer.bitfield) is bytearray, 'bitfield is of type ' + str(type(peer.bitfield))
+		assert type(peer.pieces) is int, 'pieces is of type ' + str(type(peer.pieces))
+		assert type(host) is str, 'hostname is of type ' + str(type(host))
 		assert type(country) is str, 'country is of type ' + str(type(country))
 		assert type(torrent) is int, 'torrent is of type ' + str(type(torrent))
 		
 		# Write to database
 		new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, progress=peer.pieces, isp=host, country=country, torrent=torrent)
-		self.session.add(new_peer)
-		self.session.commit()
+		session.add(new_peer)
+		session.commit()
 		logging.info('Stored peer: ' + str(new_peer))
 
 	## Relase resources
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Close GeoIP2 database reader
 		self.reader.close()
-		logging.debug('GeoIP2 database closed')
+		logging.info('GeoIP2 database closed')
 

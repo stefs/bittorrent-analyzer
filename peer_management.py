@@ -5,7 +5,7 @@ import collections
 import socket
 
 ## Create named tuple
-CachedPeer = collections.namedtuple('CachedPeer', 'delay ip_address port id bitfield pieces')
+CachedPeer = collections.namedtuple('CachedPeer', 'revisit ip_address port id bitfield pieces')
 
 ## Cache of peers in different conection and progress states
 #  @warn Not threadsafe, calls must be guarded with locks
@@ -18,7 +18,7 @@ class PeerCache:
 	## Add a new peer with unknown connectivity status
 	#  @param peer Tuple of IP address and port number
 	def add_new(self, peer):
-		new_peer = CachedPeer(delay=0, ip_address=peer[0], port=peer[1], id=b'', bitfield=b'', pieces=0)
+		new_peer = CachedPeer(revisit=0, ip_address=peer[0], port=peer[1], id=b'', bitfield=b'', pieces=0)
 		self.in_progress.put(new_peer)
 	
 	## Puts a peer back in the in progress list
