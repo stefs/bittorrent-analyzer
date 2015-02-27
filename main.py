@@ -8,12 +8,12 @@ import threading
 import traceback
 import queue
 import time
+import random
 
 # Project modules
 import torrent_file
 import tracker_request
 import peer_wire_protocol
-import peer_management
 import peer_storage
 
 # Argument parsing
@@ -35,6 +35,7 @@ logging.info('Timeout for network operations is ' + str(args.timeout) + ' second
 logging.info('Logging messages up to ' + args.loglevel + ' level')
 logging.info('Connecting to peers in ' + str(args.jobs) + ' threads')
 logging.info('Time delay for revisiting unfinished peers is ' + str(args.delay) + ' minutes')
+logging.info('The identifier for the main thread is ' + str(threading.get_ident()))
 
 # Extract announce URL and info hash
 # TODO expect exceptions
@@ -50,27 +51,43 @@ try:
 	peer_ips = tracker.get_peers(info_hash) # URLError, HTTPException, TrackerException, DecodingError
 except (URLError, http.client.HTTPException, TrackerException, bencodepy.DecodingError) as err:
 	ArgumentParser.error('Unable to get peers from tracker: ' + str(err))
-max_peers = 5 # debug
-del peer_ips[5:] # debug
+peer_ips = random.sample(peer_ips, 30) # debug
 
 # Statistic counters
 statistic_lock = threading.Lock()
 revisit_count = error_count = finished_count = 0
 
 # Create peer cache
-peers = peer_management.PeerCache()
+in_progress = queue.PriorityQueue()
 for peer_ip in peer_ips:
-	peers.add_new(peer_ip)
+	new_peer = peer_storage.CachedPeer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1], id=None, bitfield=None, pieces=None, key=None)
+	in_progress.put(new_peer)
+
+## Returns the numbers of bits set in an integer
+#  @param byte An arbitrary integer between 0 and 255
+#  @return Count of 1 bits in the binary representation of byte
+def count_bits(byte):
+	assert 0 <= byte <= 255, 'Only values between 0 and 255 allowed'
+	mask = 1
+	count = 0
+	for i in range(0,8):
+		masked_byte = byte & mask
+		if masked_byte > 0:
+			count += 1
+		mask *= 2
+	return count
 
 # Create new database
 with peer_storage.PeerDatabase() as database:
 	## Worker method to be started as a thread
 	#  @param SQLAlchemy database scoped session object
 	def worker(database_session):
+		# Log thread id
+		logging.info('The identifier for this worker thread is ' + str(threading.get_ident()))
 		# Ends when daemon thread dies
 		while True:
 			# Get new peer
-			peer = peers.in_progress.get()
+			peer = in_progress.get()
 			if peer.key is None:
 				logging.info('******** NEXT PEER: Evaluating for the first time ********')
 			else:
@@ -105,23 +122,33 @@ with peer_storage.PeerDatabase() as database:
 				# Count finished pieces
 				pieces_count = 0
 				for byte in bitfield:
-					pieces_count += peer_management.count_bits(byte)
+					pieces_count += count_bits(byte)
 				percentage = int(pieces_count * 100 / pieces_number)
 				remaining = pieces_number - pieces_count
 				logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
-
+				
 				# Save results
 				delay_seconds = args.delay * 60
 				revisit_time = time.perf_counter() + delay_seconds
-				peer = peer_management.CachedPeer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
-				updated_peer = database.store(peer, 0, database_session) # TODO give torrent id
+				peer = peer_storage.CachedPeer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
+				try:
+					database_id = database.store(peer, 0, database_session) # TODO give torrent id
+				except Exception as err:
+					database_session.rollback()
+					logging.critical('Unexpected error during database update: ' + str(err))
+					raise
+				
+				# Remember database id if necesarry
+				if peer.key is None:
+					*old_peer, key = peer
+					peer = peer_storage.CachedPeer(*old_peer, key=database_id)
 				
 				# Write back in progress peers
-				if peer.pieces < pieces_number:
+				if remaining > 0:
 					global revisit_count
 					with statistic_lock:
 						revisit_count += 1
-					peers.add_in_progress(updated_peer)
+					in_progress.put(peer)
 				
 				# Discard finished peers
 				else:
@@ -130,8 +157,7 @@ with peer_storage.PeerDatabase() as database:
 						finished_count += 1
 
 			# Queue.task_done() to allow Queue.join()
-			finally:
-				peers.in_progress.task_done()
+			in_progress.task_done()
 
 	# Create thread pool
 	for i in range(args.jobs):
@@ -146,10 +172,10 @@ with peer_storage.PeerDatabase() as database:
 
 	try:
 		# Wait for all peers to be parsed
-		peers.in_progress.join()
+		in_progress.join()
 	except KeyboardInterrupt as err:
 		logging.info('Caught keyboard interrupt, exiting')
-		# TODO close connections in subthreads via a signal
+		# TODO allow socket.close and session.close in subthreads via a signal
 	else:
 		logging.info('Evaluation finished, exiting')
 	finally:

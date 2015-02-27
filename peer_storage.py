@@ -3,6 +3,8 @@ import logging
 import time
 import os
 import socket
+import datetime
+import collections
 
 # Extern modules
 import sqlalchemy
@@ -10,8 +12,8 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 import geoip2.database
 
-# Project modules
-import peer_management
+# Create named tuple
+CachedPeer = collections.namedtuple('CachedPeer', 'revisit ip_address port id bitfield pieces key')
 
 # Create declarative base class, from which table classes are inherited
 Base = sqlalchemy.ext.declarative.declarative_base()
@@ -24,40 +26,14 @@ class Peer(Base):
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
 	partial_ip = sqlalchemy.Column(sqlalchemy.types.String)
 	peer_id = sqlalchemy.Column(sqlalchemy.types.Binary)
-	bitfield = sqlalchemy.Column(sqlalchemy.types.Binary)
-	progress = sqlalchemy.Column(sqlalchemy.types.Integer)
-	isp = sqlalchemy.Column(sqlalchemy.types.String)
+	host = sqlalchemy.Column(sqlalchemy.types.String)
 	country = sqlalchemy.Column(sqlalchemy.types.String)
-	sessions = sqlalchemy.Column(sqlalchemy.types.Integer)
+	first_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
+	last_pieces =  sqlalchemy.Column(sqlalchemy.types.Integer)
 	first_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
+	sessions = sqlalchemy.Column(sqlalchemy.types.Integer)
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
-
-	# Return string representation of peer object
-	def __repr__(self):
-		parts = list()
-		parts.append('<Peer(partial_ip=')
-		parts.append(self.partial_ip)
-		parts.append(', peer_id=')
-		parts.append(str(self.peer_id))
-		parts.append(', bitfield=')
-		parts.append(str(self.bitfield))
-		parts.append(', progress=')
-		parts.append(str(self.progress))
-		parts.append(', isp=')
-		parts.append(self.isp)
-		parts.append(', country=')
-		parts.append(self.country)
-		parts.append(', sessions=')
-		parts.append(str(self.sessions))
-		parts.append(', first_seen=')
-		parts.append(str(self.first_seen))
-		parts.append(', last_seen=')
-		parts.append(str(self.last_seen))
-		parts.append(', torrent=')
-		parts.append(str(self.torrent))
-		parts.append(')>')
-		return ''.join(parts)
 
 ## Handling database access with SQLAlchemy
 class PeerDatabase:
@@ -68,9 +44,8 @@ class PeerDatabase:
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 		time_string = time.strftime('%Y-%m-%d_%H-%M-%S')
-		database_path = 'sqlite:///' + directory + time_string + '.sqlite'
-		self.engine = sqlalchemy.create_engine(database_path, echo=False) # echo enables debug output
-		logging.info('Writing results to ' + database_path)
+		self.database_path = 'sqlite:///' + directory + time_string + '.sqlite'
+		self.engine = sqlalchemy.create_engine(self.database_path, echo=False) # echo enables debug output
 
 		# Create empty tables
 		Base.metadata.create_all(self.engine)
@@ -98,7 +73,7 @@ class PeerDatabase:
 	#  @param peer CachedPeer named tuple
 	#  @param torrent Database ID of the related torrent
 	#  @param session Database session, must only be used in one thread
-	#  @return CachedPeer named tuple with completed database id of peer
+	#  @return Returns database id of peer, if peer.key is None
 	def store(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
 		# Check if this is a new peer
 		if peer.key is None:
@@ -112,7 +87,7 @@ class PeerDatabase:
 				country = response.country.iso_code
 				logging.info('Country is ' + country + ', ' + response.country.name)
 
-			# Get the ISP via reverse DNS
+			# Get the host via reverse DNS
 			try:
 				long_host = socket.gethostbyaddr(peer.ip_address)[0]
 			except OSError as err:
@@ -126,37 +101,45 @@ class PeerDatabase:
 			# Anonymize IP address
 			# TODO according to https://support.google.com/analytics/answer/2763052?hl=en
 			partial_ip = peer.ip_address
+			
+			# Get a now timestamp
+			timestamp = datetime.datetime.utcnow()
 
-			# Check types before export in database
-			assert type(partial_ip) is str, 'partial ip is of type ' + str(type(partial_ip))
-			assert type(peer.id) is bytes, 'peer id is of type ' + str(type(peer.id))
-			assert type(peer.bitfield) is bytearray, 'bitfield is of type ' + str(type(peer.bitfield))
-			assert type(peer.pieces) is int, 'pieces is of type ' + str(type(peer.pieces))
-			assert type(host) is str, 'hostname is of type ' + str(type(host))
-			assert type(country) is str, 'country is of type ' + str(type(country))
-			assert type(torrent) is int, 'torrent is of type ' + str(type(torrent))
-		
 			# Write to database
-			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, progress=peer.pieces, isp=host, country=country, torrent=torrent)
+			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, country=country, first_pieces=peer.pieces, first_seen=timestamp, sessions=1, torrent=torrent)
 			session.add(new_peer)
 			session.commit()
 			
 			# Return CachedPeer with key
 			database_id = new_peer.id
 			logging.info('Stored new peer with database id ' + str(database_id))
-			*old_peer, key = peer
-			new_peer = peer_management.CachedPeer(*old_peer, key=database_id)
-			return new_peer
+			return database_id
 			
 		# Update former stored peer
 		else:
-			# TODO implement
-			logging.info('*updating*') # debug
-			return peer
-
+			# Get and delete old entry
+			database_peer = session.query(Peer).filter_by(id=peer.key).first()
+			session.delete(database_peer) # debug
+			
+			# Update old peer
+			database_peer.last_pieces = peer.pieces
+			timestamp = datetime.datetime.utcnow()
+			database_peer.last_seen = timestamp
+			database_peer.sessions += 1
+			
+			# Store updated peer
+			session.add(database_peer)
+			session.commit()
+			logging.info('Updated peer with database id ' + str(peer.key)) # debug
+		
 	## Relase resources
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Close GeoIP2 database reader
 		self.reader.close()
 		logging.info('GeoIP2 database closed')
+		logging.info('Results written to ' + self.database_path)
+
+# Indicates database related errors
+class DatabaseError(Exception):
+	pass
 
