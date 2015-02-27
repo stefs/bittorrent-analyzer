@@ -3,10 +3,9 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## TODO
 ### Next steps
-- ! Update peers (via ID) und Zeitrechnung in peer_storage (first seen, first pieces, last seen, last pieces, max speed)
+- ! Extract max speed when updating peers
 - ! Get new peers from tracker
 - ! Merge peers via IP, ISP, Client, evtl. bitfields
-- Make database usage thread safe
 - Magnet link support
 - Peer exchange message support
 - Support incoming connections to include people without an open port
@@ -30,7 +29,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 * [virtualenv](https://virtualenv.pypa.io/) 1.11+
 * [BencodePy](https://github.com/eweast/BencodePy) 0.9+
 * [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
-* Database <!--- TODO -->
+* Database
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
 
 ### Steps

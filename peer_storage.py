@@ -32,7 +32,8 @@ class Peer(Base):
 	last_pieces =  sqlalchemy.Column(sqlalchemy.types.Integer)
 	first_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
-	sessions = sqlalchemy.Column(sqlalchemy.types.Integer)
+	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)
+	visits = sqlalchemy.Column(sqlalchemy.types.Integer)
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
 
 ## Handling database access with SQLAlchemy
@@ -106,7 +107,9 @@ class PeerDatabase:
 			timestamp = datetime.datetime.utcnow()
 
 			# Write to database
-			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, country=country, first_pieces=peer.pieces, first_seen=timestamp, sessions=1, torrent=torrent)
+			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, country=country,
+					first_pieces=peer.pieces, last_pieces=peer.pieces, first_seen=timestamp, last_seen=timestamp,
+					max_speed=0, visits=1, torrent=torrent)
 			session.add(new_peer)
 			session.commit()
 			
@@ -121,11 +124,20 @@ class PeerDatabase:
 			database_peer = session.query(Peer).filter_by(id=peer.key).first()
 			session.delete(database_peer) # debug
 			
+			# Calculate max download speed
+			timestamp = datetime.datetime.utcnow()
+			time_delta = timestamp - database_peer.last_seen
+			time_delta_seconds = time_delta.total_seconds()
+			pieces_delta = peer.pieces - database_peer.last_pieces
+			pieces_per_second = pieces_delta / time_delta_seconds
+			logging.info('Download speed since last visit is ' + str(pieces_per_second) + ' pieces per second')
+
 			# Update old peer
 			database_peer.last_pieces = peer.pieces
-			timestamp = datetime.datetime.utcnow()
 			database_peer.last_seen = timestamp
-			database_peer.sessions += 1
+			database_peer.visits += 1
+			if pieces_per_second > database_peer.max_speed:
+				database_peer.max_speed = pieces_per_second
 			
 			# Store updated peer
 			session.add(database_peer)
