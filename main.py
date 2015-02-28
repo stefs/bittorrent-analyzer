@@ -59,7 +59,7 @@ peer_ips = random.sample(peer_ips, 5) # debug
 
 # Statistic counters
 statistic_lock = threading.Lock()
-revisit_count = error_count = finished_count = 0
+revisit_count = error_count = store_count = 0
 
 # Create peer cache
 in_progress = queue.PriorityQueue()
@@ -93,9 +93,12 @@ with peer_storage.PeerDatabase() as database:
 			# Get new peer
 			peer = in_progress.get()
 			if peer.key is None:
-				logging.info('******** NEXT PEER: Evaluating for the first time ********')
+				logging.info('Evaluating peer for the first time ****************')
 			else:
-				logging.info('******** NEXT PEER: Revisiting peer with database id ' + str(peer.key) + ' ********')
+				logging.info('Revisiting peer with database id ' + str(peer.key) + ' ****************')
+				global revisit_count
+				with statistic_lock:
+					revisit_count += 1
 		
 			# Delay evaluation
 			delay = peer.revisit - time.perf_counter()
@@ -107,10 +110,10 @@ with peer_storage.PeerDatabase() as database:
 			peer_tuple = (peer.ip_address, peer.port)
 			try:
 				# Use peer_session in with clause to ensure socket close
-				with peer_wire_protocol.PeerSession(peer_tuple, args.timeout, info_hash, own_peer_id) as session: # OSError
-					peer_id = session.exchange_handshakes()[0] # OSError, PeerError
+				with peer_wire_protocol.PeerSession(peer_tuple, args.timeout, info_hash, own_peer_id) as session:
+					peer_id = session.exchange_handshakes()[0]
 					messages = session.receive_all_messages(100)
-			except (OSError, peer_wire_protocol.PeerError) as err:
+			except peer_wire_protocol.PeerError as err:
 				global error_count
 				with statistic_lock:
 					error_count += 1
@@ -141,25 +144,20 @@ with peer_storage.PeerDatabase() as database:
 					database_session.rollback()
 					logging.critical('Unexpected error during database update: ' + str(err))
 					raise
+				global store_count
+				with statistic_lock:
+					store_count += 1
+
 				
 				# Remember database id if necesarry
 				if peer.key is None:
 					*old_peer, key = peer
 					peer = peer_storage.CachedPeer(*old_peer, key=database_id)
 				
-				# Write back in progress peers
+				# Write back in progress peers, discard finished ones
 				if remaining > 0:
-					global revisit_count
-					with statistic_lock:
-						revisit_count += 1
 					in_progress.put(peer)
 				
-				# Discard finished peers
-				else:
-					global finished_count
-					with statistic_lock:
-						finished_count += 1
-
 			# Queue.task_done() to allow Queue.join()
 			in_progress.task_done()
 
@@ -184,7 +182,7 @@ with peer_storage.PeerDatabase() as database:
 		logging.info('Evaluation finished, exiting')
 	finally:
 		# Log some statistics
-		logging.info('Number of peers marked to revisit is ' + str(revisit_count))
-		logging.info('Number of error peers is ' + str(error_count))
-		logging.info('Number of finished peers is ' + str(finished_count))
+		logging.info('Number of revisited peers is ' + str(revisit_count))
+		logging.info('Number of failed peer evaluations is ' + str(error_count))
+		logging.info('Database access count is ' + str(store_count))
 

@@ -24,11 +24,14 @@ class PeerSession:
 		self.received_bytes_buffer = b''
 		
 	## Create a socket and open the TCP connection
-	#  @exception OSError
+	#  @exception PeerError
 	def __enter__(self):
 		# Create connection to peer
 		logging.info('Connecting to peer at ' + self.peer_ip[0] + ' port ' + str(self.peer_ip[1]) + ' ...')
-		self.sock = socket.create_connection(self.peer_ip, self.timeout) # OSError
+		try:
+			self.sock = socket.create_connection(self.peer_ip, self.timeout)
+		except OSError as err:
+			raise PeerError('Connection establishment failed: ' + str(err))
 		logging.info('Connection established')
 		
 		# Enter method returns self to with-target
@@ -36,19 +39,22 @@ class PeerSession:
 		
 	## Sends bytes according to https://docs.python.org/3/howto/sockets.html#using-a-socket
 	#  @param data Bytes data to be sent
-	#  @exception OSError
+	#  @exception PeerError
 	def send_bytes(self, data):
 		total_sent_count = 0
 		while total_sent_count < len(data):
-			sent_count = self.sock.send(data[total_sent_count:]) # OSError
+			try:
+				sent_count = self.sock.send(data[total_sent_count:])
+			except OSError as err:
+				raise PeerError('Sending data failed: ' + str(err))
 			if sent_count == 0:
-			        raise OSError('Socket connection broken')
+			        raise PeerError('Socket connection broken')
 			total_sent_count += sent_count
 
 	## Receives bytes blocking according to https://stackoverflow.com/a/17508900
 	#  @param required_bytes Nuber of bytes to be returned
 	#  @return Byte object of exact requested size
-	#  @exception OSError
+	#  @exception PeerError
 	def receive_bytes(self, required_bytes):
 		# Receive more data if local buffer cannot serve the request
 		bytes_to_receive = required_bytes - len(self.received_bytes_buffer)
@@ -56,9 +62,12 @@ class PeerSession:
 			data_parts = [self.received_bytes_buffer]
 			received_bytes = 0
 			while received_bytes < bytes_to_receive:
-				buffer = self.sock.recv(1024) # OSError
+				try:
+					buffer = self.sock.recv(1024)
+				except OSError as err:
+					raise PeerError('Receiving data failed: ' + str(err))
 				if buffer == b'':
-			                raise OSError('Socket connection broken')
+			                raise PeerError('Socket connection broken')
 				data_parts.append(buffer)
 				received_bytes += len(buffer)
 			self.received_bytes_buffer = b''.join(data_parts)
@@ -70,15 +79,15 @@ class PeerSession:
 	
 	## Receive a peer wire protocol handshake
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
-	#  @exception OSError,PeerError
+	#  @exception PeerError
 	def receive_handshake(self):
 		# Receive handshake pstrlen
-		pstrlen_bytes = self.receive_bytes(1) # OSError
+		pstrlen_bytes = self.receive_bytes(1) # PeerError
 		pstrlen_tuple = struct.unpack('>B', pstrlen_bytes)
 		pstrlen = pstrlen_tuple[0]
 		
 		# Receive rest of the handshake
-		handshake_bytes = self.receive_bytes(pstrlen + 8 + 20 + 20) # OSError
+		handshake_bytes = self.receive_bytes(pstrlen + 8 + 20 + 20) # PeerError
 		format_string = '>' + str(pstrlen) + 'sQ20s20s'
 		handshake_tuple = struct.unpack(format_string, handshake_bytes)
 		
@@ -106,7 +115,7 @@ class PeerSession:
 	
 	## Receives and sends handshake to initiate BitTorrent Protocol
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
-	#  @exception OSError,PeerError
+	#  @exception PeerError
 	def exchange_handshakes(self):
 		# Pack handshake string
 		pstr = b'BitTorrent protocol'
@@ -117,28 +126,28 @@ class PeerSession:
 		logging.debug('Prepared handshake is ' + str(handshake))
 		
 		# Send and receive handshake
-		self.send_bytes(handshake) # OSError
-		return self.receive_handshake() # OSError, PeerError
+		self.send_bytes(handshake) # PeerError
+		return self.receive_handshake() # PeerError
 	
 	## Receive a peer message
 	#  @return Tuple of message id and payload, keepalive has id -1
-	#  @exception OSError
+	#  @exception PeerError
 	def receive_message(self):
 		# Receive message length prefix
-		length_prefix_bytes = self.receive_bytes(4) # OSError
+		length_prefix_bytes = self.receive_bytes(4) # PeerError
 		length_prefix_tuple = struct.unpack('>I', length_prefix_bytes)
 		length_prefix = length_prefix_tuple[0]
 		if length_prefix == 0:
 			return (-1, b'')
 
 		# Receive message id and payload
-		message_id_bytes = self.receive_bytes(1) # OSError
+		message_id_bytes = self.receive_bytes(1) # PeerError
 		message_id_tuple = struct.unpack('>B', message_id_bytes)
 		message_id = message_id_tuple[0]
 		
 		# Receive payload
 		payload_length = length_prefix - 1
-		payload_bytes = self.receive_bytes(payload_length) # OSError
+		payload_bytes = self.receive_bytes(payload_length) # PeerError
 		format_string = '>' + str(payload_length) + 's'
 		payload_tuple = struct.unpack(format_string, payload_bytes)
 		payload = payload_tuple[0]
@@ -155,8 +164,8 @@ class PeerSession:
 		messages = list()
 		while len(messages) < max_messages:
 			try:
-				message = self.receive_message() # OSError
-			except OSError as err:
+				message = self.receive_message()
+			except PeerError as err:
 				logging.info('No more messages: ' + str(err))
 				break
 			else:
