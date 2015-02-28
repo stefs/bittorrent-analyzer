@@ -38,19 +38,23 @@ logging.info('Time delay for revisiting unfinished peers is ' + str(args.delay) 
 logging.info('The identifier for the main thread is ' + str(threading.get_ident()))
 
 # Extract announce URL and info hash
-# TODO expect exceptions
-torrent = torrent_file.TorrentParser(args.file)
-announce_url = torrent.get_announce_url()
-info_hash = torrent.get_info_hash()
-pieces_number = torrent.get_pieces_number()
+try:
+	torrent = torrent_file.TorrentParser(args.file)
+	announce_url = torrent.get_announce_url()
+	info_hash = torrent.get_info_hash()
+	pieces_number = torrent.get_pieces_number()
+except torrent_file.FileError as err:
+	logging.error('Bad torrent file: ' + str(err))
+	raise SystemExit
 
 # Get peers from tracker
 own_peer_id = tracker_request.generate_peer_id()
 tracker = tracker_request.TrackerCommunicator(own_peer_id, announce_url)
 try:
-	peer_ips = tracker.get_peers(info_hash) # URLError, HTTPException, TrackerException, DecodingError
-except (tracker_request.TrackerException) as err:
-	ArgumentParser.error('Unable to get peers from tracker: ' + str(err))
+	peer_ips = tracker.get_peers(info_hash)
+except (tracker_request.TrackerError) as err:
+	logging.error('Unable to get peers from tracker: ' + str(err))
+	raise SystemExit
 peer_ips = random.sample(peer_ips, 5) # debug
 
 # Statistic counters

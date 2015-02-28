@@ -36,10 +36,10 @@ class TrackerCommunicator:
 
 		# Issue GET request
 		try:
-			with urllib.request.urlopen(request_url) as http_response: # urllib.error.URLError
+			with urllib.request.urlopen(request_url) as http_response:
 				if http_response.status == http.client.OK:
 					logging.info('HTTP response status code is OK')
-					response_bencoded = http_response.read() # http.client.HTTPException
+					response_bencoded = http_response.read()
 				else:
 					raise TrackerError('HTTP response status code is ' + str(http_response.status))
 		except (urllib.error.URLError, http.client.HTTPException) as err:
@@ -47,7 +47,7 @@ class TrackerCommunicator:
 
 		# Decode response
 		try:
-			response = bencodepy.decode(response_bencoded) # DecodingError
+			response = bencodepy.decode(response_bencoded)
 		except bencodepy.DecodingError as err:
 			raise TrackerError('Unable to decode response: ' + str(err))
 		if b'failure reason' in response:
@@ -65,7 +65,7 @@ class TrackerCommunicator:
 
 		# Extract list of IPv4 peers in byte form
 		try:
-			peers_bytes = response[b'peers'] # KeyError
+			peers_bytes = response[b'peers']
 		except KeyError as err:
 			raise TrackerError('Tracker did not send any peers: ' + str(err))
 		peers_count = int(len(peers_bytes) / 6)
@@ -92,7 +92,7 @@ class TrackerCommunicator:
 		peer_ips = []
 		for raw_peer in peer_bytes:
 			try:
-				peer_ip = str(ipaddress.ip_address(raw_peer[0])) # ValueError
+				peer_ip = str(ipaddress.ip_address(raw_peer[0]))
 			except ValueError as err:
 				logging.warning('Tracker sent invalid ip address: ' + str(err))
 			else:
