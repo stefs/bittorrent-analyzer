@@ -49,9 +49,9 @@ own_peer_id = tracker_request.generate_peer_id()
 tracker = tracker_request.TrackerCommunicator(own_peer_id, announce_url)
 try:
 	peer_ips = tracker.get_peers(info_hash) # URLError, HTTPException, TrackerException, DecodingError
-except (URLError, http.client.HTTPException, TrackerException, bencodepy.DecodingError) as err:
+except (tracker_request.TrackerException) as err:
 	ArgumentParser.error('Unable to get peers from tracker: ' + str(err))
-peer_ips = random.sample(peer_ips, 30) # debug
+peer_ips = random.sample(peer_ips, 5) # debug
 
 # Statistic counters
 statistic_lock = threading.Lock()

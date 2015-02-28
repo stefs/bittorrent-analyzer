@@ -3,12 +3,11 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## TODO
 ### Next steps
-- ! Extract max speed when updating peers
 - ! Get new peers from tracker
-- ! Merge peers via IP, ISP, Client, evtl. bitfields
-- Magnet link support
+- ! Support incoming connections to include people without an open port
+- ! Magnet link support
 - Peer exchange message support
-- Support incoming connections to include people without an open port
+- Merge peers via IP, ISP, Client, evtl. bitfields
 - Document database needed
 
 ### Code quality

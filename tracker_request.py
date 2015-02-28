@@ -23,7 +23,7 @@ class TrackerCommunicator:
 	## Issue a HTTP GET request on the announce URL
 	#  @param info_hash Info hash for the desired torrent
 	#  @return Tuples list of IPv4 or IPv6 addresses and port numbers
-	#  @exception urllib.error.URLError,http.client.HTTPException,TrackerException,bencodepy.DecodingError
+	#  @exception TrackerException
 	def get_peers(self, info_hash):
 		# Assemble tracker request
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': '30301', 'uploaded': '0', 'downloaded': '0', 'left': '23'}
@@ -35,15 +35,21 @@ class TrackerCommunicator:
 		logging.debug('Request URL is ' + request_url)
 
 		# Issue GET request
-		with urllib.request.urlopen(request_url) as http_response: # urllib.error.URLError
-			response_bencoded = http_response.read() # http.client.HTTPException
-			if http_response.status == http.client.OK:
-				logging.info('HTTP response status code is OK')
-			else:
-				raise TrackerError('HTTP response status code is ' + http_response.status)
+		try:
+			with urllib.request.urlopen(request_url) as http_response: # urllib.error.URLError
+				if http_response.status == http.client.OK:
+					logging.info('HTTP response status code is OK')
+					response_bencoded = http_response.read() # http.client.HTTPException
+				else:
+					raise TrackerError('HTTP response status code is ' + str(http_response.status))
+		except (urllib.error.URLError, http.client.HTTPException) as err:
+			raise TrackerError('Get request failed: ' + str(err))
 
 		# Decode response
-		response = bencodepy.decode(response_bencoded) # DecodingError
+		try:
+			response = bencodepy.decode(response_bencoded) # DecodingError
+		except bencodepy.DecodingError as err:
+			raise TrackerError('Unable to decode response: ' + str(err))
 		if b'failure reason' in response:
 			failure_reason_bytes = response[b'failure reason']
 			failure_reason = failure_reason_bytes.decode()
