@@ -55,7 +55,7 @@ try:
 except (tracker_request.TrackerError) as err:
 	logging.error('Unable to get peers from tracker: ' + str(err))
 	raise SystemExit
-peer_ips = random.sample(peer_ips, 5) # debug
+#peer_ips = random.sample(peer_ips, 5) # debug
 
 # Statistic counters
 statistic_lock = threading.Lock()
@@ -92,10 +92,8 @@ with peer_storage.PeerDatabase() as database:
 		while True:
 			# Get new peer
 			peer = in_progress.get()
-			if peer.key is None:
-				logging.info('Evaluating peer for the first time ****************')
-			else:
-				logging.info('Revisiting peer with database id ' + str(peer.key) + ' ****************')
+			if peer.key is not None:
+				logging.info('Revisiting peer with database id ' + str(peer.key))
 				global revisit_count
 				with statistic_lock:
 					revisit_count += 1

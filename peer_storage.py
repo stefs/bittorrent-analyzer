@@ -5,6 +5,7 @@ import os
 import socket
 import datetime
 import collections
+import ipaddress
 
 # Extern modules
 import sqlalchemy
@@ -84,7 +85,7 @@ class PeerDatabase:
 		# Check if this is a new peer
 		if peer.key is None:
 			# Get meta data
-			country = get_country_by_ip(peer.ip_address)
+			country = self.get_country_by_ip(peer.ip_address)
 			logging.info('Country is ' + country)
 			host = get_short_hostname(peer.ip_address)
 			logging.info('Host name is ' + host)
@@ -170,6 +171,12 @@ def get_short_hostname(ip_address):
 #  @param ip_address Not anonymized ip adderss
 #  @return Anonymized ip address
 def anonymize_ip(ip_address):
-	# TODO implement
-	return ip_address
-
+	ip = ipaddress.ip_address(ip_address)
+	if ip.version == 4:
+		network = ip_address + '/24'
+		net = ipaddress.IPv4Network(network, strict=False)
+	elif ip.version == 6:
+		network = ip_address + '/48'	
+		net = ipaddress.IPv6Network(network, strict=False)
+	return str(net.network_address)
+	

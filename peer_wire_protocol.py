@@ -27,7 +27,7 @@ class PeerSession:
 	#  @exception PeerError
 	def __enter__(self):
 		# Create connection to peer
-		logging.info('Connecting to peer at ' + self.peer_ip[0] + ' port ' + str(self.peer_ip[1]) + ' ...')
+		logging.info('Connecting to peer ...')
 		try:
 			self.sock = socket.create_connection(self.peer_ip, self.timeout)
 		except OSError as err:
