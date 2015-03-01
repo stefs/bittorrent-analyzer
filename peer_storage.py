@@ -11,6 +11,7 @@ import sqlalchemy
 import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 import geoip2.database
+import maxminddb.errors
 
 # Create named tuple
 CachedPeer = collections.namedtuple('CachedPeer', 'revisit ip_address port id bitfield pieces key')
@@ -52,11 +53,15 @@ class PeerDatabase:
 		Base.metadata.create_all(self.engine)
 
 	## Open GeoIP2 database
+	#  @exception DatabaseError
 	def __enter__(self):
 		# Open MaxMind GeoIP2 database from http://dev.maxmind.com/geoip/geoip2/geolite2/
 		# according to http://geoip2.readthedocs.org/en/latest/#database-example
 		geoip2_country_location = 'input/GeoLite2-Country.mmdb'
-		self.reader = geoip2.database.Reader(geoip2_country_location)
+		try:
+			self.reader = geoip2.database.Reader(geoip2_country_location)
+		except (FileNotFoundError, maxminddb.errors.InvalidDatabaseError) as err:
+			raise DatabaseError('Failed to open geolocation database: ' + str(err))
 		logging.debug('Opened GeoIP2 database at ' + geoip2_country_location)
 		
 		# Enter method returns self to with-target
@@ -70,7 +75,7 @@ class PeerDatabase:
 		# Return thread local proxy
 		return sqlalchemy.orm.scoped_session(session_factory)
 
-	## Store new peer statistic
+	## Store a peer's statistic
 	#  @param peer CachedPeer named tuple
 	#  @param torrent Database ID of the related torrent
 	#  @param session Database session, must only be used in one thread
@@ -78,32 +83,13 @@ class PeerDatabase:
 	def store(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
 		# Check if this is a new peer
 		if peer.key is None:
-			# Get two letter ISO country code via GeoIP2
-			try:
-				response = self.reader.country(peer.ip_address)
-			except geoip2.errors.AddressNotFoundError as err:
-				logging.warning('IP address is not in the database: ' + str(err))
-				country = ''
-			else:
-				country = response.country.iso_code
-				logging.info('Country is ' + country + ', ' + response.country.name)
-
-			# Get the host via reverse DNS
-			try:
-				long_host = socket.gethostbyaddr(peer.ip_address)[0]
-			except OSError as err:
-				logging.warning('Get host by address failed: ' + str(err))
-				host = ''
-			else:
-				host_list = long_host.split('.')
-				host = host_list[-2] + '.' + host_list[-1]
-				logging.info('Host name is ' + host)
-		
-			# Anonymize IP address
-			# TODO according to https://support.google.com/analytics/answer/2763052?hl=en
-			partial_ip = peer.ip_address
-			
-			# Get a now timestamp
+			# Get meta data
+			country = get_country_by_ip(peer.ip_address)
+			logging.info('Country is ' + country)
+			host = get_short_hostname(peer.ip_address)
+			logging.info('Host name is ' + host)
+			partial_ip = anonymize_ip(peer.ip_address)
+			logging.info('Anonymized ip address is ' + partial_ip)
 			timestamp = datetime.datetime.utcnow()
 
 			# Write to database
@@ -122,7 +108,7 @@ class PeerDatabase:
 		else:
 			# Get and delete old entry
 			database_peer = session.query(Peer).filter_by(id=peer.key).first()
-			session.delete(database_peer) # debug
+			session.delete(database_peer)
 			
 			# Calculate max download speed
 			timestamp = datetime.datetime.utcnow()
@@ -132,7 +118,7 @@ class PeerDatabase:
 			pieces_per_second = pieces_delta / time_delta_seconds
 			logging.info('Download speed since last visit is ' + str(pieces_per_second) + ' pieces per second')
 
-			# Update old peer
+			# Update peer
 			database_peer.last_pieces = peer.pieces
 			database_peer.last_seen = timestamp
 			database_peer.visits += 1
@@ -142,8 +128,20 @@ class PeerDatabase:
 			# Store updated peer
 			session.add(database_peer)
 			session.commit()
-			logging.info('Updated peer with database id ' + str(peer.key)) # debug
+			logging.info('Updated peer with database id ' + str(peer.key))
 		
+	## Uses a local GeoIP2 database to geolocate an ip address
+	#  @param ip_address The address in question
+	#  @return Two letter ISO country code or an empty string
+	def get_country_by_ip(self, ip_address):
+		try:
+			response = self.reader.country(ip_address)
+		except geoip2.errors.AddressNotFoundError as err:
+			logging.warning('IP address is not in the database: ' + str(err))
+			return ''
+		else:
+			return response.country.iso_code
+	
 	## Relase resources
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Close GeoIP2 database reader
@@ -154,4 +152,24 @@ class PeerDatabase:
 # Indicates database related errors
 class DatabaseError(Exception):
 	pass
+
+## Get the host via reverse DNS
+#  @param ip_address The address in question
+#  @return Hostname with TLD and SLD or empty string
+def get_short_hostname(ip_address):
+	try:
+		long_host = socket.gethostbyaddr(ip_address)[0]
+	except OSError as err:
+		logging.warning('Get host by address failed: ' + str(err))
+		return ''
+	else:
+		host_list = long_host.split('.')
+		return host_list[-2] + '.' + host_list[-1]
+
+## Anonymize an IP address according to https://support.google.com/analytics/answer/2763052?hl=en
+#  @param ip_address Not anonymized ip adderss
+#  @return Anonymized ip address
+def anonymize_ip(ip_address):
+	# TODO implement
+	return ip_address
 

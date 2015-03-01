@@ -13,7 +13,6 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 ### Code quality
 - Refactor main
 - Review logging messages
-- Review exception flow
 - Review imports
 - Review doxygen comments
 - Review documentation references
