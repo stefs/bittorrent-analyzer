@@ -3,7 +3,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## TODO
 ### Next steps
-- ! Get new peers from tracker
+- ! Get new peers from tracker continuously
 - ! Support incoming connections to include people without an open port
 - ! Magnet link support
 - Peer exchange message support
@@ -11,9 +11,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 - Document database needed
 
 ### Code quality
-- Refactor main
 - Review logging messages
-- Review imports
 - Review doxygen comments
 - Review documentation references
 - Compact some statements
