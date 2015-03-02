@@ -2,8 +2,44 @@
 import logging
 import socket
 import struct
-import select
 import math
+import collections
+import time
+
+## Named tuple representing a cached peer
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces key')
+
+## Evaluate a peer by receiving all messages and updating attributes accordingly
+#  @param peer Peer named tuple
+#  @param info_hash Info hash of the current torrent
+#  @param own_peer_id Own peer id
+#  @param pieces_number Number of pieces of the current torrent
+#  @param delay Evaluation delay in minutes
+#  @param timeout Timeout for network operations in seconds
+#  @param return Evaluated Peer named tuple
+#  @exception PeerError
+def evaluate_peer(peer, info_hash, own_peer_id, pieces_number, delay, timeout):
+	# Use PeerSession in with clause to ensure socket close
+	peer_tuple = (peer.ip_address, peer.port)
+	with PeerSession(peer_tuple, timeout, info_hash, own_peer_id) as session: # PeerError
+		peer_id = session.exchange_handshakes()[0] # PeerError
+		messages = session.receive_all_messages(100)
+
+	# Receive bitfield
+	bitfield = bitfield_from_messages(messages, pieces_number)
+
+	# Count finished pieces
+	pieces_count = 0
+	for byte in bitfield:
+		pieces_count += count_bits(byte)
+	percentage = int(pieces_count * 100 / pieces_number)
+	remaining = pieces_number - pieces_count
+	logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
+
+	# Save results
+	delay_seconds = delay * 60
+	revisit_time = time.perf_counter() + delay_seconds
+	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
 
 ## Handles connection and communication to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:
@@ -302,4 +338,18 @@ def set_bit_at_index(bitfield, index):
 	# Write back
 	bitfield[byte_index] = byte_after
 	return bitfield
+
+## Returns the numbers of bits set in an integer
+#  @param byte An arbitrary integer between 0 and 255
+#  @return Count of 1 bits in the binary representation of byte
+def count_bits(byte):
+	assert 0 <= byte <= 255, 'Only values between 0 and 255 allowed'
+	mask = 1
+	count = 0
+	for i in range(0,8):
+		masked_byte = byte & mask
+		if masked_byte > 0:
+			count += 1
+		mask *= 2
+	return count
 

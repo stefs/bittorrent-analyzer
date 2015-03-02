@@ -53,7 +53,7 @@ class TrackerCommunicator:
 		if b'failure reason' in response:
 			failure_reason_bytes = response[b'failure reason']
 			failure_reason = failure_reason_bytes.decode()
-			raise TrackerException('Query failed: ' + failure_reason)
+			raise TrackerError('Tracker responded with failure reason: ' + failure_reason)
 
 		# Extract request interval
 		try:
@@ -89,7 +89,7 @@ class TrackerCommunicator:
 			logging.info('Received number of IPv6 peers is ' + str(peers_count))
 		
 		# Parse IP adresses and ports
-		peer_ips = []
+		peer_ips = list()
 		for raw_peer in peer_bytes:
 			try:
 				peer_ip = str(ipaddress.ip_address(raw_peer[0]))

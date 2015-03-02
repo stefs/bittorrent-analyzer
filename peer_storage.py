@@ -4,7 +4,6 @@ import time
 import os
 import socket
 import datetime
-import collections
 import ipaddress
 
 # Extern modules
@@ -14,8 +13,8 @@ import sqlalchemy.orm
 import geoip2.database
 import maxminddb.errors
 
-# Create named tuple
-CachedPeer = collections.namedtuple('CachedPeer', 'revisit ip_address port id bitfield pieces key')
+# Project modules
+import peer_wire_protocol
 
 # Create declarative base class, from which table classes are inherited
 Base = sqlalchemy.ext.declarative.declarative_base()
@@ -77,10 +76,10 @@ class PeerDatabase:
 		return sqlalchemy.orm.scoped_session(session_factory)
 
 	## Store a peer's statistic
-	#  @param peer CachedPeer named tuple
+	#  @param peer Peer named tuple
 	#  @param torrent Database ID of the related torrent
 	#  @param session Database session, must only be used in one thread
-	#  @return Returns database id of peer, if peer.key is None
+	#  @return Peer named tuple with peer.key filled
 	def store(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
 		# Check if this is a new peer
 		if peer.key is None:
@@ -100,10 +99,11 @@ class PeerDatabase:
 			session.add(new_peer)
 			session.commit()
 			
-			# Return CachedPeer with key
+			# Return Peer with key
 			database_id = new_peer.id
 			logging.info('Stored new peer with database id ' + str(database_id))
-			return database_id
+			*old_peer, key = peer
+			return peer_wire_protocol.Peer(*old_peer, key=database_id)
 			
 		# Update former stored peer
 		else:
@@ -130,6 +130,7 @@ class PeerDatabase:
 			session.add(database_peer)
 			session.commit()
 			logging.info('Updated peer with database id ' + str(peer.key))
+			return peer
 		
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question

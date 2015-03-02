@@ -2,9 +2,30 @@
 import hashlib
 import logging
 import base64
+import collections
 
 # Extern modules
 import bencodepy
+
+## Named tuple representing a torrent
+Torrent = collections.namedtuple('Torrent', 'announce_url info_hash pieces_count piece_size')
+
+## Return Torrent named tuple using the TorrentParser
+#  @param path File system path to a valid torrent file
+#  @return Torrent named tuple
+#  @exception FileError
+def import_torrent(path):
+	parser = TorrentParser(path)
+	announce_url = parser.get_announce_url()
+	logging.info('Announce URL is ' + announce_url)
+	info_hash = parser.get_info_hash()
+	info_hash_hex = base64.b16encode(info_hash).decode()
+	logging.info('Info hash is ' + info_hash_hex)
+	pieces_number = parser.get_pieces_number()
+	logging.info('Number of pieces is ' + str(pieces_number))
+	piece_size = parser.get_piece_size()
+	logging.info('Size of one piece is ' + str(piece_size) + ' bytes')
+	return Torrent(announce_url, info_hash, pieces_number, piece_size)
 
 ## Providing methods for analysis of torrent files
 class TorrentParser:
@@ -25,7 +46,7 @@ class TorrentParser:
 			raise FileError('Could not read file: ' + str(err))
 		finally:
 			torrent_file_object.close()
-		
+	
 		# Decode content
 		try:
 			self.torrent_file = bencodepy.decode(torrent_file_bencoded)
@@ -40,9 +61,7 @@ class TorrentParser:
 			announce_url_bytes = self.torrent_file[b'announce']
 		except KeyError as err:
 			raise FileError('File did not contain a announce URL: ' + str(err))
-		announce_url = announce_url_bytes.decode()
-		logging.info('Announce URL is ' + announce_url)
-		return announce_url
+		return announce_url_bytes.decode()
 
 	## Extract info hash
 	#  @return The info hash
@@ -57,14 +76,7 @@ class TorrentParser:
 		except bencodepy.exceptions.EncodingError as err:
 			raise FileError('Bencoding failed: ' + str(err))
 		sha1_hasher = hashlib.sha1(info_dict_bencoded)
-		info_hash = sha1_hasher.digest()
-		
-		# Convert to hex for logging
-		info_hash_hex_bytes = base64.b16encode(info_hash)
-		info_hash_hex = info_hash_hex_bytes.decode()
-		logging.info('Info hash is ' + info_hash_hex)
-		
-		return info_hash
+		return sha1_hasher.digest()
 		
 	## Extract the number of pieces
 	#  @return Pieces number
@@ -75,9 +87,17 @@ class TorrentParser:
 			pieces = info_dict[b'pieces']
 		except KeyError as err:
 			raise FileError('File did not contain the info dictionary or pieces list: ' + str(err))
-		pieces_number = int(len(pieces) / 20)
-		logging.info('Number of pieces is ' + str(pieces_number))
-		return pieces_number
+		return int(len(pieces) / 20)
+	
+	## Extract the size of the pieces
+	#  @return Size in Bytes
+	#  @exception FileError
+	def get_piece_size(self):
+		try:
+			info_dict = self.torrent_file[b'info']
+			return info_dict[b'piece length']
+		except KeyError as err:
+			raise FileError('File did not contain the length of pieces: ' + str(err))
 
 ## Exception for a unreachable or bad torrent file
 class FileError(Exception):
