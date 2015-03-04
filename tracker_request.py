@@ -22,9 +22,8 @@ class TrackerCommunicator:
 	
 	## Issue a HTTP GET request on the announce URL
 	#  @param info_hash Info hash for the desired torrent
-	#  @return Tuples list of IPv4 or IPv6 addresses and port numbers
-	#  @exception TrackerException
-	def get_peers(self, info_hash):
+	#  @exception TrackerError
+	def issue_request(self, info_hash):
 		# Assemble tracker request
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': '30301', 'uploaded': '0', 'downloaded': '0', 'left': '23'}
 		request_parameters['compact'] = '1'
@@ -47,46 +46,76 @@ class TrackerCommunicator:
 
 		# Decode response
 		try:
-			response = bencodepy.decode(response_bencoded)
-		except bencodepy.DecodingError as err:
+			self.response = bencodepy.decode(response_bencoded)
+		except bencodepy.exceptions.DecodingError as err:
 			raise TrackerError('Unable to decode response: ' + str(err))
-		if b'failure reason' in response:
-			failure_reason_bytes = response[b'failure reason']
+		if b'failure reason' in self.response:
+			failure_reason_bytes = self.response[b'failure reason']
 			failure_reason = failure_reason_bytes.decode()
-			raise TrackerError('Tracker responded with failure reason: ' + failure_reason)
+			raise TrackerError('Tracker responded with failure reason: ' + str(failure_reason))
 
-		# Extract request interval
+	## Extract recommended request interval from response
+	#  @return Recommended request interval in seconds
+	#  @exception TrackerError
+	#  @note Call issue_request method first
+	def get_interval(self):
 		try:
-			interval = response[b'interval']
+			interval = self.response[b'interval']
 		except KeyError as err:
-			logging.debug('Tracker did not send a request interval: ' + str(err))
+			raise TrackerError('Tracker did not send a recommended request interval: ' + str(err))
+		
+		if type(interval) is int:
+			logging.info('Recommended request interval is ' + str(interval/60) + ' minutes')
+			return interval
 		else:
-			logging.info('Recommended request interval in seconds is ' + str(interval))
+			raise TrackerError('Tracker sent invalid request interval')
 
+	## Extract minimum request interval from response if present, since this is an optional value
+	#  @return Minimum request interval in seconds or None
+	#  @note Call issue_request method first
+	def get_min_interval(self):
+		try:
+			min_interval = self.response[b'min interval']
+		except KeyError as err:
+			logging.info('Tracker did not send a minimum request interval: ' + str(err))
+			return None
+		
+		if type(min_interval) is int:
+			logging.info('Minimum request interval in is ' + str(min_interval/60) + ' minutes')
+			return min_interval
+		else:
+			logging.warning('Tracker sent invalid minimum request interval')
+			return None
+
+	## Extract peer list from response
+	#  @return Tuples list of IPv4 or IPv6 addresses and port numbers
+	#  @exception TrackerError
+	#  @note Call issue_request method first
+	def get_peers(self):
 		# Extract list of IPv4 peers in byte form
 		try:
-			peers_bytes = response[b'peers']
+			peers_bytes = self.response[b'peers']
 		except KeyError as err:
 			raise TrackerError('Tracker did not send any peers: ' + str(err))
-		peers_count = int(len(peers_bytes) / 6)
+		ipv4_peers_count = int(len(peers_bytes) / 6)
 		peer_bytes = list()
-		for peer in range(0, peers_count):
+		for peer in range(0, ipv4_peers_count):
 			peer_start_byte = peer * 6
 			peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 4]
 			peer_port_bytes = peers_bytes[peer_start_byte + 4:peer_start_byte + 6]
 			peer_bytes.append((peer_ip_bytes, peer_port_bytes))
-		logging.info('Received number of IPv4 peers is ' + str(peers_count))
 
 		# Extract list of IPv6 peers in byte form
-		if b'peers6' in response:
-			peers_bytes = response[b'peers6']
-			peers_count = int(len(peers_bytes) / 18)
-			for peer in range(0, peers_count):
+		ipv6_peers_count = 0
+		if b'peers6' in self.response:
+			peers_bytes = self.response[b'peers6']
+			ipv6_peers_count = int(len(peers_bytes) / 18)
+			for peer in range(0, ipv6_peers_count):
 				peer_start_byte = peer * 18
 				peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 16]
 				peer_port_bytes = peers_bytes[peer_start_byte + 16:peer_start_byte + 18]
 				peer_bytes.append((peer_ip_bytes, peer_port_bytes))
-			logging.info('Received number of IPv6 peers is ' + str(peers_count))
+		logging.info('Received number of IPv4 peers is ' + str(ipv4_peers_count) + ', number of IPv6 peers is ' + str(ipv6_peers_count))
 		
 		# Parse IP adresses and ports
 		peer_ips = list()
@@ -100,7 +129,7 @@ class TrackerCommunicator:
 				peer_port = peer_port_tuple[0]
 				peer_ips.append((peer_ip, peer_port))
 
-		# Return combined IPv4 and IPv6 list
+		# Return combined IPv4 and IPv6 list and recommended request interval
 		return peer_ips
 
 ## Exception for bad tracker response

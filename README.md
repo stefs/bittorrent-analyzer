@@ -3,11 +3,11 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## TODO
 ### Next steps
-- ! Get new peers from tracker continuously
 - ! Support incoming connections to include people without an open port
 - ! Magnet link support
 - Peer exchange message support
 - Merge peers via IP, ISP, Client, evtl. bitfields
+- Allow socket and SQLAlchemy sessions to close at evaluation termination
 - Document database needed
 
 ### Code quality
@@ -41,7 +41,7 @@ These are the standard installation steps on a Debian based system.
 
 ## Usage
 1. `source py3env/bin/activate`
-2. `./main.py [-h] -f <filename> [-t <seconds>] [-l <level>] [-j <number>]`
+2. `./main.py [-h] -f <filename> [-t <seconds>] [-l <level>] [-j <number>] [-d <minutes>]`
 3. `deactivate`
 4. Statistics are saved in `output/` directory as a SQLite database.
 
@@ -59,6 +59,7 @@ These are the standard installation steps on a Debian based system.
 * `-d <minutes>, --delay <minutes>`  
   Time delay for revisiting unfinished peers in minutes
 
+
 ## Licence
 © Copyright 2015 Stefan Schindler  
-Licensed under GNU General Public License Version 3
+Licensed under the GNU General Public License Version 3
