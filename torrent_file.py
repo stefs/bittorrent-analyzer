@@ -46,7 +46,7 @@ class TorrentParser:
 			raise FileError('Could not read file: ' + str(err))
 		finally:
 			torrent_file_object.close()
-	
+
 		# Decode content
 		try:
 			self.torrent_file = bencodepy.decode(torrent_file_bencoded)
@@ -77,7 +77,7 @@ class TorrentParser:
 			raise FileError('Bencoding failed: ' + str(err))
 		sha1_hasher = hashlib.sha1(info_dict_bencoded)
 		return sha1_hasher.digest()
-		
+
 	## Extract the number of pieces
 	#  @return Pieces number
 	#  @exception FileError
@@ -88,7 +88,7 @@ class TorrentParser:
 		except KeyError as err:
 			raise FileError('File did not contain the info dictionary or pieces list: ' + str(err))
 		return int(len(pieces) / 20)
-	
+
 	## Extract the size of the pieces
 	#  @return Size in Bytes
 	#  @exception FileError

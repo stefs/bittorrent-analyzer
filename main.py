@@ -13,12 +13,12 @@ import torrent_file
 import tracker_request
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015')
-parser.add_argument('-t', '--torrent', required=True, help='Torrent file to be examined', metavar='<filename>')
+parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('torrent', help='File system path to the torrent file to be examined', metavar='<torrent>')
 parser.add_argument('-j', '--jobs', type=int, default='1', help='Number of threads used for peer connections', metavar='<number>')
-parser.add_argument('-o', '--timeout', type=int, default='10', help='Timeout in seconds for network connections', metavar='<seconds>')
+parser.add_argument('-t', '--timeout', type=int, default='10', help='Timeout in seconds for network connections', metavar='<seconds>')
 parser.add_argument('-d', '--delay', type=float, default='10', help='Time delay for revisiting unfinished peers in minutes', metavar='<minutes>')
-parser.add_argument('-i', '--interval', type=float, help='Time delay between asking the tracker server for new ppers in minutes, defaults to a value recommended by the tracker server', metavar='<minutes>')
+parser.add_argument('-i', '--interval', type=float, help='Time delay between asking the tracker server for new peers in minutes, defaults to a value recommended by the tracker server', metavar='<minutes>')
 parser.add_argument('-l', '--loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Level of detail for log messages', metavar='<level>')
 args = parser.parse_args()
 
@@ -46,10 +46,10 @@ with peer_storage.PeerDatabase() as database:
 	except peer_analyzer.AnalyzerError as err:
 		logging.error(str(err))
 		raise SystemExit
-	
-	# Start worker threads	
+
+	# Start worker threads
 	analyzer.start_threads(args.jobs)
-	
+
 	while True:
 		# Request new peers
 		analyzer.get_new_peers()

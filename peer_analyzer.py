@@ -21,10 +21,10 @@ class SwarmAnalyzer:
 	def __init__(self, database, torrent_path, delay, timeout):
 		# Smart queue for peer management
 		self.peers = PeerQueue()
-		
+
 		# PeerDatabase object
 		self.database = database
-		
+
 		# Torrent and tracker data
 		try:
 			self.torrent = torrent_file.import_torrent(torrent_path)
@@ -32,11 +32,11 @@ class SwarmAnalyzer:
 			raise AnalyzerError('Could not import torrent file: ' + str(err))
 		self.own_peer_id = tracker_request.generate_peer_id()
 		self.tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrent.announce_url)
-	
+
 		# Network parameters
 		self.delay = delay * 60
 		self.timeout = timeout
-		
+
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
 		self.late_evaluation_error = SharedCounter()
@@ -57,7 +57,7 @@ class SwarmAnalyzer:
 			peer_ips = self.tracker.get_peers()
 		except tracker_request.TrackerError as err:
 			raise AnalyzerError('Could not get new peers: ' + str(err))
-		
+
 		# Put peers in queue if not already contained
 		#import random # debug
 		#peer_ips = random.sample(peer_ips, 8) # debug
@@ -68,11 +68,11 @@ class SwarmAnalyzer:
 		duplicate_counter = self.duplicate.get()
 		self.total_duplicate += duplicate_counter
 		self.total_received_peers += len(peer_ips)
-		
+
 		# Calculate number of new peers, inaccurate due to consumer threads
 		percentage = int(duplicate_counter * 100 / len(peer_ips))
 		logging.info(str(len(peer_ips)) + ' peers received, ' + str(duplicate_counter) + ' duplicates, equals ' + str(percentage) + '%')
-	
+
 	## Get the right interval considering tracker's response
 	#  @param requested_interval Requested interval in minutes or None for tracker recommendation
 	#  @return Tracker recommendation or requested_interval considering tracker min interval
@@ -84,7 +84,7 @@ class SwarmAnalyzer:
 				interval = self.tracker.get_interval()
 			except tracker_request.TrackerError as err:
 				raise AnalyzerError('No request interval specified and tracker did not send a recommended interval: ' + str(err))
-		
+
 		# Use min interval as minimum
 		else:
 			min_interval = self.tracker.get_min_interval()
@@ -92,18 +92,18 @@ class SwarmAnalyzer:
 				interval = requested_interval * 60
 			else:
 				interval = max(min_interval, requested_interval * 60)
-		
+
 		# Return result
 		logging.info('Using a request interval of ' + str(interval/60) + ' minutes')
 		return interval
-			
+
 	## Evaluate peers from main queue
 	#  @param SQLAlchemy database scoped session object
 	#  @note This is a worker method to be started as a thread, it does not return
 	def evaluator(self, database_session):
 		# Log thread id
 		logging.info('The identifier for this worker thread is ' + str(threading.get_ident()))
-	
+
 		# Ends when daemon thread dies
 		while True:
 			# Get new peer
@@ -124,7 +124,7 @@ class SwarmAnalyzer:
 			try:
 				peer = peer_wire_protocol.evaluate_peer(
 						peer, self.torrent.info_hash, self.own_peer_id, self.torrent.pieces_count, self.delay, self.timeout)
-			
+
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
 				if first_evaluation:
@@ -140,7 +140,7 @@ class SwarmAnalyzer:
 				logging.critical('Unexpected error during peer evaluation: ' + str(err))
 				traceback.print_tb(err.__traceback__)
 				continue
-				
+
 			# Store evaluated peer and fill peer.key
 			try:
 				peer = self.database.store(peer, 0, database_session) # TODO give torrent id
@@ -152,7 +152,7 @@ class SwarmAnalyzer:
 				logging.critical('Unexpected error during database update: ' + str(err))
 				traceback.print_tb(err.__traceback__)
 				continue
-			
+
 			# Update statistical counters
 			if first_evaluation:
 				self.database_new_peer.increment()
@@ -177,7 +177,7 @@ class SwarmAnalyzer:
 			# Start thread
 			thread.start()
 
-	## Print log 
+	## Print log
 	def log_statistics(self):
 		# Peer queue, inaccurate due to consumer threads
 		logging.info('Currently are about ' + str(self.peers.qsize()) + ' peers in queue')
@@ -212,18 +212,18 @@ class SharedCounter:
 	def __init__(self):
 		self.value = 0
 		self.lock = threading.Lock()
-	
+
 	## Increase value by one
 	def increment(self):
 		with self.lock:
 			self.value += 1
-	
+
 	## Read value
 	#  @return The value
 	def get(self):
 		with self.lock:
 			return self.value
-	
+
 	## Resets the value to zero
 	def reset(self):
 		with self.lock:
@@ -238,13 +238,13 @@ class PeerQueue(queue.PriorityQueue):
 	def _init(self, maxsize):
 		# Call parent method
 		queue.PriorityQueue._init(self, maxsize)
-		
+
 		# Add new attribute
 		self.all_peers = set()
-		
+
 		# Add a duplicate counter
 		self.duplicate = SharedCounter()
-	
+
 	## Put new peer in queue if not already processed, does not exclude peers with database id
 	#  @param peer Peer named tuple
 	#  @return True if this is a new peer, False if it has already been put
@@ -253,12 +253,12 @@ class PeerQueue(queue.PriorityQueue):
 	def _put(self, peer):
 		# Create copy of ip_address and port for equality check
 		peer_ip = (peer.ip_address, peer.port)
-		
+
 		# Check if this is a revisit or if it is a new peer
 		if peer.key is not None or peer_ip not in self.all_peers:
 			# Call parent method
-			queue.PriorityQueue._put(self, peer) 
-			
+			queue.PriorityQueue._put(self, peer)
+
 			# Remember equality information, set discards revisit duplicates
 			self.all_peers.add(peer_ip)
 		else:

@@ -6,8 +6,9 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 - ! Support incoming connections to include people without an open port
 - ! Magnet link support
 - Peer exchange message support
-- Merge peers via IP, ISP, Client, evtl. bitfields
+- Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
 - Allow socket and SQLAlchemy sessions to close at evaluation termination
+- Import Torrent fille(s) in database and start evaluating from there
 - Document database needed
 
 ### Code quality
@@ -41,24 +42,25 @@ These are the standard installation steps on a Debian based system.
 
 ## Usage
 1. `source py3env/bin/activate`
-2. `./main.py [-h] -f <filename> [-t <seconds>] [-l <level>] [-j <number>] [-d <minutes>]`
+2. `./main.py [-h] [-j <number>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
 3. `deactivate`
 4. Statistics are saved in `output/` directory as a SQLite database.
 
 ### Command Line Arguments:
+* `<torrent>`  
+  File system path to the torrent file to be examined
 * `-h, --help`  
   Show this help message and exit
-* `-f <filename>, --file <filename>`  
-  Torrent file to be examined
-* `-t <seconds>, --timeout <seconds>`  
-  Timeout in seconds for network connections
-* `-l <level>, --loglevel <level>`  
-  Level of detail for log messages
 * `-j <number>, --jobs <number>`  
-  Number of threads used for peer connections
+  Number of threads used for peer connections (default: 1)
+* `-t <seconds>, --timeout <seconds>`  
+  Timeout in seconds for network connections (default: 10)
 * `-d <minutes>, --delay <minutes>`  
-  Time delay for revisiting unfinished peers in minutes
-
+  Time delay for revisiting unfinished peers in minutes (default: 10)
+* `-i <minutes>, --interval <minutes>`  
+  Time delay between asking the tracker server for new peers in minutes, defaults to a value recommended by the tracker server (default: None)
+* `-l <level>, --loglevel <level>`  
+  Level of detail for log messages (default: INFO)
 
 ## Licence
 © Copyright 2015 Stefan Schindler  

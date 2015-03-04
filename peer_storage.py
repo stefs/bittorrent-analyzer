@@ -22,7 +22,7 @@ Base = sqlalchemy.ext.declarative.declarative_base()
 # Declarative class for peer session table
 class Peer(Base):
 	__tablename__ = 'peer'
-	
+
 	# Types according to http://docs.sqlalchemy.org/en/rel_0_9/core/type_basics.html#generic-types
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
 	partial_ip = sqlalchemy.Column(sqlalchemy.types.String)
@@ -63,15 +63,15 @@ class PeerDatabase:
 		except (FileNotFoundError, maxminddb.errors.InvalidDatabaseError) as err:
 			raise DatabaseError('Failed to open geolocation database: ' + str(err))
 		logging.debug('Opened GeoIP2 database at ' + geoip2_country_location)
-		
+
 		# Enter method returns self to with-target
 		return self
-	
+
 	## Returnes thread safe scoped session object according to http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html
 	def get_session(self):
 		# Create session factory class
 		session_factory = sqlalchemy.orm.sessionmaker(bind=self.engine)
-		
+
 		# Return thread local proxy
 		return sqlalchemy.orm.scoped_session(session_factory)
 
@@ -98,19 +98,19 @@ class PeerDatabase:
 					max_speed=0, visits=1, torrent=torrent)
 			session.add(new_peer)
 			session.commit()
-			
+
 			# Return Peer with key
 			database_id = new_peer.id
 			logging.info('Stored new peer with database id ' + str(database_id))
 			*old_peer, key = peer
 			return peer_wire_protocol.Peer(*old_peer, key=database_id)
-			
+
 		# Update former stored peer
 		else:
 			# Get and delete old entry
 			database_peer = session.query(Peer).filter_by(id=peer.key).first()
 			session.delete(database_peer)
-			
+
 			# Calculate max download speed
 			timestamp = datetime.datetime.utcnow()
 			time_delta = timestamp - database_peer.last_seen
@@ -125,13 +125,13 @@ class PeerDatabase:
 			database_peer.visits += 1
 			if pieces_per_second > database_peer.max_speed:
 				database_peer.max_speed = pieces_per_second
-			
+
 			# Store updated peer
 			session.add(database_peer)
 			session.commit()
 			logging.info('Updated peer with database id ' + str(peer.key))
 			return peer
-		
+
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question
 	#  @return Two letter ISO country code or an empty string
@@ -143,7 +143,7 @@ class PeerDatabase:
 			return ''
 		else:
 			return response.country.iso_code
-	
+
 	## Relase resources
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Close GeoIP2 database reader
@@ -177,7 +177,7 @@ def anonymize_ip(ip_address):
 		network = ip_address + '/24'
 		net = ipaddress.IPv4Network(network, strict=False)
 	elif ip.version == 6:
-		network = ip_address + '/48'	
+		network = ip_address + '/48'
 		net = ipaddress.IPv6Network(network, strict=False)
 	return str(net.network_address)
 	

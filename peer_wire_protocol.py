@@ -54,10 +54,10 @@ class PeerSession:
 		self.timeout = timeout
 		self.info_hash = info_hash
 		self.peer_id = peer_id
-		
+
 		# Create buffer for consecutive receive_bytes calls
 		self.received_bytes_buffer = b''
-		
+
 	## Create a socket and open the TCP connection
 	#  @exception PeerError
 	def __enter__(self):
@@ -68,10 +68,10 @@ class PeerSession:
 		except OSError as err:
 			raise PeerError('Connection establishment failed: ' + str(err))
 		logging.info('Connection established')
-		
+
 		# Enter method returns self to with-target
 		return self
-		
+
 	## Sends bytes according to https://docs.python.org/3/howto/sockets.html#using-a-socket
 	#  @param data Bytes data to be sent
 	#  @exception PeerError
@@ -106,12 +106,12 @@ class PeerSession:
 				data_parts.append(buffer)
 				received_bytes += len(buffer)
 			self.received_bytes_buffer = b''.join(data_parts)
-		
+
 		# Extract requested bytes and adjust local buffer
 		data = self.received_bytes_buffer[:required_bytes]
 		self.received_bytes_buffer = self.received_bytes_buffer[required_bytes:]
 		return data
-	
+
 	## Receive a peer wire protocol handshake
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
 	#  @exception PeerError
@@ -120,12 +120,12 @@ class PeerSession:
 		pstrlen_bytes = self.receive_bytes(1) # PeerError
 		pstrlen_tuple = struct.unpack('>B', pstrlen_bytes)
 		pstrlen = pstrlen_tuple[0]
-		
+
 		# Receive rest of the handshake
 		handshake_bytes = self.receive_bytes(pstrlen + 8 + 20 + 20) # PeerError
 		format_string = '>' + str(pstrlen) + 'sQ20s20s'
 		handshake_tuple = struct.unpack(format_string, handshake_bytes)
-		
+
 		# Parse protocol string
 		pstr = handshake_tuple[0]
 		if pstr != b'BitTorrent protocol':
@@ -136,7 +136,7 @@ class PeerSession:
 		if reserved != 0:
 			reserved_bitmap = number_to_64_bitmap(reserved)
 			logging.info('Reserved bytes of received handshake set: ' + reserved_bitmap)
-		
+
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
 		if received_info_hash != self.info_hash:
@@ -145,9 +145,9 @@ class PeerSession:
 		# Parse peer id
 		received_peer_id = handshake_tuple[3]
 		logging.info('ID of connected peer is ' + str(received_peer_id))
-		
+
 		return (received_peer_id, reserved)
-	
+
 	## Receives and sends handshake to initiate BitTorrent Protocol
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
 	#  @exception PeerError
@@ -159,11 +159,11 @@ class PeerSession:
 		handshake = struct.pack(format_string, len(pstr), pstr, 0, self.info_hash, peer_id_bytes)
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'
 		logging.debug('Prepared handshake is ' + str(handshake))
-		
+
 		# Send and receive handshake
 		self.send_bytes(handshake) # PeerError
 		return self.receive_handshake() # PeerError
-	
+
 	## Receive a peer message
 	#  @return Tuple of message id and payload, keepalive has id -1
 	#  @exception PeerError
@@ -179,19 +179,19 @@ class PeerSession:
 		message_id_bytes = self.receive_bytes(1) # PeerError
 		message_id_tuple = struct.unpack('>B', message_id_bytes)
 		message_id = message_id_tuple[0]
-		
+
 		# Receive payload
 		payload_length = length_prefix - 1
 		payload_bytes = self.receive_bytes(payload_length) # PeerError
 		format_string = '>' + str(payload_length) + 's'
 		payload_tuple = struct.unpack(format_string, payload_bytes)
 		payload = payload_tuple[0]
-		
+
 		# Return message id and payload tuple
 		message_str = message_to_string(message_id, payload, 80)
 		logging.debug('Received message: ' + message_str)
 		return (message_id, payload)
-	
+
 	## Collect all messages from the peer until timeout or error
 	#  @param max_messages Maximal number of messages received in one connection
 	#  @return List of tuples of message id and payload
@@ -255,22 +255,22 @@ def number_to_64_bitmap(number):
 def message_to_string(message_id, payload, length):
 	# Known message types according to http://www.bittorrent.org/beps/bep_0003.html#peer-messages
 	peer_message_type = {0: 'choke', 1: 'unchoke', 2: 'interested', 3: 'not interested', 4: 'have', 5: 'bitfield', 6: 'request', 7: 'piece', 8: 'cancel'}
-	
+
 	# Custom id for a keepalive signal
 	peer_message_type[-1] = 'keepalive'
-	
+
 	# Get type id and string
 	result = list()
 	result.append(str(message_id))
 	type_string = peer_message_type.get(message_id, 'unknown')
 	result.append(type_string)
-	
+
 	# Shorten message and append ellipsis
 	message_string = str(payload)
 	result.append(message_string[:length])
 	if len(message_string) > length:
 		result.append('...')
-	
+
 	# Join strings with seperator
 	return ' '.join(result)
 
@@ -311,7 +311,7 @@ def bitfield_from_messages(messages, pieces_number):
 				have_count += 1
 			else:
 				logging.warning('Peer sent a have message with out of bounds piece index')
-	
+
 		# Unknown or other message
 		else:
 			other_count += 1

@@ -19,7 +19,7 @@ class TrackerCommunicator:
 	def __init__(self, peer_id, announce_url):
 		self.peer_id = peer_id
 		self.announce_url = announce_url
-	
+
 	## Issue a HTTP GET request on the announce URL
 	#  @param info_hash Info hash for the desired torrent
 	#  @exception TrackerError
@@ -63,7 +63,7 @@ class TrackerCommunicator:
 			interval = self.response[b'interval']
 		except KeyError as err:
 			raise TrackerError('Tracker did not send a recommended request interval: ' + str(err))
-		
+
 		if type(interval) is int:
 			logging.info('Recommended request interval is ' + str(interval/60) + ' minutes')
 			return interval
@@ -79,7 +79,7 @@ class TrackerCommunicator:
 		except KeyError as err:
 			logging.info('Tracker did not send a minimum request interval: ' + str(err))
 			return None
-		
+
 		if type(min_interval) is int:
 			logging.info('Minimum request interval in is ' + str(min_interval/60) + ' minutes')
 			return min_interval
@@ -116,7 +116,7 @@ class TrackerCommunicator:
 				peer_port_bytes = peers_bytes[peer_start_byte + 16:peer_start_byte + 18]
 				peer_bytes.append((peer_ip_bytes, peer_port_bytes))
 		logging.info('Received number of IPv4 peers is ' + str(ipv4_peers_count) + ', number of IPv6 peers is ' + str(ipv6_peers_count))
-		
+
 		# Parse IP adresses and ports
 		peer_ips = list()
 		for raw_peer in peer_bytes:
