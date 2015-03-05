@@ -4,13 +4,18 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 ## Todo
 ### Next steps
 - ! Support incoming connections to include people without an open port
+    - Create own database storage thread which takes Peer named tuples from peer_analyzer.SwarmAnalyzer.database_queue, stores them in database, and puts them back in peers queue
+    - Remove database access from evaluator threads (revert again, see GitHub)
+    - Test with real incoming peers
 - ! Magnet link support
 - Record thread sleeping statistics
 - Peer exchange message support
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
 - Allow socket and SQLAlchemy sessions to close at evaluation termination
-- Import Torrent fille(s) in database and start evaluating from there
+- Import Torrent file(s) in database and start evaluating from there
 - Document database needed
+- Support encrypted peer connections?
+- Pause evaluation on network outage?
 
 ### Code quality
 - Review logging messages
@@ -43,7 +48,7 @@ These are the standard installation steps on a Debian based system.
 
 ## Usage
 1. `source py3env/bin/activate`
-2. `./main.py [-h] [-j <number>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
+2. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
 3. `deactivate`
 4. Statistics are saved in `output/` directory as a SQLite database.
 
@@ -53,7 +58,9 @@ These are the standard installation steps on a Debian based system.
 * `-h, --help`  
   Show this help message and exit
 * `-j <number>, --jobs <number>`  
-  Number of threads used for peer connections (default: 1)
+  Active peer evaluation using the specified number of threads (default: None)
+* `-p <port>, --port <port>`  
+  Passive peer evaluation of incoming peers at the specified port number (default: None)
 * `-t <seconds>, --timeout <seconds>`  
   Timeout in seconds for network connections (default: 10)
 * `-d <minutes>, --delay <minutes>`  

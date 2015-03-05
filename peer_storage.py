@@ -19,7 +19,7 @@ import peer_wire_protocol
 # Create declarative base class, from which table classes are inherited
 Base = sqlalchemy.ext.declarative.declarative_base()
 
-# Declarative class for peer session table
+## Declarative class for peer session table
 class Peer(Base):
 	__tablename__ = 'peer'
 
@@ -35,6 +35,7 @@ class Peer(Base):
 	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)
 	visits = sqlalchemy.Column(sqlalchemy.types.Integer)
+	active = sqlalchemy.Column(sqlalchemy.types.Boolean)
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
 
 ## Handling database access with SQLAlchemy
@@ -95,7 +96,7 @@ class PeerDatabase:
 			# Write to database
 			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, country=country,
 					first_pieces=peer.pieces, last_pieces=peer.pieces, first_seen=timestamp, last_seen=timestamp,
-					max_speed=0, visits=1, torrent=torrent)
+					max_speed=0, visits=1, active=peer.active, torrent=torrent)
 			session.add(new_peer)
 			session.commit()
 
@@ -151,7 +152,9 @@ class PeerDatabase:
 		logging.info('GeoIP2 database closed')
 		logging.info('Results written to ' + self.database_path)
 
-# Indicates database related errors
+		# TODO session.close
+
+## Indicates database related errors
 class DatabaseError(Exception):
 	pass
 

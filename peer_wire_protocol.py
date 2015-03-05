@@ -1,45 +1,29 @@
 # Built-in modules
 import logging
-import socket
 import struct
 import math
 import collections
 import time
 
 ## Named tuple representing a cached peer
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces key')
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces active key')
 
-## Handles connection and communication to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
+## Communicates to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:
 	## Construct a peer session
-	#  @param peer_ip Tuple of ip address as string and port number
-	#  @param timeout Timeout in seconds used for all network operations
+	#  @param socket An active connection socket
 	#  @param info_hash Info hash from original torrent regarding this session
 	#  @param peer_id Own peer ID
-	#  @warning Must be used with the with statement to guarantee a close
-	def __init__(self, peer_ip, timeout, info_hash, peer_id):
-		# Store peer and torrent data and timeout parameter
-		self.peer_ip = peer_ip
-		self.timeout = timeout
+	def __init__(self, socket, info_hash, peer_id):
+		# Store peer socket
+		self.sock = socket
+		
+		# Store common parameters
 		self.info_hash = info_hash
 		self.peer_id = peer_id
 
 		# Create buffer for consecutive receive_bytes calls
 		self.received_bytes_buffer = b''
-
-	## Create a socket and open the TCP connection
-	#  @exception PeerError
-	def __enter__(self):
-		# Create connection to peer
-		logging.info('Connecting to peer ...')
-		try:
-			self.sock = socket.create_connection(self.peer_ip, self.timeout)
-		except OSError as err:
-			raise PeerError('Connection establishment failed: ' + str(err))
-		logging.info('Connection established')
-
-		# Enter method returns self to with-target
-		return self
 
 	## Sends bytes according to https://docs.python.org/3/howto/sockets.html#using-a-socket
 	#  @param data Bytes data to be sent
@@ -178,18 +162,7 @@ class PeerSession:
 			logging.error('Reached message limit of ' + str(max_messages))
 		return messages
 
-	## Closing connection on socket
-	#  @note Exit method is guaranteed called in conjunction with the with statement
-	def __exit__(self, exception_type, exception_value, traceback):
-		try:
-			self.sock.close()
-		except OSError as err:
-			# No exception as the results can still be used as this is the session end
-			logging.warning('Closing of connectioin failed: ' + str(err))
-		else:
-			logging.info('Connection closed')
-
-# Exception for not expected behavior of other peers and network failures
+## Exception for not expected behavior of other peers and network failures
 class PeerError(Exception):
 	pass
 
@@ -307,48 +280,46 @@ def set_bit_at_index(bitfield, index):
 	bitfield[byte_index] = byte_after
 	return bitfield
 
-## Returns the numbers of bits set in an integer
-#  @param byte An arbitrary integer between 0 and 255
-#  @return Count of 1 bits in the binary representation of byte
-def count_bits(byte):
-	assert 0 <= byte <= 255, 'Only values between 0 and 255 allowed'
-	mask = 1
+## Returns the numbers of bits set in an bitfield
+#  @param bitfield An arbitrary bitfield
+#  @return Number of one bits
+def count_bits(bitfield):
 	count = 0
-	for i in range(0,8):
-		masked_byte = byte & mask
-		if masked_byte > 0:
-			count += 1
-		mask *= 2
+	for byte in bitfield:
+		mask = 1
+		for i in range(0,8):
+			masked_byte = byte & mask
+			if masked_byte > 0:
+				count += 1
+			mask *= 2
 	return count
 
 ## Evaluate a peer by receiving all messages and updating attributes accordingly
 #  @param peer Peer named tuple
+#  @param socket Active peer connection socket
 #  @param info_hash Info hash of the current torrent
 #  @param own_peer_id Own peer id
 #  @param pieces_number Number of pieces of the current torrent
 #  @param delay Evaluation delay in seconds
-#  @param timeout Timeout for network operations in seconds
 #  @return Evaluated Peer named tuple
 #  @exception PeerError
-def evaluate_peer(peer, info_hash, own_peer_id, pieces_number, delay, timeout):
-	# Use PeerSession in with clause to ensure socket close
-	peer_tuple = (peer.ip_address, peer.port)
-	with PeerSession(peer_tuple, timeout, info_hash, own_peer_id) as session: # PeerError
-		peer_id = session.exchange_handshakes()[0] # PeerError
-		messages = session.receive_all_messages(100)
+# TODO take out Peer creation to reduce argument list
+def evaluate_peer(peer, socket, info_hash, own_peer_id, pieces_number, delay):
+	# Initiate session, exchange handshakes, receive messages
+	session = PeerSession(socket, info_hash, own_peer_id)
+	peer_id = session.exchange_handshakes()[0] # PeerError
+	messages = session.receive_all_messages(100)
 
-	# Receive bitfield
+	# Evaluate bitfield
 	bitfield = bitfield_from_messages(messages, pieces_number)
 
 	# Count finished pieces
-	pieces_count = 0
-	for byte in bitfield:
-		pieces_count += count_bits(byte)
+	pieces_count = count_bits(bitfield)
 	percentage = int(pieces_count * 100 / pieces_number)
 	remaining = pieces_number - pieces_count
 	logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
 
 	# Save results
 	revisit_time = time.perf_counter() + delay
-	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
+	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.active, peer.key)
 

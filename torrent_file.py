@@ -70,7 +70,10 @@ class TorrentParser:
 			pieces = info_dict[b'pieces']
 		except KeyError as err:
 			raise FileError('File did not contain the info dictionary or pieces list: ' + str(err))
-		return int(len(pieces) / 20)
+		number = int(len(pieces) / 20)
+		if number == 0:
+			raise FileError('Torrent containes no pieces')
+		return number
 
 	## Extract the size of the pieces
 	#  @return Size in Bytes
@@ -78,9 +81,12 @@ class TorrentParser:
 	def get_piece_size(self):
 		try:
 			info_dict = self.torrent_file[b'info']
-			return info_dict[b'piece length']
+			size = info_dict[b'piece length']
 		except KeyError as err:
 			raise FileError('File did not contain the length of pieces: ' + str(err))
+		if size == 0:
+			raise FileError('Piece size is zero')
+		return size
 
 ## Exception for a unreachable or bad torrent file
 class FileError(Exception):
