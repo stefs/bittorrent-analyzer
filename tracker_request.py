@@ -129,7 +129,7 @@ class TrackerCommunicator:
 				peer_port = peer_port_tuple[0]
 				peer_ips.append((peer_ip, peer_port))
 
-		# Return combined IPv4 and IPv6 list and recommended request interval
+		# Return combined IPv4 and IPv6 list
 		return peer_ips
 
 ## Exception for bad tracker response

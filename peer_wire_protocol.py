@@ -9,37 +9,6 @@ import time
 ## Named tuple representing a cached peer
 Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces key')
 
-## Evaluate a peer by receiving all messages and updating attributes accordingly
-#  @param peer Peer named tuple
-#  @param info_hash Info hash of the current torrent
-#  @param own_peer_id Own peer id
-#  @param pieces_number Number of pieces of the current torrent
-#  @param delay Evaluation delay in seconds
-#  @param timeout Timeout for network operations in seconds
-#  @return Evaluated Peer named tuple
-#  @exception PeerError
-def evaluate_peer(peer, info_hash, own_peer_id, pieces_number, delay, timeout):
-	# Use PeerSession in with clause to ensure socket close
-	peer_tuple = (peer.ip_address, peer.port)
-	with PeerSession(peer_tuple, timeout, info_hash, own_peer_id) as session: # PeerError
-		peer_id = session.exchange_handshakes()[0] # PeerError
-		messages = session.receive_all_messages(100)
-
-	# Receive bitfield
-	bitfield = bitfield_from_messages(messages, pieces_number)
-
-	# Count finished pieces
-	pieces_count = 0
-	for byte in bitfield:
-		pieces_count += count_bits(byte)
-	percentage = int(pieces_count * 100 / pieces_number)
-	remaining = pieces_number - pieces_count
-	logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
-
-	# Save results
-	revisit_time = time.perf_counter() + delay
-	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
-
 ## Handles connection and communication to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:
 	## Construct a peer session
@@ -351,4 +320,35 @@ def count_bits(byte):
 			count += 1
 		mask *= 2
 	return count
+
+## Evaluate a peer by receiving all messages and updating attributes accordingly
+#  @param peer Peer named tuple
+#  @param info_hash Info hash of the current torrent
+#  @param own_peer_id Own peer id
+#  @param pieces_number Number of pieces of the current torrent
+#  @param delay Evaluation delay in seconds
+#  @param timeout Timeout for network operations in seconds
+#  @return Evaluated Peer named tuple
+#  @exception PeerError
+def evaluate_peer(peer, info_hash, own_peer_id, pieces_number, delay, timeout):
+	# Use PeerSession in with clause to ensure socket close
+	peer_tuple = (peer.ip_address, peer.port)
+	with PeerSession(peer_tuple, timeout, info_hash, own_peer_id) as session: # PeerError
+		peer_id = session.exchange_handshakes()[0] # PeerError
+		messages = session.receive_all_messages(100)
+
+	# Receive bitfield
+	bitfield = bitfield_from_messages(messages, pieces_number)
+
+	# Count finished pieces
+	pieces_count = 0
+	for byte in bitfield:
+		pieces_count += count_bits(byte)
+	percentage = int(pieces_count * 100 / pieces_number)
+	remaining = pieces_number - pieces_count
+	logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
+
+	# Save results
+	revisit_time = time.perf_counter() + delay
+	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.key)
 

@@ -1,10 +1,11 @@
 # bittorrent-analyzer
 Bachelor thesis about the analysis of BitTorrent trackers and peers
 
-## TODO
+## Todo
 ### Next steps
 - ! Support incoming connections to include people without an open port
 - ! Magnet link support
+- Record thread sleeping statistics
 - Peer exchange message support
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
 - Allow socket and SQLAlchemy sessions to close at evaluation termination
@@ -62,6 +63,6 @@ These are the standard installation steps on a Debian based system.
 * `-l <level>, --loglevel <level>`  
   Level of detail for log messages (default: INFO)
 
-## Licence
+## License
 © Copyright 2015 Stefan Schindler  
 Licensed under the GNU General Public License Version 3

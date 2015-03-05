@@ -10,7 +10,6 @@ import time
 import peer_analyzer
 import peer_storage
 import torrent_file
-import tracker_request
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -40,9 +39,16 @@ logging.info('The identifier for the main thread is ' + str(threading.get_ident(
 
 # Create new database
 with peer_storage.PeerDatabase() as database:
+	# Import torrent file
+	try:
+		torrent = torrent_file.import_torrent(args.torrent)
+	except torrent_file.FileError as err:
+		logging.error('Could not import torrent file: ' + str(err))
+		raise SystemExit
+
 	# Initialize SwarmAnalyzer
 	try:
-		analyzer = peer_analyzer.SwarmAnalyzer(database, args.torrent, args.delay, args.timeout)
+		analyzer = peer_analyzer.ActiveAnalyzer(database, torrent, args.delay, args.timeout)
 	except peer_analyzer.AnalyzerError as err:
 		logging.error(str(err))
 		raise SystemExit

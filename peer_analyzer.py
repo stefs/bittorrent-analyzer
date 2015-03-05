@@ -6,19 +6,18 @@ import queue
 import time
 
 # Project modules
-import torrent_file
 import tracker_request
 import peer_wire_protocol
-import peer_storage
 
-class SwarmAnalyzer:
+## Requests peers from tracker and initiates peer connections
+class ActiveAnalyzer:
 	## Initializes analyser for peers of one torrent
 	#  @param database PeerDatabase object
-	#  @param torrent_path File system path to a torrent file
+	#  @param torrent Torrent named tuple
 	#  @param delay Minimal timedelta between contacting the same peer in minutes
 	#  @param timeout Timeout for network operations in seconds
 	#  @exception AnalyzerError
-	def __init__(self, database, torrent_path, delay, timeout):
+	def __init__(self, database, torrent, delay, timeout):
 		# Smart queue for peer management
 		self.peers = PeerQueue()
 
@@ -26,10 +25,7 @@ class SwarmAnalyzer:
 		self.database = database
 
 		# Torrent and tracker data
-		try:
-			self.torrent = torrent_file.import_torrent(torrent_path)
-		except torrent_file.FileError as err:
-			raise AnalyzerError('Could not import torrent file: ' + str(err))
+		self.torrent = torrent
 		self.own_peer_id = tracker_request.generate_peer_id()
 		self.tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrent.announce_url)
 
@@ -77,6 +73,7 @@ class SwarmAnalyzer:
 	#  @param requested_interval Requested interval in minutes or None for tracker recommendation
 	#  @return Tracker recommendation or requested_interval considering tracker min interval
 	#  @exception AnalyzerError
+	#  @note Call get_new_peers first
 	def get_interval(self, requested_interval=None):
 		# Use interval recommendation from tracker
 		if requested_interval is None:
@@ -96,6 +93,20 @@ class SwarmAnalyzer:
 		# Return result
 		logging.info('Using a request interval of ' + str(interval/60) + ' minutes')
 		return interval
+
+	## Evaluates all peers in the queue
+	#  @param jobs Number of parallel thread to use
+	def start_threads(self, jobs):
+		# Create thread pool
+		for i in range(jobs):
+			# Get thread safe session object
+			database_session = self.database.get_session()
+			# Create a thread with worker callable and pass it it's own session
+			thread = threading.Thread(target=self.evaluator, args=(database_session,))
+			# Thread dies when main thread exits, requires Queue.join()
+			thread.daemon = True
+			# Start thread
+			thread.start()
 
 	## Evaluate peers from main queue
 	#  @param SQLAlchemy database scoped session object
@@ -163,20 +174,6 @@ class SwarmAnalyzer:
 			if peer.pieces < self.torrent.pieces_count:
 				self.peers.put(peer)
 
-	## Evaluates all peers in the queue
-	#  @param jobs Number of parallel thread to use
-	def start_threads(self, jobs):
-		# Create thread pool
-		for i in range(jobs):
-			# Get thread safe session object
-			database_session = self.database.get_session()
-			# Create a thread with worker callable and pass it it's own session
-			thread = threading.Thread(target=self.evaluator, args=(database_session,))
-			# Thread dies when main thread exits, requires Queue.join()
-			thread.daemon = True
-			# Start thread
-			thread.start()
-
 	## Print log
 	def log_statistics(self):
 		# Peer queue, inaccurate due to consumer threads
@@ -202,34 +199,7 @@ class SwarmAnalyzer:
 		if critical_database_error_counter > 0:
 			logging.critical('Encountered ' + str(critical_database_error_counter) + ' critical database errors')
 
-## Indicates an error for this module
-class AnalyzerError(Exception):
-	pass
-
-## Simple thread safe counter
-class SharedCounter:
-	## Set value and create a lock
-	def __init__(self):
-		self.value = 0
-		self.lock = threading.Lock()
-
-	## Increase value by one
-	def increment(self):
-		with self.lock:
-			self.value += 1
-
-	## Read value
-	#  @return The value
-	def get(self):
-		with self.lock:
-			return self.value
-
-	## Resets the value to zero
-	def reset(self):
-		with self.lock:
-			self.value = 0
-
-## Smart queue which excludes items that are already in queue or processed earlier while keeping revisits
+## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
 #  according to http://stackoverflow.com/a/1581937 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l197
 class PeerQueue(queue.PriorityQueue):
 	## Add a set to remember processed peers
@@ -263,4 +233,36 @@ class PeerQueue(queue.PriorityQueue):
 			self.all_peers.add(peer_ip)
 		else:
 			self.duplicate.increment()
+
+## Waits for incoming peer connections
+class PassiveAnayzer:
+	# TODO
+	pass
+
+## Simple thread safe counter
+class SharedCounter:
+	## Set value and create a lock
+	def __init__(self):
+		self.value = 0
+		self.lock = threading.Lock()
+
+	## Increase value by one
+	def increment(self):
+		with self.lock:
+			self.value += 1
+
+	## Read value
+	#  @return The value
+	def get(self):
+		with self.lock:
+			return self.value
+
+	## Resets the value to zero
+	def reset(self):
+		with self.lock:
+			self.value = 0
+
+## Indicates an error for this module
+class AnalyzerError(Exception):
+	pass
 
