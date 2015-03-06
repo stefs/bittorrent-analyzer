@@ -163,26 +163,6 @@ class SwarmAnalyzer:
 			if peer.pieces < self.torrent.pieces_count:
 				self.peers.put(peer)
 	
-	## Starts TCP server analyzer for incoming peers of one torrent
-	#  @param port Extern listen port number
-	# TODO test with real data
-	def start_passive_evaluation(self, port):
-		# Create the server, binding to outside address on custom port
-		if not 0 <= port <= 65535:
-			raise AnalyzerError('Invalid port number: ' + str(port))
-		address = (socket.gethostname(), port)
-		logging.info('Starting passive evaluation server on host ' + address[0] + ', port ' + str(address[1]))
-		self.server = PeerEvaluationServer(address, PeerHandler,
-				self.torrent.info_hash, self.own_peer_id, self.torrent.pieces_count, self.database_queue, self.delay)
-
-		# Activate the server in it's own thread
-		server_thread = threading.Thread(target=self.server.serve_forever)
-		server_thread.daemon = True
-		server_thread.start()
-		
-		# Remember activation to enable shutdown
-		self.passive_evaluation = True
-	
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
 	#  @param desired_interval Requested interval in minutes
 	#  @exception AnalyzerError
@@ -236,6 +216,27 @@ class SwarmAnalyzer:
 			logging.info('Waiting ' + str(interval/60) + ' minutes until next tracker request ...')
 			time.sleep(interval)
 
+	## Starts TCP server analyzer for incoming peers of one torrent
+	#  @param port Extern listen port number
+	# TODO test with real data
+	def start_passive_evaluation(self, port):
+		# Create the server, binding to outside address on custom port
+		if not 0 <= port <= 65535:
+			raise AnalyzerError('Invalid port number: ' + str(port))
+		address = (socket.gethostname(), port)
+		logging.info('Starting passive evaluation server on host ' + address[0] + ', port ' + str(address[1]))
+		# TODO use self.timeout
+		self.server = PeerEvaluationServer(address, PeerHandler,
+				self.torrent.info_hash, self.own_peer_id, self.torrent.pieces_count, self.database_queue, self.delay)
+
+		# Activate the server in it's own thread
+		server_thread = threading.Thread(target=self.server.serve_forever)
+		server_thread.daemon = True
+		server_thread.start()
+		
+		# Remember activation to enable shutdown
+		self.passive_evaluation = True
+	
 	## Thread shutdown and logs
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Active evaluation shutdown

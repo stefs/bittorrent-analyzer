@@ -7,6 +7,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
     - Create own database storage thread which takes Peer named tuples from peer_analyzer.SwarmAnalyzer.database_queue, stores them in database, and puts them back in peers queue
     - Remove database access from evaluator threads (revert again, see GitHub)
     - Test with real incoming peers
+    - Statistics
 - ! Magnet link support
 - Record thread sleeping statistics
 - Peer exchange message support
@@ -22,7 +23,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 - Review doxygen comments
 - Review documentation references
 - Compact some statements
-- Implement unit tests
+- Implement unit tests?
 
 ## Installation
 ### Requirements
