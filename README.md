@@ -4,21 +4,18 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 ## Todo
 ### Next steps
 - ! Support incoming connections to include people without an open port
-    - Passive server timeout
-    - Test with real incoming peers
-    - Test min interval check
-    - Statistics
-    - Analyzer shutdown
+    - (Test with real incoming peers)
+    - (Test min interval check)
 - ! Magnet link support
-- Record thread sleeping statistics
 - Peer exchange message support
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
-- Allow socket and SQLAlchemy sessions to close at evaluation termination
 - Import Torrent file(s) in database and start evaluating from there
-- Document database needed
-- Support encrypted peer connections?
-- Pause evaluation on network outage?
-- Log city?
+- ? Support encrypted peer connections
+- ? Pause evaluation on network outage
+- ? Log city
+- (Analyzer shutdown: Allow socket and SQLAlchemy sessions to close at evaluation termination)
+- (Record active thread sleeping statistics)
+- (Document database needed)
 
 ### Code quality
 - Review logging messages

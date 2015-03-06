@@ -44,6 +44,9 @@ class SwarmAnalyzer:
 		self.database_new_peer = SharedCounter()
 		self.total_received_peers = 0
 		self.total_duplicate = 0
+		self.active_success = SharedCounter()
+		self.passive_success = SharedCounter()
+		self.passive_error = SharedCounter()
 		
 		# Analysis parts, activated via starter methods
 		self.active_evaluation = False
@@ -130,6 +133,7 @@ class SwarmAnalyzer:
 				logging.info('Connection closed')
 			
 			# Put in archiver queue
+			self.active_success.increment()
 			self.database_queue.put(peer)
 
 	## Continuously asks the tracker server for new peers	
@@ -203,10 +207,16 @@ class SwarmAnalyzer:
 			raise AnalyzerError('Invalid port number: ' + str(port))
 		address = (socket.gethostname(), port)
 		logging.info('Starting passive evaluation server on host ' + address[0] + ', port ' + str(address[1]))
-		# TODO use self.timeout
 		try:
-			self.server = PeerEvaluationServer(address, PeerHandler, self.torrent.info_hash,
-					self.own_peer_id, self.torrent.pieces_count, self.database_queue, self.delay)
+			self.server = PeerEvaluationServer(address, PeerHandler, 
+					info_hash=self.torrent.info_hash, 
+					own_peer_id=self.own_peer_id,
+					pieces_number=self.torrent.pieces_count,
+					database_queue=self.database_queue,
+					delay=self.delay,
+					sock_timeout=self.timeout,
+					success=self.passive_success,
+					error=self.passive_error)
 		except PermissionError as err:
 			raise AnalyzerError('Could not start server on port ' + str(port) + ': ' + str(err))
 
@@ -281,8 +291,11 @@ class SwarmAnalyzer:
 		logging.info('In total ' + str(self.total_received_peers) + ' peers received, ' + str(self.total_duplicate) + ' duplicates, equals ' + str(percentage) + '%')
 
 		# Evaluation errors
-		logging.info('Failed evaluations: ' + str(self.first_evaluation_error.get()) + ' on first contact, ' +
-				str(self.late_evaluation_error.get()) + ' on later contact')
+		logging.info('Active evaluations: ' + str(self.active_success.get()) + ' successful, ' +
+				str(self.first_evaluation_error.get()) + ' failed on first contact, ' +
+				str(self.late_evaluation_error.get()) + ' failed on later contact')
+		logging.info('Passive evaluations: ' + str(self.passive_success.get()) + ' successful, ' + 
+				str(self.passive_error.get()) + ' failed')
 
 		# Database access
 		logging.info('Peer database access: ' + str(self.database_new_peer.get()) + ' stored, ' +
@@ -307,11 +320,11 @@ class SwarmAnalyzer:
 			pass
 
 		if self.passive_evaluation:
-			logging.info('Shutdown passive peer evaluation server')
+			logging.info('Shutdown peer evaluation server ...')
 			self.server.shutdown()
 
 		if self.database_archive:
-			logging.info('Waiting for all evaluated peers to be stored')
+			logging.info('Waiting for peers to be written to database ...')
 			self.database_queue.join()
 
 			# TODO Close database session
@@ -359,21 +372,13 @@ class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	## Extended init
 	#  @param server_address Pass through to parent
 	#  @param RequestHandlerClass Pass through to parent
-	#  @param info_hash Torrent info hash
-	#  @param own_peer_id Own peer id
-	#  @param pieces_number Number of pieces of the torrent
-	#  @param database_queue queue.Queue instance for database access
-	#  @param delay Delay between peer visits
-	def __init__(self, server_address, RequestHandlerClass, info_hash, own_peer_id, pieces_number, database_queue, delay):
+	#  @param **server_args Server attributes available in handle method
+	def __init__(self, server_address, RequestHandlerClass, **server_args):
 		# Call base constructor
 		socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
 		
 		# Add attributes that are later available in handler method
-		self.info_hash = info_hash
-		self.own_peer_id = own_peer_id
-		self.pieces_number = pieces_number
-		self.database_queue = database_queue
-		self.delay = delay
+		self.__dict__.update(server_args)
 
 ## Connection handler, an instance is created for each request
 class PeerHandler(socketserver.BaseRequestHandler):
@@ -383,6 +388,11 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		# self.client_address is tuple of incoming client address and port
 		# self.request is incoming connection socket
 		# self.server is own server instance
+		try:
+			self.request.settimeout(self.server.sock_timeout)
+		except OSError as err:
+			logging.warning('Could not set timeout on incoming connection')
+			return
 		logging.info('################ Evaluating an incoming peer ################')
 		old_peer = peer_wire_protocol.Peer(None, self.client_address[0], self.client_address[1], None, None, None, False, None)
 		try:
@@ -390,8 +400,10 @@ class PeerHandler(socketserver.BaseRequestHandler):
 					self.server.info_hash, self.server.own_peer_id, self.server.pieces_number, self.server.delay)
 		except peer_wire_protocol.PeerError as err:
 			logging.warning('Could not evaluate incoming peer: ' + str(err))
+			self.server.error.increment()
 		else:
 			key_peer = self.server.database_queue.put(peer)
+			self.server.success.increment()
 	
 ## Simple thread safe counter
 class SharedCounter:
