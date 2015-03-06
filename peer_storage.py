@@ -41,6 +41,7 @@ class Peer(Base):
 ## Handling database access with SQLAlchemy
 class PeerDatabase:
 	## Prepare SQLAlchemy backend
+	#  @exception DatabaseError
 	def __init__(self):
 		# Create engine, usable with SQLAlchemy Expression Language, used via SQLAlchemy Object Relational Mapper
 		directory = 'output/'
@@ -53,9 +54,6 @@ class PeerDatabase:
 		# Create empty tables
 		Base.metadata.create_all(self.engine)
 
-	## Open GeoIP2 database
-	#  @exception DatabaseError
-	def __enter__(self):
 		# Open MaxMind GeoIP2 database from http://dev.maxmind.com/geoip/geoip2/geolite2/
 		# according to http://geoip2.readthedocs.org/en/latest/#database-example
 		geoip2_country_location = 'input/GeoLite2-Country.mmdb'
@@ -64,9 +62,6 @@ class PeerDatabase:
 		except (FileNotFoundError, maxminddb.errors.InvalidDatabaseError) as err:
 			raise DatabaseError('Failed to open geolocation database: ' + str(err))
 		logging.debug('Opened GeoIP2 database at ' + geoip2_country_location)
-
-		# Enter method returns self to with-target
-		return self
 
 	## Returnes thread safe scoped session object according to http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html
 	def get_session(self):
@@ -146,7 +141,7 @@ class PeerDatabase:
 			return response.country.iso_code, response.country.name
 
 	## Relase resources
-	def __exit__(self, exception_type, exception_value, traceback):
+	def close(self):
 		# Close GeoIP2 database reader
 		self.reader.close()
 		logging.info('GeoIP2 database closed')

@@ -10,21 +10,18 @@ import socket
 # Project modules
 import tracker_request
 import peer_wire_protocol
+import peer_storage
 
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
 	## Initializes analyzer for peers of one torrent
-	#  @param database PeerDatabase object
 	#  @param torrent Torrent named tuple
 	#  @param delay Minimal timedelta between contacting the same peer in minutes
 	#  @param timeout Timeout for network operations in seconds
-	def __init__(self, database, torrent, delay, timeout):
+	def __init__(self, torrent, delay, timeout):
 		# Smart queue for peer management
 		self.peers = PeerQueue()
 		self.database_queue = queue.Queue()
-
-		# PeerDatabase object
-		self.database = database
 
 		# Torrent and tracker data
 		self.torrent = torrent
@@ -229,7 +226,14 @@ class SwarmAnalyzer:
 		self.passive_evaluation = True
 	
 	## Comsumes peers from database queue and put back in main queue
+	#  @exception AnalyzerError
 	def start_database_archiver(self):
+		# Create peer database
+		try:
+			self.database = peer_storage.PeerDatabase()
+		except peer_storage.DatabaseError as err:
+			raise AnalyzerError('Could not create database: ' + str(err))
+
 		# Get database session
 		database_session = self.database.get_session()
 
@@ -274,7 +278,7 @@ class SwarmAnalyzer:
 			# Write back in progress peers, discard finished ones
 			if peer.pieces < self.torrent.pieces_count:
 				self.peers.put(peer)
-			
+		
 			# Allow waiting for all peers to be stored at shutdown
 			self.database_queue.task_done()
 
@@ -326,8 +330,7 @@ class SwarmAnalyzer:
 		if self.database_archive:
 			logging.info('Waiting for peers to be written to database ...')
 			self.database_queue.join()
-
-			# TODO Close database session
+			self.database.close()
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
 #  according to http://stackoverflow.com/a/1581937 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l197

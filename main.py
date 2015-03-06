@@ -7,7 +7,6 @@ import time
 
 # Project modules
 import peer_analyzer
-import peer_storage
 import torrent_file
 
 # Argument parsing
@@ -45,26 +44,30 @@ logging.info('Logging messages up to ' + args.loglevel + ' level')
 try:
 	torrent = torrent_file.import_torrent(args.torrent)
 except torrent_file.FileError as err:
-	logging.error('Could not import torrent file: ' + str(err))
+	logging.error(str(err))
 	raise SystemExit
 
 # Create new database and initialize swarm analyzer
-with peer_storage.PeerDatabase() as database, peer_analyzer.SwarmAnalyzer(database, torrent, args.delay, args.timeout) as analyzer:
+with peer_analyzer.SwarmAnalyzer(torrent, args.delay, args.timeout) as analyzer:
 	# Start database archiver
-	analyzer.start_database_archiver()
+	try:
+		analyzer.start_database_archiver()
+	except peer_analyzer.AnalyzerError as err:
+		logging.error(str(err))
+		raise SystemExit
 	
+	# Start active evaluator threads
+	if args.jobs is not None:
+		analyzer.start_active_evaluation(args.jobs)
+		analyzer.start_tracker_requests(args.interval)
+
 	# Start passive evaluation server
 	if args.port is not None:
 		try:
 			analyzer.start_passive_evaluation(args.port)
 		except peer_analyzer.AnalyzerError as err:
-			logging.error('Passive evaluation failed: ' + str(err))
+			logging.error(str(err))
 			raise SystemExit
-
-	# Start active evaluator threads
-	if args.jobs is not None:
-		analyzer.start_active_evaluation(args.jobs)
-		analyzer.start_tracker_requests(args.interval)
 
 	# Wait for termination
 	try:
