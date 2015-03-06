@@ -14,7 +14,7 @@ import torrent_file
 parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('torrent', help='File system path to the torrent file to be examined', metavar='<torrent>')
 parser.add_argument('-j', '--jobs', type=int, help='Active peer evaluation using the specified number of threads', metavar='<number>')
-parser.add_argument('-i', '--interval', type=float, help='Time delay between asking the tracker server for new peers in minutes', metavar='<minutes>')
+parser.add_argument('-i', '--interval', type=float, default=30, help='Time delay between asking the tracker server for new peers in minutes', metavar='<minutes>')
 parser.add_argument('-p', '--port', type=int, help='Passive peer evaluation of incoming peers at the specified port number', metavar='<port>')
 parser.add_argument('-t', '--timeout', type=int, default='10', help='Timeout in seconds for network connections', metavar='<seconds>')
 parser.add_argument('-d', '--delay', type=float, default='10', help='Time delay for revisiting unfinished peers in minutes', metavar='<minutes>')
@@ -29,9 +29,6 @@ logging.basicConfig(format='[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s
 if args.jobs is None and args.port is None:
 	logging.error('Please enable active and/or passive peer evaluation via commandline switches')
 	raise SystemExit
-if args.jobs is not None and args.interval is None:
-	logging.error('Please specify tracker request interval for active evaluation')
-	raise SystemExit
 
 # Log arguments
 logging.info('Analyzing peers of torrent file ' + args.torrent)
@@ -44,29 +41,38 @@ logging.info('Timeout for network operations is ' + str(args.timeout) + ' second
 logging.info('Time delay for revisiting unfinished peers is ' + str(args.delay) + ' minutes')
 logging.info('Logging messages up to ' + args.loglevel + ' level')
 
-# Create new database
-with peer_storage.PeerDatabase() as database:
-	# Import torrent file
-	try:
-		torrent = torrent_file.import_torrent(args.torrent)
-	except torrent_file.FileError as err:
-		logging.error('Could not import torrent file: ' + str(err))
-		raise SystemExit
+# Import torrent file
+try:
+	torrent = torrent_file.import_torrent(args.torrent)
+except torrent_file.FileError as err:
+	logging.error('Could not import torrent file: ' + str(err))
+	raise SystemExit
 
-	# Initialize SwarmAnalyzer
-	with peer_analyzer.SwarmAnalyzer(database, torrent, args.delay, args.timeout) as analyzer:
-		# Start passive evaluation server
-		if args.port is not None:
-			analyzer.start_passive_evaluation(args.port)
+# Create new database and initialize swarm analyzer
+with peer_storage.PeerDatabase() as database, peer_analyzer.SwarmAnalyzer(database, torrent, args.delay, args.timeout) as analyzer:
+	# Start database archiver
+	analyzer.start_database_archiver()
 	
-		# Start active evaluator threads
-		if args.jobs is not None:
-			analyzer.start_active_evaluation(args.jobs, args.interval)
-
-		# Wait for termination
+	# Start passive evaluation server
+	if args.port is not None:
 		try:
-			while True:
-				time.sleep(1024)
-		except KeyboardInterrupt as err:
-			logging.info('Received interrupt signal, exiting')
+			analyzer.start_passive_evaluation(args.port)
+		except peer_analyzer.AnalyzerError as err:
+			logging.error('Passive evaluation failed: ' + str(err))
+			raise SystemExit
+
+	# Start active evaluator threads
+	if args.jobs is not None:
+		analyzer.start_active_evaluation(args.jobs)
+		analyzer.start_tracker_requests(args.interval)
+
+	# Wait for termination
+	try:
+		while True:
+			time.sleep(1024)
+	except KeyboardInterrupt as err:
+		logging.info('Received interrupt signal, exiting')
+
+# Print statistics
+analyzer.log_statistics()
 

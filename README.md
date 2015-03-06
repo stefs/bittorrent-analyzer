@@ -4,10 +4,11 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 ## Todo
 ### Next steps
 - ! Support incoming connections to include people without an open port
-    - Create own database storage thread which takes Peer named tuples from peer_analyzer.SwarmAnalyzer.database_queue, stores them in database, and puts them back in peers queue
-    - Remove database access from evaluator threads (revert again, see GitHub)
+    - Passive server timeout
     - Test with real incoming peers
+    - Test min interval check
     - Statistics
+    - Analyzer shutdown
 - ! Magnet link support
 - Record thread sleeping statistics
 - Peer exchange message support
@@ -17,6 +18,7 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 - Document database needed
 - Support encrypted peer connections?
 - Pause evaluation on network outage?
+- Log city?
 
 ### Code quality
 - Review logging messages

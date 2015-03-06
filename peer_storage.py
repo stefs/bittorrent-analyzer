@@ -86,7 +86,7 @@ class PeerDatabase:
 		if peer.key is None:
 			# Get meta data
 			country = self.get_country_by_ip(peer.ip_address)
-			logging.info('Country is ' + country)
+			logging.info('Country is ' + country[0] + ', ' + country[1])
 			host = get_short_hostname(peer.ip_address)
 			logging.info('Host name is ' + host)
 			partial_ip = anonymize_ip(peer.ip_address)
@@ -94,7 +94,7 @@ class PeerDatabase:
 			timestamp = datetime.datetime.utcnow()
 
 			# Write to database
-			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, country=country,
+			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, country=country[0],
 					first_pieces=peer.pieces, last_pieces=peer.pieces, first_seen=timestamp, last_seen=timestamp,
 					max_speed=0, visits=1, active=peer.active, torrent=torrent)
 			session.add(new_peer)
@@ -143,7 +143,7 @@ class PeerDatabase:
 			logging.warning('IP address is not in the database: ' + str(err))
 			return ''
 		else:
-			return response.country.iso_code
+			return response.country.iso_code, response.country.name
 
 	## Relase resources
 	def __exit__(self, exception_type, exception_value, traceback):

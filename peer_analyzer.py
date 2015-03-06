@@ -47,7 +47,9 @@ class SwarmAnalyzer:
 		
 		# Analysis parts, activated via starter methods
 		self.active_evaluation = False
+		self.tracker_requests = False
 		self.passive_evaluation = False
+		self.database_archive = False
 	
 	## Resouces are allocated in starter methods
 	def __enter__(self):
@@ -55,39 +57,25 @@ class SwarmAnalyzer:
 	
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
-	#  @param interval Timer interval between tracker requests are issued in seconds
-	def start_active_evaluation(self, jobs, interval):
+	def start_active_evaluation(self, jobs):
 		# Create thread pool
 		for i in range(jobs):
-			# Get thread safe session object
-			database_session = self.database.get_session()
-			# Create a thread with worker callable and pass it it's own session
-			thread = threading.Thread(target=self._evaluator, args=(database_session,))
-			# Thread dies when main thread exits, requires Queue.join()
+			# Create a thread with worker callable
+			thread = threading.Thread(target=self._evaluator)
+			# Thread dies when main thread exits
 			thread.daemon = True
 			# Start thread
 			thread.start()
 		
-		# Create tracker request thread
-		thread = threading.Thread(target=self._tracker_requestor, args=(interval,))
-		thread.daemon = True
-		thread.start()
-
 		# Remember activation to enable shutdown
 		self.active_evaluation = True
 
 	## Evaluate peers from main queue
-	#  @param SQLAlchemy database scoped session object
-	#  @note This is a worker method to be started as a thread, it does not return
-	def _evaluator(self, database_session):
-		# Log thread id
-		logging.info('The identifier for this active evaluator thread is ' + str(threading.get_ident()))
-
-		# Ends when daemon thread dies
+	#  @note This is a worker method to be started as a thread
+	def _evaluator(self):
 		while True:
 			# Get new peer
 			peer = self.peers.get()
-			first_evaluation = peer.key is None
 
 			# Delay evaluation and write back if delay too long
 			delay = peer.revisit - time.perf_counter()
@@ -96,7 +84,7 @@ class SwarmAnalyzer:
 				time.sleep(delay)
 
 			# Establish connection
-			if first_evaluation:
+			if peer.key is None:
 				logging.info('################ Evaluating a new peer ################')
 			else:
 				logging.info('################ Revisiting peer with database id ' + str(peer.key) + ' ################')
@@ -104,7 +92,7 @@ class SwarmAnalyzer:
 			try:
 				sock = socket.create_connection((peer.ip_address, peer.port), self.timeout)
 			except OSError as err:
-				if first_evaluation:
+				if peer.key is None:
 					self.first_evaluation_error.increment()
 				else:
 					self.late_evaluation_error.increment()
@@ -119,7 +107,7 @@ class SwarmAnalyzer:
 
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
-				if first_evaluation:
+				if peer.key is None:
 					self.first_evaluation_error.increment()
 				else:
 					self.late_evaluation_error.increment()
@@ -140,37 +128,25 @@ class SwarmAnalyzer:
 				logging.warning('Closing of connectioin failed: ' + str(err))
 			else:
 				logging.info('Connection closed')
+			
+			# Put in archiver queue
+			self.database_queue.put(peer)
 
-			# Store evaluated peer and fill peer.key
-			try:
-				peer = self.database.store(peer, 0, database_session) # TODO give torrent id
+	## Continuously asks the tracker server for new peers	
+	#  @param interval Timer interval between tracker requests are issued in seconds
+	def start_tracker_requests(self, interval):
+		# Create tracker request thread
+		thread = threading.Thread(target=self._tracker_requestor, args=(interval,))
+		thread.daemon = True
+		thread.start()
 
-			# Catch all exceptions to enable ongoing analysis, should never happen
-			except Exception as err:
-				database_session.rollback()
-				self.critical_database_error.increment()
-				logging.critical('Unexpected error during database update: ' + str(err))
-				traceback.print_tb(err.__traceback__)
-				continue
+		# Remember activation to enable shutdown
+		self.tracker_requests = True
 
-			# Update statistical counters
-			if first_evaluation:
-				self.database_new_peer.increment()
-			else:
-				self.database_peer_update.increment()
-
-			# Write back in progress peers, discard finished ones
-			if peer.pieces < self.torrent.pieces_count:
-				self.peers.put(peer)
-	
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
 	#  @param desired_interval Requested interval in minutes
-	#  @exception AnalyzerError
+	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, desired_interval):
-		# Log thread id
-		logging.info('The identifier for this tracker requestor thread is ' + str(threading.get_ident()))
-
-		# Ends when daemon thread dies
 		while True:
 			# Ask tracker
 			try:
@@ -199,13 +175,14 @@ class SwarmAnalyzer:
 					percentage = 0
 				logging.info(str(len(peer_ips)) + ' peers received, ' + str(duplicate_counter) + ' duplicates, equals ' + str(percentage) + '%')
 			
-				# Receive interval recommendation from tracker for logging purposes
+				# Receive interval recommendation from tracker for logging purposes # debug
 				try:
 					self.tracker.get_interval()
 				except tracker_request.TrackerError:
 					pass
 
 				# Check requested_interval against min interval
+				# TODO test
 				min_interval = self.tracker.get_min_interval()
 				if min_interval is None:
 					interval = desired_interval * 60
@@ -216,8 +193,9 @@ class SwarmAnalyzer:
 			logging.info('Waiting ' + str(interval/60) + ' minutes until next tracker request ...')
 			time.sleep(interval)
 
-	## Starts TCP server analyzer for incoming peers of one torrent
+	## Starts a multithreaded TCP server to analyze incoming peers
 	#  @param port Extern listen port number
+	#  @exception AnalyzerError
 	# TODO test with real data
 	def start_passive_evaluation(self, port):
 		# Create the server, binding to outside address on custom port
@@ -226,8 +204,11 @@ class SwarmAnalyzer:
 		address = (socket.gethostname(), port)
 		logging.info('Starting passive evaluation server on host ' + address[0] + ', port ' + str(address[1]))
 		# TODO use self.timeout
-		self.server = PeerEvaluationServer(address, PeerHandler,
-				self.torrent.info_hash, self.own_peer_id, self.torrent.pieces_count, self.database_queue, self.delay)
+		try:
+			self.server = PeerEvaluationServer(address, PeerHandler, self.torrent.info_hash,
+					self.own_peer_id, self.torrent.pieces_count, self.database_queue, self.delay)
+		except PermissionError as err:
+			raise AnalyzerError('Could not start server on port ' + str(port) + ': ' + str(err))
 
 		# Activate the server in it's own thread
 		server_thread = threading.Thread(target=self.server.serve_forever)
@@ -237,23 +218,60 @@ class SwarmAnalyzer:
 		# Remember activation to enable shutdown
 		self.passive_evaluation = True
 	
-	## Thread shutdown and logs
-	def __exit__(self, exception_type, exception_value, traceback):
-		# Active evaluation shutdown
-		if self.active_evaluation:
-			# TODO evaluator threads shutdown
-			# TODO tracker thread shutdown
-			pass
+	## Comsumes peers from database queue and put back in main queue
+	def start_database_archiver(self):
+		# Get database session
+		database_session = self.database.get_session()
 
-		# Passive evaluation shutdown
-		if self.passive_evaluation:
-			logging.info('Shutdown passive peer evaluation server')
-			self.server.shutdown()
+		# Start database thread
+		thread = threading.Thread(target=self._database_archivator, args=(database_session,))
+		thread.daemon = True
+		thread.start()
 
-		# TODO database thread shutdown
+		# Remember activation to enable shutdown
+		self.database_archive = True
+	
+	## Consumes peers and stores them in the database
+	#  @param database_session Database session instance
+	#  @note This is a worker method to be started as a thread
+	def _database_archivator(self, database_session):
+		# Log thread id
+		logging.info('The identifier for this database archiver thread is ' + str(threading.get_ident()))
 
+		while True:
+			# Get new peer to store
+			peer = self.database_queue.get()
+			first_evaluation = peer.key is None
+
+			# Store evaluated peer and fill peer.key
+			try:
+				peer = self.database.store(peer, 0, database_session) # TODO give torrent id
+
+			# Catch all exceptions to enable ongoing thread, should never happen
+			except Exception as err:
+				database_session.rollback()
+				self.critical_database_error.increment()
+				logging.critical('Unexpected error during database update: ' + str(err))
+				traceback.print_tb(err.__traceback__)
+				continue
+
+			# Update statistical counters
+			if first_evaluation:
+				self.database_new_peer.increment()
+			else:
+				self.database_peer_update.increment()
+
+			# Write back in progress peers, discard finished ones
+			if peer.pieces < self.torrent.pieces_count:
+				self.peers.put(peer)
+			
+			# Allow waiting for all peers to be stored at shutdown
+			self.database_queue.task_done()
+
+	## Print evaluation statistics
+	def log_statistics(self):
 		# Peer queue, inaccurate due to consumer threads
-		logging.info('Currently are about ' + str(self.peers.qsize()) + ' peers in queue')
+		logging.info('Currently are about ' + str(self.peers.qsize()) + ' peers in queue left')
 
 		# Received peers
 		try:
@@ -277,6 +295,26 @@ class SwarmAnalyzer:
 		critical_database_error_counter = self.critical_database_error.get()
 		if critical_database_error_counter > 0:
 			logging.critical('Encountered ' + str(critical_database_error_counter) + ' critical database errors')
+
+	## Shutdown all worker threads if started
+	def __exit__(self, exception_type, exception_value, traceback):
+		if self.active_evaluation:
+			# TODO
+			pass
+
+		if self.tracker_requests:
+			# TODO
+			pass
+
+		if self.passive_evaluation:
+			logging.info('Shutdown passive peer evaluation server')
+			self.server.shutdown()
+
+		if self.database_archive:
+			logging.info('Waiting for all evaluated peers to be stored')
+			self.database_queue.join()
+
+			# TODO Close database session
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
 #  according to http://stackoverflow.com/a/1581937 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l197
