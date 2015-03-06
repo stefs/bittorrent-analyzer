@@ -46,6 +46,7 @@ class SwarmAnalyzer:
 		self.passive_error = SharedCounter()
 		
 		# Analysis parts, activated via starter methods
+		self.shutdown_request = threading.Event()
 		self.active_evaluation = False
 		self.tracker_requests = False
 		self.passive_evaluation = False
@@ -58,6 +59,9 @@ class SwarmAnalyzer:
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
 	def start_active_evaluation(self, jobs):
+		# Thread termination barrier
+		self.active_shutdown_done = threading.Barrier(jobs + 1)
+
 		# Create thread pool
 		for i in range(jobs):
 			# Create a thread with worker callable
@@ -73,7 +77,7 @@ class SwarmAnalyzer:
 	## Evaluate peers from main queue
 	#  @note This is a worker method to be started as a thread
 	def _evaluator(self):
-		while True:
+		while not self.shutdown_request.is_set():
 			# Get new peer
 			peer = self.peers.get()
 
@@ -81,7 +85,8 @@ class SwarmAnalyzer:
 			delay = peer.revisit - time.perf_counter()
 			if delay > 0:
 				logging.info('Delaying peer evaluation for ' + str(delay) + ' seconds ...')
-				time.sleep(delay)
+				if self.shutdown_request.wait(delay):
+					break
 
 			# Establish connection
 			if peer.key is None:
@@ -132,10 +137,16 @@ class SwarmAnalyzer:
 			# Put in archiver queue
 			self.active_success.increment()
 			self.database_queue.put(peer)
+		
+		# Propagate shutdown finish
+		self.active_shutdown_done.wait()
 
 	## Continuously asks the tracker server for new peers	
 	#  @param interval Timer interval between tracker requests are issued in seconds
 	def start_tracker_requests(self, interval):
+		# Thread termination indicator
+		self.tracker_shutdown_done = threading.Event()
+		
 		# Create tracker request thread
 		thread = threading.Thread(target=self._tracker_requestor, args=(interval,))
 		thread.daemon = True
@@ -148,7 +159,7 @@ class SwarmAnalyzer:
 	#  @param desired_interval Requested interval in minutes
 	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, desired_interval):
-		while True:
+		while not self.shutdown_request.is_set():
 			# Ask tracker
 			try:
 				self.tracker.issue_request(self.torrent.info_hash)
@@ -192,7 +203,10 @@ class SwarmAnalyzer:
 
 			# Wait accordingly
 			logging.info('Waiting ' + str(interval/60) + ' minutes until next tracker request ...')
-			time.sleep(interval)
+			self.shutdown_request.wait(interval)
+		
+		# Propagate thread termination
+		self.tracker_shutdown_done.set()
 
 	## Starts a multithreaded TCP server to analyze incoming peers
 	#  @param port Extern listen port number
@@ -235,10 +249,10 @@ class SwarmAnalyzer:
 			raise AnalyzerError('Could not create database: ' + str(err))
 
 		# Get database session
-		database_session = self.database.get_session()
+		self.database_session = self.database.get_session()
 
 		# Start database thread
-		thread = threading.Thread(target=self._database_archivator, args=(database_session,))
+		thread = threading.Thread(target=self._database_archivator, args=(self.database_session,))
 		thread.daemon = True
 		thread.start()
 
@@ -315,13 +329,16 @@ class SwarmAnalyzer:
 
 	## Shutdown all worker threads if started
 	def __exit__(self, exception_type, exception_value, traceback):
+		# Propagate shutdown request
+		self.shutdown_request.set()
+		
 		if self.active_evaluation:
-			# TODO
-			pass
+			logging.info('Waiting for current evaluations to finish ...')
+			self.active_shutdown_done.wait()
 
 		if self.tracker_requests:
-			# TODO
-			pass
+			logging.info('Waiting for current tracker requests to finish ...')
+			self.tracker_shutdown_done.wait()
 
 		if self.passive_evaluation:
 			logging.info('Shutdown peer evaluation server ...')
@@ -330,6 +347,8 @@ class SwarmAnalyzer:
 		if self.database_archive:
 			logging.info('Waiting for peers to be written to database ...')
 			self.database_queue.join()
+			self.database_session.close()
+			logging.info('Database session closed')
 			self.database.close()
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits

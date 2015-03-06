@@ -147,8 +147,6 @@ class PeerDatabase:
 		logging.info('GeoIP2 database closed')
 		logging.info('Results written to ' + self.database_path)
 
-		# TODO session.close
-
 ## Indicates database related errors
 class DatabaseError(Exception):
 	pass
