@@ -30,7 +30,9 @@ class SwarmAnalyzer:
 
 		# Network parameters
 		self.delay = delay * 60
+		logging.info('Time delay for revisiting unfinished peers is ' + str(delay) + ' minutes')
 		self.timeout = timeout
+		logging.info('Timeout for network operations is ' + str(timeout) + ' seconds')
 
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
@@ -51,7 +53,7 @@ class SwarmAnalyzer:
 		self.tracker_requests = False
 		self.passive_evaluation = False
 		self.database_archive = False
-	
+		
 	## Resouces are allocated in starter methods
 	def __enter__(self):
 		return self
@@ -73,6 +75,7 @@ class SwarmAnalyzer:
 		
 		# Remember activation to enable shutdown
 		self.active_evaluation = True
+		logging.info('Connecting to peers in ' + str(jobs) + ' threads')
 
 	## Evaluate peers from main queue
 	#  @note This is a worker method to be started as a thread
@@ -148,21 +151,22 @@ class SwarmAnalyzer:
 		self.active_shutdown_done.wait()
 
 	## Continuously asks the tracker server for new peers	
-	#  @param interval Timer interval between tracker requests are issued in seconds
+	#  @param interval Timer interval between tracker requests are issued in minutes
 	def start_tracker_requests(self, interval):
 		# Thread termination indicator
 		self.tracker_shutdown_done = threading.Event()
 		
 		# Create tracker request thread
-		thread = threading.Thread(target=self._tracker_requestor, args=(interval,))
+		thread = threading.Thread(target=self._tracker_requestor, args=(interval * 60,))
 		thread.daemon = True
 		thread.start()
 
 		# Remember activation to enable shutdown
 		self.tracker_requests = True
+		logging.info('The interval between asking the tracker for new peers is ' + str(interval) + ' minutes')
 
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
-	#  @param desired_interval Requested interval in minutes
+	#  @param desired_interval Requested interval in seconds
 	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, desired_interval):
 		while not self.shutdown_request.is_set():
@@ -172,7 +176,7 @@ class SwarmAnalyzer:
 				peer_ips = self.tracker.get_peers()
 			except tracker_request.TrackerError as err:
 				logging.warning('Could not receive peers from tracker: ' + str(err))
-				interval = desired_interval * 60
+				interval = desired_interval
 			else:
 				# Put peers in queue
 				#import random # debug
@@ -203,9 +207,9 @@ class SwarmAnalyzer:
 				# TODO test
 				min_interval = self.tracker.get_min_interval()
 				if min_interval is None:
-					interval = desired_interval * 60
+					interval = desired_interval
 				else:
-					interval = max(min_interval, desired_interval * 60)
+					interval = max(min_interval, desired_interval)
 
 			# Wait accordingly
 			logging.info('Waiting ' + str(interval/60) + ' minutes until next tracker request ...')
@@ -244,13 +248,15 @@ class SwarmAnalyzer:
 		
 		# Remember activation to enable shutdown
 		self.passive_evaluation = True
-	
+		logging.info('Listening on port ' + str(port) + ' for incomming peer connections')
+
 	## Comsumes peers from database queue and put back in main queue
+	#  @param output Path for database output without file extension
 	#  @exception AnalyzerError
-	def start_database_archiver(self):
+	def start_database_archiver(self, output):
 		# Create peer database
 		try:
-			self.database = peer_storage.PeerDatabase()
+			self.database = peer_storage.PeerDatabase(output)
 		except peer_storage.DatabaseError as err:
 			raise AnalyzerError('Could not create database: ' + str(err))
 

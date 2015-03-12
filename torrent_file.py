@@ -35,6 +35,7 @@ class TorrentParser:
 			self.torrent_file = bencodepy.decode(torrent_file_bencoded)
 		except bencodepy.exceptions.DecodingError as err:
 			raise FileError('Could not decode file: ' + str(err))
+		logging.info('Read torrent file from ' + path)
 
 	## Extract announce URL
 	#  @return The tracker announce URL

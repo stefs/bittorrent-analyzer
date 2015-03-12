@@ -4,6 +4,7 @@
 import argparse
 import logging
 import time
+import os
 
 # Project modules
 import peer_analyzer
@@ -20,24 +21,21 @@ parser.add_argument('-d', '--delay', type=float, default='15', help='Time delay 
 parser.add_argument('-l', '--loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Level of detail for log messages', metavar='<level>')
 args = parser.parse_args()
 
-# Set logging level
-numeric_level = getattr(logging, args.loglevel)
-logging.basicConfig(format='[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', datefmt='%Hh%Mm%Ss', level = numeric_level)
-
-# Check if argument plausibility
+# Check argument plausibility
 if args.jobs is None and args.port is None:
-	logging.error('Please enable active and/or passive peer evaluation via commandline switches')
-	raise SystemExit
+	parser.error('Please enable active and/or passive peer evaluation via commandline switches')
 
-# Log arguments
-logging.info('Analyzing peers of torrent file ' + args.torrent)
-if args.jobs is not None:
-	logging.info('Connecting to peers in ' + str(args.jobs) + ' threads')
-	logging.info('The interval between asking the tracker for new peers is ' + str(args.interval) + ' minutes')
-if args.port is not None:
-	logging.info('Listening on port ' + str(args.port) + ' for incomming peer connections')
-logging.info('Timeout for network operations is ' + str(args.timeout) + ' seconds')
-logging.info('Time delay for revisiting unfinished peers is ' + str(args.delay) + ' minutes')
+# Set output path
+directory = 'output/'
+if not os.path.exists(directory):
+	os.makedirs(directory)
+output = directory + time.strftime('%Y-%m-%d_%H-%M-%S')
+
+# Configure logging
+numeric_level = getattr(logging, args.loglevel)
+logfile = output + '.log'
+logging.basicConfig(filename=logfile, format='[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', datefmt='%Hh%Mm%Ss', level=numeric_level)
+print('Log is written to file ' + logfile)
 logging.info('Logging messages up to ' + args.loglevel + ' level')
 
 # Import torrent file
@@ -51,15 +49,15 @@ except torrent_file.FileError as err:
 with peer_analyzer.SwarmAnalyzer(torrent, args.delay, args.timeout) as analyzer:
 	# Start database archiver
 	try:
-		analyzer.start_database_archiver()
+		analyzer.start_database_archiver(output)
 	except peer_analyzer.AnalyzerError as err:
 		logging.error(str(err))
 		raise SystemExit
-	
+
 	# Start active evaluator threads
 	if args.jobs is not None:
-		analyzer.start_active_evaluation(args.jobs)
 		analyzer.start_tracker_requests(args.interval)
+		analyzer.start_active_evaluation(args.jobs)
 
 	# Start passive evaluation server
 	if args.port is not None:
@@ -73,7 +71,8 @@ with peer_analyzer.SwarmAnalyzer(torrent, args.delay, args.timeout) as analyzer:
 	try:
 		while True:
 			time.sleep(1024)
-	except KeyboardInterrupt as err:
+	except KeyboardInterrupt:
+		print('Please wait for termination ...')
 		logging.info('Received interrupt signal, exiting')
 
 # Print statistics

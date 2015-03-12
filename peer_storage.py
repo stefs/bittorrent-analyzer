@@ -1,7 +1,5 @@
 # Built-in modules
 import logging
-import time
-import os
 import socket
 import datetime
 import ipaddress
@@ -41,14 +39,11 @@ class Peer(Base):
 ## Handling database access with SQLAlchemy
 class PeerDatabase:
 	## Prepare SQLAlchemy backend
+	#  @param output Output path with filename without file extension
 	#  @exception DatabaseError
-	def __init__(self):
+	def __init__(self, output):
 		# Create engine, usable with SQLAlchemy Expression Language, used via SQLAlchemy Object Relational Mapper
-		directory = 'output/'
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-		time_string = time.strftime('%Y-%m-%d_%H-%M-%S')
-		self.database_path = 'sqlite:///' + directory + time_string + '.sqlite'
+		self.database_path = 'sqlite:///' + output + '.sqlite'
 		self.engine = sqlalchemy.create_engine(self.database_path, echo=False) # echo enables debug output
 
 		# Create empty tables
