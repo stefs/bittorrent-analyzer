@@ -79,7 +79,11 @@ class SwarmAnalyzer:
 	def _evaluator(self):
 		while not self.shutdown_request.is_set():
 			# Get new peer
-			peer = self.peers.get()
+			try:
+				peer = self.peers.get(block=False)
+			except queue.Empty:
+				self.shutdown_request.wait(15)
+				continue
 
 			# Delay evaluation and write back if delay too long
 			delay = peer.revisit - time.perf_counter()
@@ -166,7 +170,7 @@ class SwarmAnalyzer:
 				peer_ips = self.tracker.get_peers()
 			except tracker_request.TrackerError as err:
 				logging.warning('Could not receive peers from tracker: ' + str(err))
-				interval = desired_interval
+				interval = desired_interval * 60
 			else:
 				# Put peers in queue
 				#import random # debug

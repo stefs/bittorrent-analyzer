@@ -6,12 +6,14 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 - ! Support incoming connections to include people without an open port
     - (Test with real incoming peers)
     - (Test min interval check)
+- ! Evaluate multiple torrents at once
+- ! Real test run on VM
 - ! Search peers via IPv4 DHT and IPv6 DHT (BEP 5, BEP 32)
 - ! Accept magnet links (partial BEP 9)
 - Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
-- tracker exchange message support (BEP 28)
+- Tracker exchange message support (BEP 28)
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
-- Import Torrent file(s) in database and start evaluating from there
+- Import Torrent file(s) in database and start evaluating from there (incl. file name, name collissions!)
 - ? Support encrypted peer connections
 - ? Pause evaluation on network outage
 - ? Log city
