@@ -78,19 +78,21 @@ class SwarmAnalyzer:
 	#  @note This is a worker method to be started as a thread
 	def _evaluator(self):
 		while not self.shutdown_request.is_set():
-			# Get new peer
+			# Get new peer, wait instead of block to react to shutdown request
 			try:
 				peer = self.peers.get(block=False)
 			except queue.Empty:
-				self.shutdown_request.wait(15)
+				logging.info('Waiting for new peers ...')
+				self.shutdown_request.wait(10)
 				continue
 
-			# Delay evaluation and write back if delay too long
+			# Delay evaluation, wait in parts to react to new peers in queue
 			delay = peer.revisit - time.perf_counter()
 			if delay > 0:
-				logging.info('Delaying peer evaluation for ' + str(delay) + ' seconds ...')
-				if self.shutdown_request.wait(delay):
-					break
+				logging.info('Delaying peer evaluation ...')
+				self.shutdown_request.wait(10)
+				self.peers.put(peer)
+				continue
 
 			# Establish connection
 			if peer.key is None:
