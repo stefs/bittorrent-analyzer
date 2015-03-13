@@ -36,8 +36,20 @@ class Peer(Base):
 	active = sqlalchemy.Column(sqlalchemy.types.Boolean)
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
 
+
+## Declarative class for torrent table
+class Torrent(Base):
+	__tablename__ = 'torrent'
+
+	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
+	announce_url = sqlalchemy.Column(sqlalchemy.types.String)
+	info_hash = sqlalchemy.Column(sqlalchemy.types.Binary)
+	pieces_count = sqlalchemy.Column(sqlalchemy.types.Integer)
+	piece_size = sqlalchemy.Column(sqlalchemy.types.Integer)
+	filepath = sqlalchemy.Column(sqlalchemy.types.String)
+
 ## Handling database access with SQLAlchemy
-class PeerDatabase:
+class Database:
 	## Prepare SQLAlchemy backend
 	#  @param output Output path with filename without file extension
 	#  @exception DatabaseError
@@ -71,7 +83,7 @@ class PeerDatabase:
 	#  @param torrent Database ID of the related torrent
 	#  @param session Database session, must only be used in one thread
 	#  @return Peer named tuple with peer.key filled
-	def store(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
+	def store_peer(self, peer, torrent, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
 		# Check if this is a new peer
 		if peer.key is None:
 			# Get meta data
@@ -125,7 +137,7 @@ class PeerDatabase:
 
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question
-	#  @return Two letter ISO country code or an empty string
+	#  @return Two letter ISO country code or an empty string # TODO change to None and NULL
 	def get_country_by_ip(self, ip_address):
 		try:
 			response = self.reader.country(ip_address)
@@ -134,6 +146,24 @@ class PeerDatabase:
 			return ''
 		else:
 			return response.country.iso_code, response.country.name
+	
+	## Store a given torrent in the database
+	#  @param torrent Torrent named tuple
+	#  @param path File system path the torrent file was located
+	#  @param session Database session
+	#  @return Database id
+	def store_torrent(self, torrent, path, session):
+		# Write to database
+		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
+				pieces_count=torrent.pieces_count, piece_size=torrent.piece_size,
+				filepath=path)
+		session.add(new_torrent)
+		session.commit()
+		
+		# Return Torrent with key
+		database_id = new_torrent.id
+		logging.info('Stored ' + str(torrent) + ' with database id ' + str(database_id))
+		return database_id
 
 	## Relase resources
 	def close(self):
@@ -148,7 +178,7 @@ class DatabaseError(Exception):
 
 ## Get the host via reverse DNS
 #  @param ip_address The address in question
-#  @return Hostname with TLD and SLD or empty string
+#  @return Hostname with TLD and SLD or empty string # TODO change to None and NULL
 def get_short_hostname(ip_address):
 	try:
 		long_host = socket.gethostbyaddr(ip_address)[0]

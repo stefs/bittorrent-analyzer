@@ -6,7 +6,7 @@ import collections
 import time
 
 ## Named tuple representing a cached peer
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces active key')
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces active torrent key')
 
 ## Communicates to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:
@@ -274,7 +274,6 @@ def set_bit_at_index(bitfield, index):
 	# Alter affected byte
 	byte_before = bitfield[byte_index]
 	byte_after = byte_before | bit_index
-	logging.debug('Bit ' + str(index) + ' equals bit ' + str(bit_index) + ' in byte ' + str(byte_index) + ', converted ' + str(byte_before) + ' to ' + str(byte_after))
 
 	# Write back
 	bitfield[byte_index] = byte_after
@@ -321,5 +320,5 @@ def evaluate_peer(peer, socket, info_hash, own_peer_id, pieces_number, delay):
 
 	# Save results
 	revisit_time = time.perf_counter() + delay
-	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.active, peer.key)
+	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.active, peer.torrent, peer.key)
 

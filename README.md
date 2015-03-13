@@ -3,13 +3,10 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## Todo
 ### Next steps
-- ! Support incoming connections to include people without an open port
-    - (Test with real incoming peers)
-    - (Test min interval check)
-- ! Evaluate multiple torrents at once
-- ! Real test run on VM
+- ! More tests on VM
 - ! Search peers via IPv4 DHT and IPv6 DHT (BEP 5, BEP 32)
 - ! Accept magnet links (partial BEP 9)
+- ! Accept UDP trackers
 - Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 - Tracker exchange message support (BEP 28)
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
@@ -19,7 +16,6 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 - ? Log city
 - (Record active thread sleeping statistics)
 - (Document database needed)
-- (Simplify database access, thread-safe session not needed anymore)
 
 ### Code quality
 - Review logging messages
@@ -55,6 +51,8 @@ These are the standard installation steps on a Debian based system.
 2. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
 3. `deactivate`
 4. Statistics are saved in `output/` directory as a SQLite database.
+
+tail -n +0 -f output/2015-03-12_18-06-35.log
 
 ### Command Line Arguments:
 * `<torrent>`  

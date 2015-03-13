@@ -1,7 +1,6 @@
 # Built-in modules
 import hashlib
 import logging
-import base64
 import collections
 
 # Extern modules
@@ -35,7 +34,7 @@ class TorrentParser:
 			self.torrent_file = bencodepy.decode(torrent_file_bencoded)
 		except bencodepy.exceptions.DecodingError as err:
 			raise FileError('Could not decode file: ' + str(err))
-		logging.info('Read torrent file from ' + path)
+		logging.info('Read torrent file ' + path)
 
 	## Extract announce URL
 	#  @return The tracker announce URL
@@ -92,21 +91,4 @@ class TorrentParser:
 ## Exception for a unreachable or bad torrent file
 class FileError(Exception):
 	pass
-
-## Return Torrent named tuple using the TorrentParser
-#  @param path File system path to a valid torrent file
-#  @return Torrent named tuple
-#  @exception FileError
-def import_torrent(path):
-	parser = TorrentParser(path)
-	announce_url = parser.get_announce_url()
-	logging.info('Announce URL is ' + announce_url)
-	info_hash = parser.get_info_hash()
-	info_hash_hex = base64.b16encode(info_hash).decode()
-	logging.info('Info hash is ' + info_hash_hex)
-	pieces_number = parser.get_pieces_number()
-	logging.info('Number of pieces is ' + str(pieces_number))
-	piece_size = parser.get_piece_size()
-	logging.info('Size of one piece is ' + str(piece_size) + ' bytes')
-	return Torrent(announce_url, info_hash, pieces_number, piece_size)
 

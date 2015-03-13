@@ -6,27 +6,29 @@ import queue
 import time
 import socketserver
 import socket
+import os
+import base64
 
 # Project modules
 import tracker_request
 import peer_wire_protocol
-import peer_storage
+import database_storage
+import torrent_file
 
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
 	## Initializes analyzer for peers of one torrent
-	#  @param torrent Torrent named tuple
 	#  @param delay Minimal timedelta between contacting the same peer in minutes
 	#  @param timeout Timeout for network operations in seconds
-	def __init__(self, torrent, delay, timeout):
+	#  @param output Path for database output without file extension
+	#  @exception AnalyzerError
+	def __init__(self, delay, timeout, output):
 		# Smart queue for peer management
 		self.peers = PeerQueue()
 		self.database_queue = queue.Queue()
 
-		# Torrent and tracker data
-		self.torrent = torrent
+		# Generate peer id
 		self.own_peer_id = tracker_request.generate_peer_id()
-		self.tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrent.announce_url)
 
 		# Network parameters
 		self.delay = delay * 60
@@ -54,15 +56,63 @@ class SwarmAnalyzer:
 		self.passive_evaluation = False
 		self.database_archive = False
 		
+		# Create database
+		try:
+			self.database = database_storage.Database(output)
+		except database_storage.DatabaseError as err:
+			raise AnalyzerError('Could not create database: ' + str(err))
+
 	## Resouces are allocated in starter methods
 	def __enter__(self):
 		return self
+	
+	## Reads all torrent files from input directory
+	def import_torrents(self):
+		# Create torrent dictionary
+		self.torrents = dict()
+
+		# Import all files
+		database_session = self.database.get_session()
+		try:
+			walk = os.walk('input/')
+		except OSError as err:
+			raise AnalyzerError('Could not read from input directory: ' + str(err))
+		for dirname, dirnames, filenames in walk:
+			for filename in filenames:
+				# Sort out non torrents
+				if not filename.endswith('.torrent'):
+					continue
+					
+				# Read torrent file
+				path = os.path.join(dirname, filename)
+				try:
+					parser = torrent_file.TorrentParser(path)
+					announce_url = parser.get_announce_url()
+					info_hash = parser.get_info_hash()
+					pieces_number = parser.get_pieces_number()
+					piece_size = parser.get_piece_size()
+				except torrent_file.FileError as err:
+					logging.error('Could not import torrent ' + filename + ': ' + str(err))
+					continue
+
+				# Store in database and dictionary
+				torrent = torrent_file.Torrent(announce_url, info_hash, pieces_number, piece_size)
+				key = self.database.store_torrent(torrent, path, database_session)
+				self.torrents[key] = torrent
+		
+		# Close database sesssion						
+		database_session.close()
+		if len(self.torrents) > 0:
+			logging.info('Imported ' + str(len(self.torrents)) + ' torrent files')
+		else:
+			raise AnalyzerError('No valid torrent files found')
 	
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
 	def start_active_evaluation(self, jobs):
 		# Thread termination barrier
 		self.active_shutdown_done = threading.Barrier(jobs + 1)
+		logging.info('Connecting to peers in ' + str(jobs) + ' threads')
 
 		# Create thread pool
 		for i in range(jobs):
@@ -75,25 +125,23 @@ class SwarmAnalyzer:
 		
 		# Remember activation to enable shutdown
 		self.active_evaluation = True
-		logging.info('Connecting to peers in ' + str(jobs) + ' threads')
 
 	## Evaluate peers from main queue
 	#  @note This is a worker method to be started as a thread
 	def _evaluator(self):
 		while not self.shutdown_request.is_set():
-			# Get new peer, wait instead of block to react to shutdown request
+			# Get new peer with timeout to react to shutdown request
 			try:
-				peer = self.peers.get(block=False)
+				peer = self.peers.get(timeout=10)
 			except queue.Empty:
-				logging.info('Waiting for new peers ...')
-				self.shutdown_request.wait(10)
 				continue
 
-			# Delay evaluation, wait in parts to react to new peers in queue
+			# Delay evaluation
 			delay = peer.revisit - time.perf_counter()
+			better_peer_reaction = 60
 			if delay > 0:
-				logging.info('Delaying peer evaluation ...')
-				self.shutdown_request.wait(10)
+				logging.info('Delaying peer evaluation for ' + str(better_peer_reaction) + ' seconds, target is ' + str(delay/60) + ' minutes ...')
+				self.shutdown_request.wait(better_peer_reaction)
 				self.peers.put(peer)
 				continue
 
@@ -115,9 +163,10 @@ class SwarmAnalyzer:
 			logging.info('Connection established')
 
 			# Contact peer and update attributes
+			torrent = self.torrents[peer.torrent]
 			try:
 				peer = peer_wire_protocol.evaluate_peer(peer, sock,
-						self.torrent.info_hash, self.own_peer_id, self.torrent.pieces_count, self.delay)
+						torrent.info_hash, self.own_peer_id, torrent.pieces_count, self.delay)
 
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
@@ -131,8 +180,8 @@ class SwarmAnalyzer:
 			# Catch all exceptions to enable ongoing analysis, should never happen
 			except Exception as err:
 				self.critical_evaluation_error.increment()
-				logging.critical('Unexpected error during peer evaluation: ' + str(err))
-				traceback.print_tb(err.__traceback__)
+				tb = traceback.format_tb(err.__traceback__)
+				logging.critical('Unexpected error during peer evaluation: ' + str(err) + '\n' + ''.join(tb))
 				continue
 
 			# Close connection
@@ -154,26 +203,32 @@ class SwarmAnalyzer:
 	#  @param interval Timer interval between tracker requests are issued in minutes
 	def start_tracker_requests(self, interval):
 		# Thread termination indicator
-		self.tracker_shutdown_done = threading.Event()
+		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
+		logging.info('Desired interval between asking the tracker for new peers is ' + str(interval) + ' minutes')
 		
-		# Create tracker request thread
-		thread = threading.Thread(target=self._tracker_requestor, args=(interval * 60,))
-		thread.daemon = True
-		thread.start()
+		# Create tracker request threads
+		interval_seconds = interval * 60
+		for torrent in self.torrents:
+			thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
+			thread.daemon = True
+			thread.start()
 
 		# Remember activation to enable shutdown
 		self.tracker_requests = True
-		logging.info('The interval between asking the tracker for new peers is ' + str(interval) + ' minutes')
 
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
+	#  @param torrent_key Torrent key specifying the target torrent and tracker
 	#  @param desired_interval Requested interval in seconds
 	#  @note This is a worker method to be started as a thread
-	def _tracker_requestor(self, desired_interval):
+	def _tracker_requestor(self, torrent_key, desired_interval):
+		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url)
+
 		while not self.shutdown_request.is_set():
 			# Ask tracker
+			logging.info('Contacting tracker for torrent with id ' + str(torrent_key))
 			try:
-				self.tracker.issue_request(self.torrent.info_hash)
-				peer_ips = self.tracker.get_peers()
+				tracker.issue_request(self.torrents[torrent_key].info_hash)
+				peer_ips = tracker.get_peers()
 			except tracker_request.TrackerError as err:
 				logging.warning('Could not receive peers from tracker: ' + str(err))
 				interval = desired_interval
@@ -184,7 +239,7 @@ class SwarmAnalyzer:
 				self.peers.duplicate.reset()
 				for peer_ip in peer_ips:
 					new_peer = peer_wire_protocol.Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
-							id=None, bitfield=None, pieces=None, active=True, key=None)
+							id=None, bitfield=None, pieces=None, active=True, torrent=torrent_key, key=None)
 					self.peers.put(new_peer)
 				duplicate_counter = self.peers.duplicate.get() # TODO inaccurate due to passive evaluation?
 				self.total_duplicate += duplicate_counter
@@ -199,13 +254,13 @@ class SwarmAnalyzer:
 			
 				# Receive interval recommendation from tracker for logging purposes # debug
 				try:
-					self.tracker.get_interval()
+					tracker.get_interval()
 				except tracker_request.TrackerError:
 					pass
 
 				# Check requested_interval against min interval
 				# TODO test
-				min_interval = self.tracker.get_min_interval()
+				min_interval = tracker.get_min_interval()
 				if min_interval is None:
 					interval = desired_interval
 				else:
@@ -216,7 +271,7 @@ class SwarmAnalyzer:
 			self.shutdown_request.wait(interval)
 		
 		# Propagate thread termination
-		self.tracker_shutdown_done.set()
+		self.tracker_shutdown_done.wait()
 
 	## Starts a multithreaded TCP server to analyze incoming peers
 	#  @param port Extern listen port number
@@ -251,15 +306,7 @@ class SwarmAnalyzer:
 		logging.info('Listening on port ' + str(port) + ' for incomming peer connections')
 
 	## Comsumes peers from database queue and put back in main queue
-	#  @param output Path for database output without file extension
-	#  @exception AnalyzerError
-	def start_database_archiver(self, output):
-		# Create peer database
-		try:
-			self.database = peer_storage.PeerDatabase(output)
-		except peer_storage.DatabaseError as err:
-			raise AnalyzerError('Could not create database: ' + str(err))
-
+	def start_database_archiver(self):
 		# Get database session
 		self.database_session = self.database.get_session()
 
@@ -285,14 +332,15 @@ class SwarmAnalyzer:
 
 			# Store evaluated peer and fill peer.key
 			try:
-				peer = self.database.store(peer, 0, database_session) # TODO give torrent id
+				peer = self.database.store_peer(peer, 0, database_session)
 
 			# Catch all exceptions to enable ongoing thread, should never happen
 			except Exception as err:
 				database_session.rollback()
 				self.critical_database_error.increment()
-				logging.critical('Unexpected error during database update: ' + str(err))
-				traceback.print_tb(err.__traceback__)
+				self.database_queue.task_done()
+				tb = traceback.format_tb(err.__traceback__)
+				logging.critical('Unexpected error during database update: ' + str(err) + '\n' + ''.join(tb))
 				continue
 
 			# Update statistical counters
@@ -302,7 +350,7 @@ class SwarmAnalyzer:
 				self.database_peer_update.increment()
 
 			# Write back in progress peers, discard finished ones
-			if peer.pieces < self.torrent.pieces_count:
+			if peer.pieces < self.torrents[peer.torrent].pieces_count:
 				self.peers.put(peer)
 		
 			# Allow waiting for all peers to be stored at shutdown
@@ -361,7 +409,8 @@ class SwarmAnalyzer:
 			self.database_queue.join()
 			self.database_session.close()
 			logging.info('Database session closed')
-			self.database.close()
+		
+		self.database.close()
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
 #  according to http://stackoverflow.com/a/1581937 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l197
@@ -385,16 +434,16 @@ class PeerQueue(queue.PriorityQueue):
 	#  @note Overrides intern method
 	#  @warning Disables join option according to http://stackoverflow.com/a/24183479 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l147
 	def _put(self, peer):
-		# Create copy of ip_address and port for equality check
-		peer_ip = (peer.ip_address, peer.port)
+		# Create copy peer data for equality check
+		peer_equalality = (peer.ip_address, peer.port, peer.torrent)
 
 		# Check if this is a revisit or if it is a new peer
-		if peer.key is not None or peer_ip not in self.all_peers:
+		if peer.key is not None or peer_equalality not in self.all_peers:
 			# Call parent method
 			queue.PriorityQueue._put(self, peer)
 
 			# Remember equality information, set discards revisit duplicates
-			self.all_peers.add(peer_ip)
+			self.all_peers.add(peer_equalality)
 		else:
 			self.duplicate.increment()
 
