@@ -3,17 +3,18 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## Todo
 ### Next steps
+- Ergebinsse auf Plausibilität prüfen, Warum keine volltändigen Downloads beobachtet?
 - ! More tests on VM
+- ! Log city / region
+- ! Accept UDP trackers
 - ! Search peers via IPv4 DHT and IPv6 DHT (BEP 5, BEP 32)
 - ! Accept magnet links (partial BEP 9)
-- ! Accept UDP trackers
 - Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 - Tracker exchange message support (BEP 28)
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
 - Import Torrent file(s) in database and start evaluating from there (incl. file name, name collissions!)
 - ? Support encrypted peer connections
 - ? Pause evaluation on network outage
-- ? Log city
 - (Record active thread sleeping statistics)
 - (Document database needed)
 
