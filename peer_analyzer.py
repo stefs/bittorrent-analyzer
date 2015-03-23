@@ -234,8 +234,6 @@ class SwarmAnalyzer:
 				interval = desired_interval
 			else:
 				# Put peers in queue
-				#import random # debug
-				#peer_ips = random.sample(peer_ips, 8) # debug
 				self.peers.duplicate.reset()
 				for peer_ip in peer_ips:
 					new_peer = peer_wire_protocol.Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
@@ -332,7 +330,7 @@ class SwarmAnalyzer:
 
 			# Store evaluated peer and fill peer.key
 			try:
-				peer = self.database.store_peer(peer, 0, database_session)
+				peer = self.database.store_peer(peer, database_session)
 
 			# Catch all exceptions to enable ongoing thread, should never happen
 			except Exception as err:

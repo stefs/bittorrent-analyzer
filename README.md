@@ -5,9 +5,9 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 ### Next steps
 - Ergebinsse auf Plausibilität prüfen, Warum keine volltändigen Downloads beobachtet?
 - ! More tests on VM
-- ! Log city / region
+- OK - Log city / region
 - ! Accept UDP trackers
-- ! Search peers via IPv4 DHT and IPv6 DHT (BEP 5, BEP 32)
+- ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
 - ! Accept magnet links (partial BEP 9)
 - Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 - Tracker exchange message support (BEP 28)

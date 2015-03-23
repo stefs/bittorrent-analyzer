@@ -63,7 +63,7 @@ try:
 			while True:
 				time.sleep(1024)
 		except KeyboardInterrupt:
-			print('Please wait for termination ...')
+			print('\nPlease wait for termination ...')
 			logging.info('Received interrupt signal, exiting')
 except peer_analyzer.AnalyzerError as err:
 	logging.error(str(err))

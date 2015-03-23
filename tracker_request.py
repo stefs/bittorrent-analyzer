@@ -130,6 +130,8 @@ class TrackerCommunicator:
 				peer_ips.append((peer_ip, peer_port))
 
 		# Return combined IPv4 and IPv6 list
+		#import random # debug
+		#peer_ips = random.sample(peer_ips, 8) # debug
 		return peer_ips
 
 ## Exception for bad tracker response
