@@ -20,10 +20,22 @@ class TrackerCommunicator:
 		self.peer_id = peer_id
 		self.announce_url = announce_url
 
-	## Issue a HTTP GET request on the announce URL
+	## Issue a request for peers to the tracker
 	#  @param info_hash Info hash for the desired torrent
 	#  @exception TrackerError
 	def issue_request(self, info_hash):
+		parsed = urllib.parse.urlparse(self.announce_url)
+		if parsed.scheme in ["http", "https"]:
+			self._http_request(info_hash)
+		elif parsed.scheme == "udp":
+			self._udp_request(info_hash)
+		else:
+			raise TrackerError('Unsupported protocol: {}'.format(parsed.scheme))
+	
+	## Issue a HTTP GET request on the announce URL
+	#  @param info_hash Info hash for the desired torrent
+	#  @exception TrackerError
+	def _http_request(self, info_hash):
 		# Assemble tracker request
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': '30301', 'uploaded': '0', 'downloaded': '0', 'left': '23'}
 		request_parameters['compact'] = '1'
@@ -53,6 +65,12 @@ class TrackerCommunicator:
 			failure_reason_bytes = self.response[b'failure reason']
 			failure_reason = failure_reason_bytes.decode()
 			raise TrackerError('Tracker responded with failure reason: ' + str(failure_reason))
+	
+	## Issue announce request according to according to http://www.bittorrent.org/beps/bep_0015.html
+	#  @param info_hash Info hash for the desired torrent
+	def _udp_request(info_hash):
+		# TODO implement
+		raise NotImplementedError
 
 	## Extract recommended request interval from response
 	#  @return Recommended request interval in seconds

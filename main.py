@@ -44,7 +44,7 @@ logging.basicConfig(**logging_config)
 try:
 	with peer_analyzer.SwarmAnalyzer(args.revisit, args.timeout, output) as analyzer:
 		analyzer.import_torrents()
-	
+
 		# Start database archiver
 		analyzer.start_database_archiver()
 
@@ -68,6 +68,6 @@ try:
 except peer_analyzer.AnalyzerError as err:
 	logging.error(str(err))
 	raise SystemExit
-else:
+finally:
 	analyzer.log_statistics()
 

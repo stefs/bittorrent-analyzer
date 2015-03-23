@@ -32,9 +32,9 @@ class SwarmAnalyzer:
 
 		# Network parameters
 		self.delay = delay * 60
-		logging.info('Time delay for revisiting unfinished peers is ' + str(delay) + ' minutes')
+		logging.info('Time delay for revisiting unfinished peers is {} minutes'.format(delay))
 		self.timeout = timeout
-		logging.info('Timeout for network operations is ' + str(timeout) + ' seconds')
+		logging.info('Timeout for network operations is {} seconds'.format(timeout))
 
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
@@ -60,7 +60,7 @@ class SwarmAnalyzer:
 		try:
 			self.database = database_storage.Database(output)
 		except database_storage.DatabaseError as err:
-			raise AnalyzerError('Could not create database: ' + str(err))
+			raise AnalyzerError('Could not create database: {}'.format(err))
 
 	## Resouces are allocated in starter methods
 	def __enter__(self):
@@ -76,7 +76,7 @@ class SwarmAnalyzer:
 		try:
 			walk = os.walk('input/')
 		except OSError as err:
-			raise AnalyzerError('Could not read from input directory: ' + str(err))
+			raise AnalyzerError('Could not read from input directory: {}'.format(err))
 		for dirname, dirnames, filenames in walk:
 			for filename in filenames:
 				# Sort out non torrents
@@ -92,7 +92,7 @@ class SwarmAnalyzer:
 					pieces_number = parser.get_pieces_number()
 					piece_size = parser.get_piece_size()
 				except torrent_file.FileError as err:
-					logging.error('Could not import torrent ' + filename + ': ' + str(err))
+					logging.error('Could not import torrent {}: {}'.format(filename, err))
 					continue
 
 				# Store in database and dictionary
@@ -103,7 +103,7 @@ class SwarmAnalyzer:
 		# Close database sesssion						
 		database_session.close()
 		if len(self.torrents) > 0:
-			logging.info('Imported ' + str(len(self.torrents)) + ' torrent files')
+			logging.info('Imported {} torrent files'.format(len(self.torrents)))
 		else:
 			raise AnalyzerError('No valid torrent files found')
 	
@@ -112,7 +112,7 @@ class SwarmAnalyzer:
 	def start_active_evaluation(self, jobs):
 		# Thread termination barrier
 		self.active_shutdown_done = threading.Barrier(jobs + 1)
-		logging.info('Connecting to peers in ' + str(jobs) + ' threads')
+		logging.info('Connecting to peers in {} threads'.format(jobs))
 
 		# Create thread pool
 		for i in range(jobs):
@@ -140,7 +140,7 @@ class SwarmAnalyzer:
 			delay = peer.revisit - time.perf_counter()
 			better_peer_reaction = 60
 			if delay > 0:
-				logging.info('Delaying peer evaluation for ' + str(better_peer_reaction) + ' seconds, target is ' + str(delay/60) + ' minutes ...')
+				logging.info('Delaying peer evaluation for {} seconds, target is {} minutes ...'.format(better_peer_reaction, delay/60))
 				self.shutdown_request.wait(better_peer_reaction)
 				self.peers.put(peer)
 				continue
@@ -149,7 +149,7 @@ class SwarmAnalyzer:
 			if peer.key is None:
 				logging.info('################ Evaluating a new peer ################')
 			else:
-				logging.info('################ Revisiting peer with database id ' + str(peer.key) + ' ################')
+				logging.info('################ Revisiting peer with database id {} ################'.format(peer.key))
 			logging.info('Connecting to peer ...')
 			try:
 				sock = socket.create_connection((peer.ip_address, peer.port), self.timeout)
@@ -158,7 +158,7 @@ class SwarmAnalyzer:
 					self.first_evaluation_error.increment()
 				else:
 					self.late_evaluation_error.increment()
-				logging.warning('Connection establishment failed: ' + str(err))
+				logging.warning('Connection establishment failed: {}'.format(err))
 				continue
 			logging.info('Connection established')
 
@@ -174,21 +174,21 @@ class SwarmAnalyzer:
 					self.first_evaluation_error.increment()
 				else:
 					self.late_evaluation_error.increment()
-				logging.warning('Peer evaluation failed: ' + str(err))
+				logging.warning('Peer evaluation failed: {}'.format(err))
 				continue
 
 			# Catch all exceptions to enable ongoing analysis, should never happen
 			except Exception as err:
 				self.critical_evaluation_error.increment()
 				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('Unexpected error during peer evaluation: ' + str(err) + '\n' + ''.join(tb))
+				logging.critical('Unexpected error during peer evaluation: {}\n{}'.format(err, ''.join(tb)))
 				continue
 
 			# Close connection
 			try:
 				sock.close()
 			except OSError as err:
-				logging.warning('Closing of connectioin failed: ' + str(err))
+				logging.warning('Closing of connectioin failed: {}'.format(err))
 			else:
 				logging.info('Connection closed')
 			
@@ -204,7 +204,7 @@ class SwarmAnalyzer:
 	def start_tracker_requests(self, interval):
 		# Thread termination indicator
 		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
-		logging.info('Desired interval between asking the tracker for new peers is ' + str(interval) + ' minutes')
+		logging.info('Desired interval between asking the tracker for new peers is {} minutes'.format(interval))
 		
 		# Create tracker request threads
 		interval_seconds = interval * 60
@@ -225,12 +225,12 @@ class SwarmAnalyzer:
 
 		while not self.shutdown_request.is_set():
 			# Ask tracker
-			logging.info('Contacting tracker for torrent with id ' + str(torrent_key))
+			logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
 			try:
 				tracker.issue_request(self.torrents[torrent_key].info_hash)
 				peer_ips = tracker.get_peers()
 			except tracker_request.TrackerError as err:
-				logging.warning('Could not receive peers from tracker: ' + str(err))
+				logging.warning('Could not receive peers from tracker: {}'.format(err))
 				interval = desired_interval
 			else:
 				# Put peers in queue
@@ -248,7 +248,7 @@ class SwarmAnalyzer:
 					percentage = int(duplicate_counter * 100 / len(peer_ips))
 				except ZeroDivisionError:
 					percentage = 0
-				logging.info(str(len(peer_ips)) + ' peers received, ' + str(duplicate_counter) + ' duplicates, equals ' + str(percentage) + '%')
+				logging.info('{} peers received, {} duplicates, equals {}%'.format(len(peer_ips), duplicate_counter, percentage))
 			
 				# Receive interval recommendation from tracker for logging purposes # debug
 				try:
@@ -265,7 +265,7 @@ class SwarmAnalyzer:
 					interval = max(min_interval, desired_interval)
 
 			# Wait accordingly
-			logging.info('Waiting ' + str(interval/60) + ' minutes until next tracker request ...')
+			logging.info('Waiting {} minutes until next tracker request ...'.format(interval/60))
 			self.shutdown_request.wait(interval)
 		
 		# Propagate thread termination
@@ -278,9 +278,9 @@ class SwarmAnalyzer:
 	def start_passive_evaluation(self, port):
 		# Create the server, binding to outside address on custom port
 		if not 0 <= port <= 65535:
-			raise AnalyzerError('Invalid port number: ' + str(port))
+			raise AnalyzerError('Invalid port number: {}'.format(port))
 		address = (socket.gethostname(), port)
-		logging.info('Starting passive evaluation server on host ' + address[0] + ', port ' + str(address[1]))
+		logging.info('Starting passive evaluation server on host {}, port {}'.format(address[0], address[1]))
 		try:
 			self.server = PeerEvaluationServer(address, PeerHandler, 
 					info_hash=self.torrent.info_hash, 
@@ -292,7 +292,7 @@ class SwarmAnalyzer:
 					success=self.passive_success,
 					error=self.passive_error)
 		except PermissionError as err:
-			raise AnalyzerError('Could not start server on port ' + str(port) + ': ' + str(err))
+			raise AnalyzerError('Could not start server on port {}: {}'.format(port, err))
 
 		# Activate the server in it's own thread
 		server_thread = threading.Thread(target=self.server.serve_forever)
@@ -301,7 +301,7 @@ class SwarmAnalyzer:
 		
 		# Remember activation to enable shutdown
 		self.passive_evaluation = True
-		logging.info('Listening on port ' + str(port) + ' for incomming peer connections')
+		logging.info('Listening on port {} for incomming peer connections'.format(port))
 
 	## Comsumes peers from database queue and put back in main queue
 	def start_database_archiver(self):
@@ -321,7 +321,7 @@ class SwarmAnalyzer:
 	#  @note This is a worker method to be started as a thread
 	def _database_archivator(self, database_session):
 		# Log thread id
-		logging.info('The identifier for this database archiver thread is ' + str(threading.get_ident()))
+		logging.info('The identifier for this database archiver thread is {}'.format(threading.get_ident()))
 
 		while True:
 			# Get new peer to store
@@ -338,7 +338,7 @@ class SwarmAnalyzer:
 				self.critical_database_error.increment()
 				self.database_queue.task_done()
 				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('Unexpected error during database update: ' + str(err) + '\n' + ''.join(tb))
+				logging.critical('Unexpected error during database update: {}\n{}'.format(err, ''.join(tb)))
 				continue
 
 			# Update statistical counters
@@ -357,33 +357,30 @@ class SwarmAnalyzer:
 	## Print evaluation statistics
 	def log_statistics(self):
 		# Peer queue, inaccurate due to consumer threads
-		logging.info('Currently are about ' + str(self.peers.qsize()) + ' peers in queue left')
+		logging.info('Currently are about {} peers in queue left'.format(self.peers.qsize()))
 
 		# Received peers
 		try:
 			percentage = int(self.total_duplicate * 100 / self.total_received_peers)
 		except ZeroDivisionError:
 			percentage = 0
-		logging.info('In total ' + str(self.total_received_peers) + ' peers received, ' + str(self.total_duplicate) + ' duplicates, equals ' + str(percentage) + '%')
+		logging.info('In total {} peers received, {} duplicates, equals {}%'.format(self.total_received_peers, self.total_duplicate, percentage))
 
 		# Evaluation errors
-		logging.info('Active evaluations: ' + str(self.active_success.get()) + ' successful, ' +
-				str(self.first_evaluation_error.get()) + ' failed on first contact, ' +
-				str(self.late_evaluation_error.get()) + ' failed on later contact')
-		logging.info('Passive evaluations: ' + str(self.passive_success.get()) + ' successful, ' + 
-				str(self.passive_error.get()) + ' failed')
+		logging.info('Active evaluations: {} successful, {} failed on first contact, {} failed on later contact'.format(
+				self.active_success.get(), self.first_evaluation_error.get(), self.late_evaluation_error.get()))
+		logging.info('Passive evaluations: {} successful, {} failed'.format(self.passive_success.get(), self.passive_error.get()))
 
 		# Database access
-		logging.info('Peer database access: ' + str(self.database_new_peer.get()) + ' stored, ' +
-				str(self.database_peer_update.get()) + ' updated')
+		logging.info('Peer database access: {} stored, {} updated'.format(self.database_new_peer.get(), self.database_peer_update.get()))
 
 		# Critical errors
 		critical_evaluation_error_counter = self.critical_evaluation_error.get()
 		if critical_evaluation_error_counter > 0:
-			logging.critical('Encountered ' + str(critical_evaluation_error_counter) + ' critical evaluation errors')
+			logging.critical('Encountered {} critical evaluation errors'.format(critical_evaluation_error_counter))
 		critical_database_error_counter = self.critical_database_error.get()
 		if critical_database_error_counter > 0:
-			logging.critical('Encountered ' + str(critical_database_error_counter) + ' critical database errors')
+			logging.critical('Encountered {} critical database errors'.format(critical_database_error_counter))
 
 	## Shutdown all worker threads if started
 	def __exit__(self, exception_type, exception_value, traceback):
@@ -480,7 +477,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			peer = peer_wire_protocol.evaluate_peer(old_peer, self.request,
 					self.server.info_hash, self.server.own_peer_id, self.server.pieces_number, self.server.delay)
 		except peer_wire_protocol.PeerError as err:
-			logging.warning('Could not evaluate incoming peer: ' + str(err))
+			logging.warning('Could not evaluate incoming peer: {}'.format(err))
 			self.server.error.increment()
 		else:
 			key_peer = self.server.database_queue.put(peer)

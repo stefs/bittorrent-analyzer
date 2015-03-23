@@ -3,10 +3,10 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 
 ## Todo
 ### Next steps
-- Ergebinsse auf Plausibilität prüfen, Warum keine volltändigen Downloads beobachtet?
-- ! More tests on VM
 - OK - Log city / region
-- ! Accept UDP trackers
+- ! Ergebinsse auf Plausibilität prüfen, Warum keine volltändigen Downloads beobachtet?
+- ! More tests on VM
+- ! Accept UDP trackers (BEP 15)
 - ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
 - ! Accept magnet links (partial BEP 9)
 - Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
@@ -45,7 +45,7 @@ These are the standard installation steps on a Debian based system.
 4. `source py3env/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`
-7. Download the [GeoLite2 Country Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-Country.mmdb`
+7. Download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-City.mmdb`
 
 ## Usage
 1. `source py3env/bin/activate`

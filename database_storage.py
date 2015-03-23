@@ -57,7 +57,7 @@ class Database:
 	#  @exception DatabaseError
 	def __init__(self, output):
 		# Create engine, usable with SQLAlchemy Expression Language, used via SQLAlchemy Object Relational Mapper
-		self.database_path = 'sqlite:///' + output + '.sqlite'
+		self.database_path = 'sqlite:///{}.sqlite'.format(output)
 		self.engine = sqlalchemy.create_engine(self.database_path, echo=False) # echo enables debug output
 
 		# Create empty tables
@@ -68,7 +68,7 @@ class Database:
 		try:
 			self.reader = geoip2.database.Reader('input/GeoLite2-City.mmdb')
 		except (FileNotFoundError, maxminddb.errors.InvalidDatabaseError) as err:
-			raise DatabaseError('Failed to open geolocation database: ' + str(err))
+			raise DatabaseError('Failed to open geolocation database: {}'.format(err))
 		logging.debug('Opened GeoIP2 database')
 
 	## Returnes thread safe scoped session object according to http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html
@@ -101,7 +101,7 @@ class Database:
 
 			# Return Peer with key
 			database_id = new_peer.id
-			logging.info('Stored new peer with database id ' + str(database_id))
+			logging.info('Stored new peer with database id {}'.format(database_id))
 			*old_peer, key = peer
 			return peer_wire_protocol.Peer(*old_peer, key=database_id)
 
@@ -110,7 +110,7 @@ class Database:
 			# Get and delete old entry
 			database_peer = session.query(Peer).filter_by(id=peer.key).first()
 			session.delete(database_peer)
-			
+
 			# Copy first to last statistics on second visit
 			if database_peer.last_pieces is None:
 				database_peer.last_pieces = database_peer.first_pieces
@@ -122,7 +122,7 @@ class Database:
 			time_delta_seconds = time_delta.total_seconds()
 			pieces_delta = peer.pieces - database_peer.last_pieces
 			pieces_per_second = pieces_delta / time_delta_seconds
-			logging.info('Download speed since last visit is ' + str(pieces_per_second) + ' pieces per second')
+			logging.info('Download speed since last visit is {} pieces per second'.format(pieces_per_second))
 
 			# Update peer
 			database_peer.last_pieces = peer.pieces
@@ -134,7 +134,7 @@ class Database:
 			# Store updated peer
 			session.add(database_peer)
 			session.commit()
-			logging.info('Updated peer with database id ' + str(peer.key))
+			logging.info('Updated peer with database id {}'.format(peer.key))
 			return peer
 
 	## Uses a local GeoIP2 database to geolocate an ip address
@@ -144,12 +144,12 @@ class Database:
 		try:
 			response = self.reader.city(ip_address)
 		except geoip2.errors.AddressNotFoundError as err:
-			logging.warning('IP address is not in the database: ' + str(err))
+			logging.warning('IP address is not in the database: {}'.format(err))
 			return None, None, None
 		else:
-			logging.info('Location of ip address is ' + str(response.city.name) + ', ' + str(response.country.name) + ', ' + str(response.continent.name))
+			logging.info('Location of ip address is {}, {}, {}'.format(response.city.name, response.country.name, response.continent.name))
 			return response.city.name, response.country.iso_code, response.continent.code
-	
+
 	## Store a given torrent in the database
 	#  @param torrent Torrent named tuple
 	#  @param path File system path the torrent file was located
@@ -162,10 +162,10 @@ class Database:
 				filepath=path)
 		session.add(new_torrent)
 		session.commit()
-		
+
 		# Return Torrent with key
 		database_id = new_torrent.id
-		logging.info('Stored ' + str(torrent) + ' with database id ' + str(database_id))
+		logging.info('Stored {} with database id {}'.format(torrent, database_id))
 		return database_id
 
 	## Relase resources
@@ -173,7 +173,7 @@ class Database:
 		# Close GeoIP2 database reader
 		self.reader.close()
 		logging.info('GeoIP2 database closed')
-		logging.info('Results written to ' + self.database_path)
+		logging.info('Results written to {}'.format(self.database_path))
 
 ## Indicates database related errors
 class DatabaseError(Exception):
@@ -186,12 +186,12 @@ def get_short_hostname(ip_address):
 	try:
 		long_host = socket.gethostbyaddr(ip_address)[0]
 	except OSError as err:
-		logging.warning('Get host by address failed: ' + str(err))
+		logging.warning('Get host by address failed: {}'.format(err))
 		return None
 	else:
 		host_list = long_host.split('.')
 		host = host_list[-2] + '.' + host_list[-1]
-		logging.info('Host name is ' + host)
+		logging.info('Host name is {}'.format(host))
 		return host
 
 ## Anonymize an IP address according to https://support.google.com/analytics/answer/2763052?hl=en
@@ -205,6 +205,6 @@ def anonymize_ip(ip_address):
 	elif ip.version == 6:
 		network = ip_address + '/48'
 		net = ipaddress.IPv6Network(network, strict=False)
-	logging.info('Anonymized ip address is ' + str(net.network_address))
+	logging.info('Anonymized ip address is {}'.format(net.network_address))
 	return str(net.network_address)
 	
