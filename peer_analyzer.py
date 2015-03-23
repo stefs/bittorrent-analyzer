@@ -48,14 +48,14 @@ class SwarmAnalyzer:
 		self.active_success = SharedCounter()
 		self.passive_success = SharedCounter()
 		self.passive_error = SharedCounter()
-		
+
 		# Analysis parts, activated via starter methods
 		self.shutdown_request = threading.Event()
 		self.active_evaluation = False
 		self.tracker_requests = False
 		self.passive_evaluation = False
 		self.database_archive = False
-		
+
 		# Create database
 		try:
 			self.database = database_storage.Database(output)
@@ -65,7 +65,7 @@ class SwarmAnalyzer:
 	## Resouces are allocated in starter methods
 	def __enter__(self):
 		return self
-	
+
 	## Reads all torrent files from input directory
 	def import_torrents(self):
 		# Create torrent dictionary
@@ -82,7 +82,7 @@ class SwarmAnalyzer:
 				# Sort out non torrents
 				if not filename.endswith('.torrent'):
 					continue
-					
+
 				# Read torrent file
 				path = os.path.join(dirname, filename)
 				try:
@@ -99,14 +99,14 @@ class SwarmAnalyzer:
 				torrent = torrent_file.Torrent(announce_url, info_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
-		
-		# Close database sesssion						
+
+		# Close database sesssion
 		database_session.close()
 		if len(self.torrents) > 0:
 			logging.info('Imported {} torrent files'.format(len(self.torrents)))
 		else:
 			raise AnalyzerError('No valid torrent files found')
-	
+
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
 	def start_active_evaluation(self, jobs):
@@ -122,7 +122,7 @@ class SwarmAnalyzer:
 			thread.daemon = True
 			# Start thread
 			thread.start()
-		
+
 		# Remember activation to enable shutdown
 		self.active_evaluation = True
 
@@ -191,21 +191,21 @@ class SwarmAnalyzer:
 				logging.warning('Closing of connectioin failed: {}'.format(err))
 			else:
 				logging.info('Connection closed')
-			
+
 			# Put in archiver queue
 			self.active_success.increment()
 			self.database_queue.put(peer)
-		
+
 		# Propagate shutdown finish
 		self.active_shutdown_done.wait()
 
-	## Continuously asks the tracker server for new peers	
+	## Continuously asks the tracker server for new peers
 	#  @param interval Timer interval between tracker requests are issued in minutes
 	def start_tracker_requests(self, interval):
 		# Thread termination indicator
 		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
 		logging.info('Desired interval between asking the tracker for new peers is {} minutes'.format(interval))
-		
+
 		# Create tracker request threads
 		interval_seconds = interval * 60
 		for torrent in self.torrents:
@@ -249,7 +249,7 @@ class SwarmAnalyzer:
 				except ZeroDivisionError:
 					percentage = 0
 				logging.info('{} peers received, {} duplicates, equals {}%'.format(len(peer_ips), duplicate_counter, percentage))
-			
+
 				# Receive interval recommendation from tracker for logging purposes # debug
 				try:
 					tracker.get_interval()
@@ -267,7 +267,7 @@ class SwarmAnalyzer:
 			# Wait accordingly
 			logging.info('Waiting {} minutes until next tracker request ...'.format(interval/60))
 			self.shutdown_request.wait(interval)
-		
+
 		# Propagate thread termination
 		self.tracker_shutdown_done.wait()
 
@@ -282,8 +282,8 @@ class SwarmAnalyzer:
 		address = (socket.gethostname(), port)
 		logging.info('Starting passive evaluation server on host {}, port {}'.format(address[0], address[1]))
 		try:
-			self.server = PeerEvaluationServer(address, PeerHandler, 
-					info_hash=self.torrent.info_hash, 
+			self.server = PeerEvaluationServer(address, PeerHandler,
+					info_hash=self.torrent.info_hash,
 					own_peer_id=self.own_peer_id,
 					pieces_number=self.torrent.pieces_count,
 					database_queue=self.database_queue,
@@ -298,7 +298,7 @@ class SwarmAnalyzer:
 		server_thread = threading.Thread(target=self.server.serve_forever)
 		server_thread.daemon = True
 		server_thread.start()
-		
+
 		# Remember activation to enable shutdown
 		self.passive_evaluation = True
 		logging.info('Listening on port {} for incomming peer connections'.format(port))
@@ -315,7 +315,7 @@ class SwarmAnalyzer:
 
 		# Remember activation to enable shutdown
 		self.database_archive = True
-	
+
 	## Consumes peers and stores them in the database
 	#  @param database_session Database session instance
 	#  @note This is a worker method to be started as a thread
@@ -350,7 +350,7 @@ class SwarmAnalyzer:
 			# Write back in progress peers, discard finished ones
 			if peer.pieces < self.torrents[peer.torrent].pieces_count:
 				self.peers.put(peer)
-		
+
 			# Allow waiting for all peers to be stored at shutdown
 			self.database_queue.task_done()
 
@@ -386,7 +386,7 @@ class SwarmAnalyzer:
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Propagate shutdown request
 		self.shutdown_request.set()
-		
+
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
 			self.active_shutdown_done.wait()
@@ -404,7 +404,7 @@ class SwarmAnalyzer:
 			self.database_queue.join()
 			self.database_session.close()
 			logging.info('Database session closed')
-		
+
 		self.database.close()
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
@@ -454,7 +454,7 @@ class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	def __init__(self, server_address, RequestHandlerClass, **server_args):
 		# Call base constructor
 		socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
-		
+
 		# Add attributes that are later available in handler method
 		self.__dict__.update(server_args)
 
@@ -482,7 +482,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		else:
 			key_peer = self.server.database_queue.put(peer)
 			self.server.success.increment()
-	
+
 ## Simple thread safe counter
 class SharedCounter:
 	## Set value and create a lock

@@ -17,7 +17,7 @@ class PeerSession:
 	def __init__(self, socket, info_hash, peer_id):
 		# Store peer socket
 		self.sock = socket
-		
+
 		# Store common parameters
 		self.info_hash = info_hash
 		self.peer_id = peer_id

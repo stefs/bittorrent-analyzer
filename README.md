@@ -4,11 +4,11 @@ Bachelor thesis about the analysis of BitTorrent trackers and peers
 ## Todo
 ### Next steps
 - OK - Log city / region
-- ! Ergebinsse auf Plausibilität prüfen, Warum keine volltändigen Downloads beobachtet?
-- ! More tests on VM
 - ! Accept UDP trackers (BEP 15)
-- ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
 - ! Accept magnet links (partial BEP 9)
+- ! Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?
+- ! More tests on VM
+- ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
 - Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 - Tracker exchange message support (BEP 28)
 - Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
@@ -74,5 +74,6 @@ tail -n +0 -f output/2015-03-12_18-06-35.log
   Level of detail for log messages (default: INFO)
 
 ## License
-© Copyright 2015 Stefan Schindler  
+Copyright © 2015 Stefan Schindler  
 Licensed under the GNU General Public License Version 3
+
