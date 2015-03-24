@@ -1,29 +1,36 @@
-# bittorrent-analyzer
-Bachelor thesis about the analysis of BitTorrent trackers and peers
+# BitTorrent peer analyzer
+This tool is aimed at counting confirmed downloads of performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 
 ## Todo
 ### Next steps
-- OK - Log city / region
-- ! Accept UDP trackers (BEP 15)
-- ! Accept magnet links (partial BEP 9)
-- ! Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?
-- ! More tests on VM
-- ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
-- Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
-- Tracker exchange message support (BEP 28)
-- Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
-- Import Torrent file(s) in database and start evaluating from there (incl. file name, name collissions!)
-- ? Support encrypted peer connections
-- ? Pause evaluation on network outage
-- (Record active thread sleeping statistics)
-- (Document database needed)
+* ! Accept magnet links (partial BEP 9)
+* ! Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?
+* ! More tests on VM
+* ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
+
+### Later steps
+* Scrape request zum Vergleich
+* Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
+* Tracker exchange message support (BEP 28)
+* Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
+* Import Torrent file(s) in database and start evaluating from there (incl. file name, name collissions!)
+* ? Support encrypted peer connections
+* ? Pause evaluation on network outage
+* (Record active thread sleeping statistics)
+* (Document database needed)
 
 ### Code quality
-- Review logging messages
-- Review doxygen comments
-- Review documentation references
-- Compact some statements
-- Implement unit tests?
+* Review logging messages
+* Review doxygen comments
+* Review documentation references
+* Compact some statements
+* Implement unit tests?
+
+## Features
+* Import multiple torrent files at once
+* Log city, countra and continent via IP address - NEW
+* Request new peers using the HTTP and UDP (BEP 15) tracker protocols, IPv4 only - NEW
+* (list incomplete)
 
 ## Installation
 ### Requirements
@@ -51,11 +58,10 @@ These are the standard installation steps on a Debian based system.
 1. `source py3env/bin/activate`
 2. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
 3. `deactivate`
-4. Statistics are saved in `output/` directory as a SQLite database.
+4. Logs and results are saved in the `output/` directory.
 
-tail -n +0 -f output/2015-03-12_18-06-35.log
+The following commandline options are available:
 
-### Command Line Arguments:
 * `<torrent>`  
   File system path to the torrent file to be examined
 * `-h, --help`  
@@ -73,7 +79,12 @@ tail -n +0 -f output/2015-03-12_18-06-35.log
 * `-l <level>, --loglevel <level>`  
   Level of detail for log messages (default: INFO)
 
-## License
+## About
+### Thanks
+* University advisor: ...
+* Inspiration: *[m2t](https://github.com/erindru/m2t/tree/75b457e65d71b0c42afdc924750448c4aaeefa0b)* by Erin Drummond under GPLv3
+
+### Copyright
 Copyright © 2015 Stefan Schindler  
 Licensed under the GNU General Public License Version 3
 

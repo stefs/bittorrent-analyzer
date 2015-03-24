@@ -48,14 +48,14 @@ try:
 		# Start database archiver
 		analyzer.start_database_archiver()
 
-		# Start active evaluator threads
-		if args.jobs is not None:
-			analyzer.start_tracker_requests(args.interval)
-			analyzer.start_active_evaluation(args.jobs)
-
 		# Start passive evaluation server
 		if args.port is not None:
 			analyzer.start_passive_evaluation(args.port)
+
+		# Start active evaluator threads
+		if args.jobs is not None:
+			analyzer.start_tracker_requests(args.interval) # start after passive evaluation
+			analyzer.start_active_evaluation(args.jobs)
 
 		# Wait for termination
 		try:

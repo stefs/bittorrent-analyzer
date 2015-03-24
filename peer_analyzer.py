@@ -35,12 +35,11 @@ class SwarmAnalyzer:
 		logging.info('Time delay for revisiting unfinished peers is {} minutes'.format(delay))
 		self.timeout = timeout
 		logging.info('Timeout for network operations is {} seconds'.format(timeout))
+		self.listen_port = None
 
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
 		self.late_evaluation_error = SharedCounter()
-		self.critical_evaluation_error = SharedCounter()
-		self.critical_database_error = SharedCounter()
 		self.database_peer_update = SharedCounter()
 		self.database_new_peer = SharedCounter()
 		self.total_received_peers = 0
@@ -179,7 +178,6 @@ class SwarmAnalyzer:
 
 			# Catch all exceptions to enable ongoing analysis, should never happen
 			except Exception as err:
-				self.critical_evaluation_error.increment()
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('Unexpected error during peer evaluation: {}\n{}'.format(err, ''.join(tb)))
 				continue
@@ -201,10 +199,10 @@ class SwarmAnalyzer:
 
 	## Continuously asks the tracker server for new peers
 	#  @param interval Timer interval between tracker requests are issued in minutes
+	#  @note Start passive evaluation first to ensure port propagation
 	def start_tracker_requests(self, interval):
 		# Thread termination indicator
 		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
-		logging.info('Desired interval between asking the tracker for new peers is {} minutes'.format(interval))
 
 		# Create tracker request threads
 		interval_seconds = interval * 60
@@ -218,21 +216,25 @@ class SwarmAnalyzer:
 
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
 	#  @param torrent_key Torrent key specifying the target torrent and tracker
-	#  @param desired_interval Requested interval in seconds
+	#  @param interval Time delay between contacting the tracker in seconds
 	#  @note This is a worker method to be started as a thread
-	def _tracker_requestor(self, torrent_key, desired_interval):
-		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url)
+	def _tracker_requestor(self, torrent_key, interval):
+		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url, self.timeout, self.listen_port)
 
 		while not self.shutdown_request.is_set():
 			# Ask tracker
 			logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
 			try:
-				tracker.issue_request(self.torrents[torrent_key].info_hash)
-				peer_ips = tracker.get_peers()
+				tracker_interval, peer_ips = tracker.announce_request(self.torrents[torrent_key].info_hash)
 			except tracker_request.TrackerError as err:
-				logging.warning('Could not receive peers from tracker: {}'.format(err))
-				interval = desired_interval
+				logging.error('Could not receive peers from tracker: {}'.format(err))
 			else:
+				# Log recommended interval
+				if interval > tracker_interval:
+					logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60, interval/60))
+				else:
+					logging.info('Tracker recommended interval of {} minutes'.format(tracker_interval/60))
+
 				# Put peers in queue
 				self.peers.duplicate.reset()
 				for peer_ip in peer_ips:
@@ -250,21 +252,7 @@ class SwarmAnalyzer:
 					percentage = 0
 				logging.info('{} peers received, {} duplicates, equals {}%'.format(len(peer_ips), duplicate_counter, percentage))
 
-				# Receive interval recommendation from tracker for logging purposes # debug
-				try:
-					tracker.get_interval()
-				except tracker_request.TrackerError:
-					pass
-
-				# Check requested_interval against min interval
-				# TODO test
-				min_interval = tracker.get_min_interval()
-				if min_interval is None:
-					interval = desired_interval
-				else:
-					interval = max(min_interval, desired_interval)
-
-			# Wait accordingly
+			# Wait interval
 			logging.info('Waiting {} minutes until next tracker request ...'.format(interval/60))
 			self.shutdown_request.wait(interval)
 
@@ -280,7 +268,6 @@ class SwarmAnalyzer:
 		if not 0 <= port <= 65535:
 			raise AnalyzerError('Invalid port number: {}'.format(port))
 		address = (socket.gethostname(), port)
-		logging.info('Starting passive evaluation server on host {}, port {}'.format(address[0], address[1]))
 		try:
 			self.server = PeerEvaluationServer(address, PeerHandler,
 					info_hash=self.torrent.info_hash,
@@ -293,6 +280,8 @@ class SwarmAnalyzer:
 					error=self.passive_error)
 		except PermissionError as err:
 			raise AnalyzerError('Could not start server on port {}: {}'.format(port, err))
+		self.listen_port = port
+		logging.info('Started passive evaluation server on host {}, port {}'.format(address[0], address[1]))
 
 		# Activate the server in it's own thread
 		server_thread = threading.Thread(target=self.server.serve_forever)
@@ -335,7 +324,6 @@ class SwarmAnalyzer:
 			# Catch all exceptions to enable ongoing thread, should never happen
 			except Exception as err:
 				database_session.rollback()
-				self.critical_database_error.increment()
 				self.database_queue.task_done()
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('Unexpected error during database update: {}\n{}'.format(err, ''.join(tb)))
@@ -373,14 +361,6 @@ class SwarmAnalyzer:
 
 		# Database access
 		logging.info('Peer database access: {} stored, {} updated'.format(self.database_new_peer.get(), self.database_peer_update.get()))
-
-		# Critical errors
-		critical_evaluation_error_counter = self.critical_evaluation_error.get()
-		if critical_evaluation_error_counter > 0:
-			logging.critical('Encountered {} critical evaluation errors'.format(critical_evaluation_error_counter))
-		critical_database_error_counter = self.critical_database_error.get()
-		if critical_database_error_counter > 0:
-			logging.critical('Encountered {} critical database errors'.format(critical_database_error_counter))
 
 	## Shutdown all worker threads if started
 	def __exit__(self, exception_type, exception_value, traceback):

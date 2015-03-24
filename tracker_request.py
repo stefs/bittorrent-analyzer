@@ -16,28 +16,41 @@ class TrackerCommunicator:
 	## Initialize a tracker
 	#  @param peer_id Own peer id
 	#  @param announce_url The announce URL representing the tracker
-	def __init__(self, peer_id, announce_url):
+	#  @param timeout Timeout for network operations in seconds
+	#  @param port Port number to be announced to trackers
+	def __init__(self, peer_id, announce_url, timeout, port=None):
 		self.peer_id = peer_id
 		self.announce_url = announce_url
+		self.timeout = timeout
+		self.port = 0 if port is None else port # TODO how react trackers to a zero port?
 
 	## Issue a request for peers to the tracker
 	#  @param info_hash Info hash for the desired torrent
+	#  @return Request interval, ip-port list
 	#  @exception TrackerError
-	def issue_request(self, info_hash):
+	def announce_request(self, info_hash):
 		parsed = urllib.parse.urlparse(self.announce_url)
 		if parsed.scheme in ["http", "https"]:
-			self._http_request(info_hash)
+			interval, ip_bytes = self._http_request(info_hash)
 		elif parsed.scheme == "udp":
-			self._udp_request(info_hash)
+			try:
+				interval, ip_bytes = self._udp_request(info_hash)
+			except (OSError, TrackerError) as err:
+				raise TrackerError('UDP tracker request failed: {}'.format(err))
 		else:
 			raise TrackerError('Unsupported protocol: {}'.format(parsed.scheme))
+		ips = parse_ips(ip_bytes)
+		#ips = random.sample(ips, 8) # debug
+		return interval, ips
 
 	## Issue a HTTP GET request on the announce URL
 	#  @param info_hash Info hash for the desired torrent
+	#  @return Request interval, ip-port bytes block
 	#  @exception TrackerError
 	def _http_request(self, info_hash):
 		# Assemble tracker request
-		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': '30301', 'uploaded': '0', 'downloaded': '0', 'left': '23'}
+		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': self.port,
+				'uploaded': '0', 'downloaded': '0', 'left': '23'} # TODO how to tamper the stats?
 		request_parameters['compact'] = '1'
 		request_parameters_optional = {'ip': None, 'event': None}
 		request_parameters_encoded = urllib.parse.urlencode(request_parameters)
@@ -47,7 +60,7 @@ class TrackerCommunicator:
 
 		# Issue GET request
 		try:
-			with urllib.request.urlopen(request_url) as http_response:
+			with urllib.request.urlopen(request_url, timeout=self.timeout) as http_response:
 				if http_response.status == http.client.OK:
 					logging.info('HTTP response status code is OK')
 					response_bencoded = http_response.read()
@@ -58,105 +71,92 @@ class TrackerCommunicator:
 
 		# Decode response
 		try:
-			self.response = bencodepy.decode(response_bencoded)
+			response = bencodepy.decode(response_bencoded)
 		except bencodepy.exceptions.DecodingError as err:
 			raise TrackerError('Unable to decode response: ' + str(err))
-		if b'failure reason' in self.response:
-			failure_reason_bytes = self.response[b'failure reason']
+		if b'failure reason' in response:
+			failure_reason_bytes = response[b'failure reason']
 			failure_reason = failure_reason_bytes.decode()
 			raise TrackerError('Tracker responded with failure reason: ' + str(failure_reason))
 
-	## Issue announce request according to according to http://www.bittorrent.org/beps/bep_0015.html
-	#  @param info_hash Info hash for the desired torrent
-	def _udp_request(self, info_hash):
-		raise NotImplementedError # TODO
-		# Send connect request
-
-		# Parse connection id from connect response
-
-		# Send announce request
-
-		# Pase announce response
-
-	## Extract recommended request interval from response
-	#  @return Recommended request interval in seconds
-	#  @exception TrackerError
-	#  @note Call issue_request method first
-	def get_interval(self):
+		# Extract request interval
 		try:
-			interval = self.response[b'interval']
+			interval = response[b'interval']
 		except KeyError as err:
-			raise TrackerError('Tracker did not send a recommended request interval: ' + str(err))
+			interval = 0
+		if type(interval) is not int:
+			interval = 0
 
-		if type(interval) is int:
-			logging.info('Recommended request interval is ' + str(interval/60) + ' minutes')
-			return interval
-		else:
-			raise TrackerError('Tracker sent invalid request interval')
-
-	## Extract minimum request interval from response if present, since this is an optional value
-	#  @return Minimum request interval in seconds or None
-	#  @note Call issue_request method first
-	def get_min_interval(self):
-		try:
-			min_interval = self.response[b'min interval']
-		except KeyError as err:
-			logging.info('Tracker did not send a minimum request interval: ' + str(err))
-			return None
-
-		if type(min_interval) is int:
-			logging.info('Minimum request interval in is ' + str(min_interval/60) + ' minutes')
-			return min_interval
-		else:
-			logging.warning('Tracker sent invalid minimum request interval')
-			return None
-
-	## Extract peer list from response
-	#  @return Tuples list of IPv4 or IPv6 addresses and port numbers
-	#  @exception TrackerError
-	#  @note Call issue_request method first
-	def get_peers(self):
 		# Extract list of IPv4 peers in byte form
 		try:
-			peers_bytes = self.response[b'peers']
+			ip_bytes = response[b'peers']
 		except KeyError as err:
 			raise TrackerError('Tracker did not send any peers: ' + str(err))
-		ipv4_peers_count = int(len(peers_bytes) / 6)
-		peer_bytes = list()
-		for peer in range(0, ipv4_peers_count):
-			peer_start_byte = peer * 6
-			peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 4]
-			peer_port_bytes = peers_bytes[peer_start_byte + 4:peer_start_byte + 6]
-			peer_bytes.append((peer_ip_bytes, peer_port_bytes))
+		return interval, ip_bytes
 
-		# Extract list of IPv6 peers in byte form
-		ipv6_peers_count = 0
-		if b'peers6' in self.response:
-			peers_bytes = self.response[b'peers6']
-			ipv6_peers_count = int(len(peers_bytes) / 18)
-			for peer in range(0, ipv6_peers_count):
-				peer_start_byte = peer * 18
-				peer_ip_bytes = peers_bytes[peer_start_byte:peer_start_byte + 16]
-				peer_port_bytes = peers_bytes[peer_start_byte + 16:peer_start_byte + 18]
-				peer_bytes.append((peer_ip_bytes, peer_port_bytes))
-		logging.info('Received number of IPv4 peers is ' + str(ipv4_peers_count) + ', number of IPv6 peers is ' + str(ipv6_peers_count))
+	## Issue announce request according to according to http://www.bittorrent.org/beps/bep_0015.html
+	#  and https://github.com/erindru/m2t/blob/75b457e65d71b0c42afdc924750448c4aaeefa0b/m2t/scraper.py
+	#  @param info_hash Info hash for the desired torrent
+	#  @exception OSError, TrackerError
+	#  @return Request interval, ip-port bytes block
+	def _udp_request(self, info_hash):
+		# Establish connection
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		sock.settimeout(self.timeout)
+		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
 
-		# Parse IP adresses and ports
-		peer_ips = list()
-		for raw_peer in peer_bytes:
-			try:
-				peer_ip = str(ipaddress.ip_address(raw_peer[0]))
-			except ValueError as err:
-				logging.warning('Tracker sent invalid ip address: ' + str(err))
-			else:
-				peer_port_tuple = struct.unpack("!H", raw_peer[1])
-				peer_port = peer_port_tuple[0]
-				peer_ips.append((peer_ip, peer_port))
+		# Send connect request
+		connection_id = 0x41727101980
+		action = 0x0
+		transaction_id = udp_transaction_id()
+		req = struct.pack('!qii', connection_id, action, transaction_id)
+		sock.sendto(req, conn)
 
-		# Return combined IPv4 and IPv6 list
-		#import random # debug
-		#peer_ips = random.sample(peer_ips, 8) # debug
-		return peer_ips
+		# Parse connection id from connect response
+		buf = sock.recvfrom(2048)[0]
+		if len(buf) < 16:
+			raise TrackerError('Wrong length connect response: {}'.format(len(buf)))
+		action = struct.unpack_from('!i', buf)[0]
+		res_transaction_id = struct.unpack_from('!i', buf, 4)[0]
+		if res_transaction_id != transaction_id:
+			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {}, got {}'.format(
+					transaction_id, res_transaction_id))
+		if action == 0x0:
+			connection_id = struct.unpack_from('!q', buf, 8)[0]
+		elif action == 0x3:
+			error = struct.unpack_from('!s', buf, 8)
+			raise TrackerError('Error while trying to get a connection response: {}'.format(error))
+		else:
+			pass
+
+		# Send announce request
+		transaction_id = udp_transaction_id()
+		port = 0 if self.port is None else self.port
+		req = struct.pack('!qii20s20sqqqiiiih', connection_id, 0x1, transaction_id, info_hash, self.peer_id,
+				0x0, 0x0, 0x0, # downloaded, left, uploaded # TODO how to tamper these stats?
+				0x0, 0x0, 0x0, -1, port)
+		sock.sendto(req, conn)
+
+		# Parse announce response
+		buf = sock.recvfrom(2048)[0]
+		if len(buf) < 20:
+			raise TrackerError('Wrong length announce response: {}'.format(len(buf)))
+		elif len(buf) == 2048:
+			logging.warning('Receive buffer may be too small')
+		action = struct.unpack_from('!i', buf)[0]
+		res_transaction_id = struct.unpack_from('!i', buf, 4)[0]
+		if res_transaction_id != transaction_id:
+			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {}, got {}'.format(
+					transaction_id, res_transaction_id))
+		if action == 0x3:
+			raise TrackerError('Error while trying to get a connection response: {}'.format(error))
+		elif action != 0x1:
+			raise TrackerError('Wrong action received after announce request: {}'.format(action))
+
+		# Extract desired information
+		interval = struct.unpack_from('!i', buf, 8)[0]
+		ip_bytes = buf[20:]
+		return interval, ip_bytes
 
 ## Exception for bad tracker response
 class TrackerError(Exception):
@@ -170,4 +170,26 @@ def generate_peer_id():
 	peer_id = ''.join(peer_id_list)
 	logging.info('Generated peer id is ' + peer_id)
 	return peer_id
+
+## Generate a transaction id for udp tracker protocol
+#  @return Transaction id
+def udp_transaction_id():
+	return int(random.randrange(0, 255))
+
+## Parses bytes to ip addresses and ports
+#  @param ip_bytes Input block
+#  @return list of ip port tuples
+def parse_ips(ip_bytes):
+	peers_count = int(len(ip_bytes) / 6)
+	ips = list()
+	for peer in range(0, peers_count):
+		offset = peer * 6
+		try:
+			peer_ip = str(ipaddress.ip_address(ip_bytes[offset:offset+4]))
+		except ValueError as err:
+			logging.warning('Tracker sent invalid ip address: ' + str(err))
+			continue
+		peer_port = struct.unpack("!H", ip_bytes[offset+4:offset+6])[0]
+		ips.append((peer_ip, peer_port))
+	return ips
 
