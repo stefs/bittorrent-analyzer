@@ -1,5 +1,5 @@
-# BitTorrent peer analyzer
-This tool is aimed at counting confirmed downloads of performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
+# BitTorrent Download Analyzer
+This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 
 ## Todo
 ### Next steps
@@ -55,10 +55,11 @@ These are the standard installation steps on a Debian based system.
 7. Download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-City.mmdb`
 
 ## Usage
-1. `source py3env/bin/activate`
-2. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
-3. `deactivate`
-4. Logs and results are saved in the `output/` directory.
+1. Place torrent files in the `input/` directory.
+2. `source py3env/bin/activate`
+3. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
+4. `deactivate`
+5. Logs and results are saved in the `output/` directory.
 
 The following commandline options are available:
 
@@ -80,9 +81,9 @@ The following commandline options are available:
   Level of detail for log messages (default: INFO)
 
 ## About
-### Thanks
-* University advisor: ...
-* Inspiration: *[m2t](https://github.com/erindru/m2t/tree/75b457e65d71b0c42afdc924750448c4aaeefa0b)* by Erin Drummond under GPLv3
+### Thanks to
+* ..., advisor
+* Erin Drummond, for *[m2t](https://github.com/erindru/m2t/tree/75b457e65d71b0c42afdc924750448c4aaeefa0b)* under GPLv3
 
 ### Copyright
 Copyright © 2015 Stefan Schindler  
