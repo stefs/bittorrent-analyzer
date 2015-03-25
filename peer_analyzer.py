@@ -239,7 +239,7 @@ class SwarmAnalyzer:
 				self.peers.duplicate.reset()
 				for peer_ip in peer_ips:
 					new_peer = peer_wire_protocol.Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
-							id=None, bitfield=None, pieces=None, active=True, torrent=torrent_key, key=None)
+							id=None, bitfield=None, pieces=None, source=0, torrent=torrent_key, key=None)
 					self.peers.put(new_peer)
 				duplicate_counter = self.peers.duplicate.get() # TODO inaccurate due to passive evaluation?
 				self.total_duplicate += duplicate_counter
@@ -455,7 +455,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			logging.warning('Could not set timeout on incoming connection')
 			return
 		logging.info('################ Evaluating an incoming peer ################')
-		old_peer = peer_wire_protocol.Peer(None, self.client_address[0], self.client_address[1], None, None, None, False, None)
+		old_peer = peer_wire_protocol.Peer(None, self.client_address[0], self.client_address[1], None, None, None, 1, None)
 		try:
 			peer = peer_wire_protocol.evaluate_peer(old_peer, self.request,
 					self.server.info_hash, self.server.own_peer_id, self.server.pieces_number, self.server.delay)

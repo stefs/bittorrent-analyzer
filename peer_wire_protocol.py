@@ -6,7 +6,7 @@ import collections
 import time
 
 ## Named tuple representing a cached peer
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces active torrent key')
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
 
 ## Communicates to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:

@@ -28,10 +28,17 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * Implement unit tests?
 
 ## Features
-* Import multiple torrent files at once
-* Log city, countra and continent via IP address - NEW
-* Request new peers using the HTTP and UDP (BEP 15) tracker protocols, IPv4 only - NEW
+* Analyze multiple torrent files at once
+* Log city, country and continent via IP address - NEW
+* Request new IPv4 peers using the HTTP and UDP tracker protocols (BEP 15) - NEW
 * (list incomplete)
+
+### Restrictions
+* No IPv6 only peers
+* No uTP only peers
+* No PEX
+* No DHT
+* No Local Peer Discovery
 
 ## Installation
 ### Requirements
@@ -49,8 +56,8 @@ These are the standard installation steps on a Debian based system.
 
 1. `sudo apt-get install python3 python3-pip`
 2. `sudo pip3 install virtualenv`
-3. `virtualenv -p /usr/bin/python3 py3env`
-4. `source py3env/bin/activate`
+3. `virtualenv -p /usr/bin/python3 env-main`
+4. `source env-main/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`
 7. Download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-City.mmdb`
