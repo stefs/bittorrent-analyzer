@@ -7,6 +7,7 @@ import ipaddress
 import struct
 import urllib.request
 import urllib.parse
+import socket
 
 # Extern modules
 import bencodepy
@@ -103,6 +104,7 @@ class TrackerCommunicator:
 		# Establish connection
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		sock.settimeout(self.timeout)
+		parsed_tracker = urllib.parse.urlparse(self.announce_url)
 		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
 
 		# Send connect request
@@ -132,9 +134,10 @@ class TrackerCommunicator:
 		# Send announce request
 		transaction_id = udp_transaction_id()
 		port = 0 if self.port is None else self.port
-		req = struct.pack('!qii20s20sqqqiiiih', connection_id, 0x1, transaction_id, info_hash, self.peer_id,
+		req = struct.pack('!qii20s20sqqqiiiih', connection_id, 0x1, transaction_id, info_hash, self.peer_id.encode(),
 				0x0, 0x0, 0x0, # downloaded, left, uploaded # TODO how to tamper these stats?
 				0x0, 0x0, 0x0, -1, port)
+		logging.debug('Announce request is {}'.format(req))
 		sock.sendto(req, conn)
 
 		# Parse announce response
