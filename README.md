@@ -4,7 +4,8 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 ## Todo
 ### Next steps
 * ! Accept magnet links (partial BEP 9)
-* ! Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?
+* ! Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?  
+    --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
 * ! More tests on VM
 * ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
 

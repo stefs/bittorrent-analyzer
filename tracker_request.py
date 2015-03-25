@@ -23,7 +23,8 @@ class TrackerCommunicator:
 		self.peer_id = peer_id
 		self.announce_url = announce_url
 		self.timeout = timeout
-		self.port = 0 if port is None else port # TODO how react trackers to a zero port?
+		self.port = 0 if port is None else port
+		logging.info('Port {} will be announced'.format(self.port))
 
 	## Issue a request for peers to the tracker
 	#  @param info_hash Info hash for the desired torrent

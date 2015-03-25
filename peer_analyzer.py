@@ -252,6 +252,9 @@ class SwarmAnalyzer:
 					percentage = 0
 				logging.info('{} peers received, {} duplicates, equals {}%'.format(len(peer_ips), duplicate_counter, percentage))
 
+			# Log queue stats
+			self.log_statistics()
+
 			# Wait interval
 			logging.info('Waiting {} minutes until next tracker request ...'.format(interval/60))
 			self.shutdown_request.wait(interval)
