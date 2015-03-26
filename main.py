@@ -70,4 +70,5 @@ except peer_analyzer.AnalyzerError as err:
 	raise SystemExit
 finally:
 	analyzer.log_statistics()
+print('Finished')
 

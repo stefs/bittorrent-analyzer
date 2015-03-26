@@ -7,7 +7,6 @@ import time
 import socketserver
 import socket
 import os
-import base64
 
 # Project modules
 import tracker_request

@@ -3,6 +3,7 @@ import logging
 import socket
 import datetime
 import ipaddress
+import base64
 
 # Extern modules
 import sqlalchemy
@@ -46,6 +47,7 @@ class Torrent(Base):
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
 	announce_url = sqlalchemy.Column(sqlalchemy.types.String)
 	info_hash = sqlalchemy.Column(sqlalchemy.types.Binary)
+	info_hash_hex = sqlalchemy.Column(sqlalchemy.types.String)
 	pieces_count = sqlalchemy.Column(sqlalchemy.types.Integer)
 	piece_size = sqlalchemy.Column(sqlalchemy.types.Integer)
 	filepath = sqlalchemy.Column(sqlalchemy.types.String)
@@ -156,10 +158,13 @@ class Database:
 	#  @param session Database session
 	#  @return Database id
 	def store_torrent(self, torrent, path, session):
+		# Calculate hex hash
+		hex_hash = base64.b16encode(info_hash).decode()
+
 		# Write to database
 		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
-				pieces_count=torrent.pieces_count, piece_size=torrent.piece_size,
-				filepath=path)
+				info_hash_hex=hex_hash, pieces_count=torrent.pieces_count,
+				piece_size=torrent.piece_size, filepath=path)
 		session.add(new_torrent)
 		session.commit()
 

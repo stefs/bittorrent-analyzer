@@ -141,7 +141,7 @@ class TrackerCommunicator:
 			error = struct.unpack_from('!s', buf, 8)
 			raise TrackerError('Error while trying to get a connection response: {}'.format(error))
 		else:
-			pass
+			logging.warning('Bad UDP tracker connect response')
 
 		# Send announce request
 		transaction_id = udp_transaction_id()
