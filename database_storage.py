@@ -159,7 +159,7 @@ class Database:
 	#  @return Database id
 	def store_torrent(self, torrent, path, session):
 		# Calculate hex hash
-		hex_hash = base64.b16encode(info_hash).decode()
+		hex_hash = base64.b16encode(torrent.info_hash).decode()
 
 		# Write to database
 		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,

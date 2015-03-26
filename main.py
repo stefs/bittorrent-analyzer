@@ -59,7 +59,7 @@ try:
 
 		# Wait for termination
 		try:
-			print('End with Ctrl+C or interrupt signal')
+			print('End with Ctrl+C or kill -SIGINT {}'.format(os.getpid()))
 			while True:
 				time.sleep(1024)
 		except KeyboardInterrupt:
