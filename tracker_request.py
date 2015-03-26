@@ -18,14 +18,17 @@ class TrackerCommunicator:
 	#  @param peer_id Own peer id
 	#  @param announce_url The announce URL representing the tracker
 	#  @param timeout Timeout for network operations in seconds
-	#  @param port Port number to be announced to trackers
+	#  @param port Port number to be announced to trackers or None
 	#  @param total_pieces Number of total pieces of the torrent
-	def __init__(self, peer_id, announce_url, timeout, port=None, total_pieces):
+	def __init__(self, peer_id, announce_url, timeout, port, total_pieces):
 		self.peer_id = peer_id
 		self.announce_url = announce_url
 		self.timeout = timeout
 		self.port = 0 if port is None else port
-		logging.info('Port {} will be announced'.format(self.port))
+		if self.port == 0:
+			logging.warning('Port 0 will be announced')
+		else:
+			logging.info('Port {} will be announced'.format(self.port))
 
 		# Faked transmission statistics as factors
 		# TODO This are in-code configuration parameters
