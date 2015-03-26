@@ -320,5 +320,5 @@ def evaluate_peer(peer, socket, info_hash, own_peer_id, pieces_number, delay):
 
 	# Save results
 	revisit_time = time.perf_counter() + delay
-	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.active, peer.torrent, peer.key)
+	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.source, peer.torrent, peer.key)
 

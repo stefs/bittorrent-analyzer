@@ -219,7 +219,8 @@ class SwarmAnalyzer:
 	#  @param interval Time delay between contacting the tracker in seconds
 	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, torrent_key, interval):
-		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url, self.timeout, self.listen_port)
+		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url,
+				self.timeout, self.listen_port, self.torrents[torrent_key].pieces_count)
 
 		while not self.shutdown_request.is_set():
 			# Ask tracker

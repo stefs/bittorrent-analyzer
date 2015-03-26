@@ -13,12 +13,14 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * Scrape request zum Vergleich
 * Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 * Tracker exchange message support (BEP 28)
-* Evaluate database by merging peers via IP, ISP, Client, maybe bitfields
+* Evaluate database by merging peers via IP, ISP, Client, maybe bitfields (programming language R)
 * Import Torrent file(s) in database and start evaluating from there (incl. file name, name collissions!)
 * ? Support encrypted peer connections
 * ? Pause evaluation on network outage
+* (Multiple torrent support for passive evaluation)
 * (Record active thread sleeping statistics)
 * (Document database needed)
+* (Use start-stop-daemon?)
 
 ### Code quality
 * Review logging messages
@@ -66,8 +68,9 @@ These are the standard installation steps on a Debian based system.
 1. Place torrent files in the `input/` directory.
 2. `source py3env/bin/activate`
 3. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
-4. `deactivate`
-5. Logs and results are saved in the `output/` directory.
+4. Stop with Ctl+C or SIGINT
+5. `deactivate`
+6. Logs and results are saved in the `output/` directory.
 
 The following commandline options are available:
 

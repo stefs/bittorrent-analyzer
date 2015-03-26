@@ -19,12 +19,20 @@ class TrackerCommunicator:
 	#  @param announce_url The announce URL representing the tracker
 	#  @param timeout Timeout for network operations in seconds
 	#  @param port Port number to be announced to trackers
-	def __init__(self, peer_id, announce_url, timeout, port=None):
+	#  @param total_pieces Number of total pieces of the torrent
+	def __init__(self, peer_id, announce_url, timeout, port=None, total_pieces):
 		self.peer_id = peer_id
 		self.announce_url = announce_url
 		self.timeout = timeout
 		self.port = 0 if port is None else port
 		logging.info('Port {} will be announced'.format(self.port))
+
+		# Faked transmission statistics as factors
+		# TODO This are in-code configuration parameters
+		self.downloaded = int(1.0 * total_pieces)
+		self.left = int(0.0 * total_pieces)
+		self.uploaded = int(0.42 * total_pieces)
+		logging.info('Will announce {} downloaded, {} left, {} uploaded'.format(self.downloaded, self.left, self.uploaded))
 
 	## Issue a request for peers to the tracker
 	#  @param info_hash Info hash for the desired torrent
@@ -52,7 +60,7 @@ class TrackerCommunicator:
 	def _http_request(self, info_hash):
 		# Assemble tracker request
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': self.port,
-				'uploaded': '0', 'downloaded': '0', 'left': '23'} # TODO how to tamper the stats?
+				'uploaded': str(self.uploaded), 'downloaded': str(self.downloaded), 'left': str(self.left)}
 		request_parameters['compact'] = '1'
 		request_parameters_optional = {'ip': None, 'event': None}
 		request_parameters_encoded = urllib.parse.urlencode(request_parameters)
@@ -136,7 +144,7 @@ class TrackerCommunicator:
 		transaction_id = udp_transaction_id()
 		port = 0 if self.port is None else self.port
 		req = struct.pack('!qii20s20sqqqiiiih', connection_id, 0x1, transaction_id, info_hash, self.peer_id.encode(),
-				0x0, 0x0, 0x0, # downloaded, left, uploaded # TODO how to tamper these stats?
+				self.downloaded, self.left, self.uploaded,
 				0x0, 0x0, 0x0, -1, port)
 		logging.debug('Announce request is {}'.format(req))
 		sock.sendto(req, conn)
