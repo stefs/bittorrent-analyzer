@@ -193,9 +193,7 @@ def get_short_hostname(ip_address):
 		return None
 	else:
 		host_list = long_host.split('.')
-		host = host_list[-2] + '.' + host_list[-1]
-		logging.info('Host name is {}'.format(host))
-		return host
+		return host_list[-2] + '.' + host_list[-1]
 
 ## Anonymize an IP address according to https://support.google.com/analytics/answer/2763052?hl=en
 #  @param ip_address Not anonymized ip adderss
@@ -208,6 +206,5 @@ def anonymize_ip(ip_address):
 	elif ip.version == 6:
 		network = ip_address + '/48'
 		net = ipaddress.IPv6Network(network, strict=False)
-	logging.info('Anonymized ip address is {}'.format(net.network_address))
 	return str(net.network_address)
 	

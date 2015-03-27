@@ -8,6 +8,7 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
     --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
 * ! More tests on VM
 * ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
+* Revisit incoming peers?
 
 ### Later steps
 * Scrape request zum Vergleich

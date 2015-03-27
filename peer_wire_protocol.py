@@ -8,12 +8,10 @@ import time
 class PeerSession:
 	## Construct a peer session
 	#  @param socket An active connection socket
-	#  @param info_hash Info hash from original torrent regarding this session
 	#  @param peer_id Own peer ID
-	def __init__(self, socket, info_hash, peer_id):
+	def __init__(self, socket, peer_id):
 		# Store attributes
 		self.sock = socket
-		self.info_hash = info_hash
 		self.peer_id = peer_id
 
 		# Create buffer for consecutive receive_bytes calls
@@ -60,9 +58,10 @@ class PeerSession:
 		return data
 
 	## Receive a peer wire protocol handshake
+	#  @param expected_hash An error will be raised if received info hash does not match
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
 	#  @exception PeerError
-	def receive_handshake(self):
+	def receive_handshake(self, expected_hash=None):
 		# Receive handshake pstrlen
 		pstrlen_bytes = self.receive_bytes(1) # PeerError
 		pstrlen_tuple = struct.unpack('>B', pstrlen_bytes)
@@ -86,6 +85,8 @@ class PeerSession:
 
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
+		if not expected_hash is None and received_info_hash != expected_hash:
+			raise PeerError('Mismatch on received info hash: ' + str(received_info_hash))
 
 		# Parse peer id
 		received_peer_id = handshake_tuple[3]
@@ -94,14 +95,15 @@ class PeerSession:
 		return received_peer_id, reserved, received_info_hash
 
 	## Sends handshake to initiate BitTorrent Protocol
+	#  @param info_hash The info hash to be sent
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
 	#  @exception PeerError
-	def send_handshake(self):
+	def send_handshake(self, info_hash):
 		# Pack handshake string
 		pstr = b'BitTorrent protocol'
 		peer_id_bytes = self.peer_id.encode()
 		format_string = '>B' + str(len(pstr)) + 'sQ20s20s'
-		handshake = struct.pack(format_string, len(pstr), pstr, 0, self.info_hash, peer_id_bytes)
+		handshake = struct.pack(format_string, len(pstr), pstr, 0, info_hash, peer_id_bytes)
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'
 		logging.debug('Prepared handshake is ' + str(handshake))
 
@@ -283,29 +285,4 @@ def count_bits(bitfield):
 				count += 1
 			mask *= 2
 	return count
-
-## Evaluate a peer by receiving and evaluating all messages
-#  @param socket Active peer connection socket
-#  @param info_hash Info hash of the current torrent
-#  @param own_peer_id Own peer id
-#  @param pieces_number Number of pieces of the current torrent
-#  @return Info about handshake and received bitfield
-#  @exception PeerError
-def evaluate_peer(socket, info_hash, own_peer_id, pieces_number):
-	session = PeerSession(socket, info_hash, own_peer_id)
-	session.send_handshake() # PeerError
-	received_peer_id, reserved, received_info_hash = session.receive_handshake() # PeerError
-	messages = session.receive_all_messages(100)
-
-	# Evaluate bitfield
-	bitfield = bitfield_from_messages(messages, pieces_number)
-
-	# Count finished pieces
-	pieces_count = count_bits(bitfield)
-	percentage = int(pieces_count * 100 / pieces_number)
-	remaining = pieces_number - pieces_count
-	logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
-
-	# Return results
-	return received_peer_id, reserved, received_info_hash, bitfield, pieces_count
 
