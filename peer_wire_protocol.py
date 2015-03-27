@@ -2,11 +2,7 @@
 import logging
 import struct
 import math
-import collections
 import time
-
-## Named tuple representing a cached peer
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
 
 ## Communicates to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:
@@ -15,10 +11,8 @@ class PeerSession:
 	#  @param info_hash Info hash from original torrent regarding this session
 	#  @param peer_id Own peer ID
 	def __init__(self, socket, info_hash, peer_id):
-		# Store peer socket
+		# Store attributes
 		self.sock = socket
-
-		# Store common parameters
 		self.info_hash = info_hash
 		self.peer_id = peer_id
 
@@ -92,19 +86,17 @@ class PeerSession:
 
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
-		if received_info_hash != self.info_hash:
-			raise PeerError('Mismatch on received info hash: ' + str(received_info_hash))
 
 		# Parse peer id
 		received_peer_id = handshake_tuple[3]
 		logging.info('ID of connected peer is ' + str(received_peer_id))
 
-		return (received_peer_id, reserved)
+		return received_peer_id, reserved, received_info_hash
 
-	## Receives and sends handshake to initiate BitTorrent Protocol
+	## Sends handshake to initiate BitTorrent Protocol
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
 	#  @exception PeerError
-	def exchange_handshakes(self):
+	def send_handshake(self):
 		# Pack handshake string
 		pstr = b'BitTorrent protocol'
 		peer_id_bytes = self.peer_id.encode()
@@ -115,7 +107,6 @@ class PeerSession:
 
 		# Send and receive handshake
 		self.send_bytes(handshake) # PeerError
-		return self.receive_handshake() # PeerError
 
 	## Receive a peer message
 	#  @return Tuple of message id and payload, keepalive has id -1
@@ -293,20 +284,17 @@ def count_bits(bitfield):
 			mask *= 2
 	return count
 
-## Evaluate a peer by receiving all messages and updating attributes accordingly
-#  @param peer Peer named tuple
+## Evaluate a peer by receiving and evaluating all messages
 #  @param socket Active peer connection socket
 #  @param info_hash Info hash of the current torrent
 #  @param own_peer_id Own peer id
 #  @param pieces_number Number of pieces of the current torrent
-#  @param delay Evaluation delay in seconds
-#  @return Evaluated Peer named tuple
+#  @return Info about handshake and received bitfield
 #  @exception PeerError
-# TODO take out Peer creation to reduce argument list
-def evaluate_peer(peer, socket, info_hash, own_peer_id, pieces_number, delay):
-	# Initiate session, exchange handshakes, receive messages
+def evaluate_peer(socket, info_hash, own_peer_id, pieces_number):
 	session = PeerSession(socket, info_hash, own_peer_id)
-	peer_id = session.exchange_handshakes()[0] # PeerError
+	session.send_handshake() # PeerError
+	received_peer_id, reserved, received_info_hash = session.receive_handshake() # PeerError
 	messages = session.receive_all_messages(100)
 
 	# Evaluate bitfield
@@ -318,7 +306,6 @@ def evaluate_peer(peer, socket, info_hash, own_peer_id, pieces_number, delay):
 	remaining = pieces_number - pieces_count
 	logging.info('Peer reports to have ' + str(pieces_count) + ' pieces, ' + str(remaining) + ' remaining, equals ' + str(percentage) + '%')
 
-	# Save results
-	revisit_time = time.perf_counter() + delay
-	return Peer(revisit_time, peer.ip_address, peer.port, peer_id, bitfield, pieces_count, peer.source, peer.torrent, peer.key)
+	# Return results
+	return received_peer_id, reserved, received_info_hash, bitfield, pieces_count
 

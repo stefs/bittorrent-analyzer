@@ -1,13 +1,9 @@
 # Built-in modules
 import hashlib
 import logging
-import collections
 
 # Extern modules
 import bencodepy
-
-## Named tuple representing a torrent
-Torrent = collections.namedtuple('Torrent', 'announce_url info_hash pieces_count piece_size')
 
 ## Providing methods for analysis of torrent files
 class TorrentParser:

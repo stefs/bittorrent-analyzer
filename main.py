@@ -43,10 +43,11 @@ logging.basicConfig(**logging_config)
 # Analysis routine
 try:
 	with peer_analyzer.SwarmAnalyzer(args.revisit, args.timeout, output) as analyzer:
+		# Import torrents from directory
 		analyzer.import_torrents()
 
-		# Start database archiver
-		analyzer.start_database_archiver()
+		# Handle evaluated peers
+		analyzer.start_peer_handler()
 
 		# Start passive evaluation server
 		if args.port is not None:

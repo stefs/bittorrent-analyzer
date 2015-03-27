@@ -7,12 +7,17 @@ import time
 import socketserver
 import socket
 import os
+import collections
 
 # Project modules
 import tracker_request
 import peer_wire_protocol
 import database_storage
 import torrent_file
+
+## Named tuples representing cached peer and a torrent file
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
+Torrent = collections.namedtuple('Torrent', 'announce_url info_hash pieces_count piece_size')
 
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
@@ -53,6 +58,7 @@ class SwarmAnalyzer:
 		self.tracker_requests = False
 		self.passive_evaluation = False
 		self.database_archive = False
+		self.dht_started = False
 
 		# Create database
 		try:
@@ -94,7 +100,7 @@ class SwarmAnalyzer:
 					continue
 
 				# Store in database and dictionary
-				torrent = torrent_file.Torrent(announce_url, info_hash, pieces_number, piece_size)
+				torrent = Torrent(announce_url, info_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
 
@@ -145,10 +151,9 @@ class SwarmAnalyzer:
 
 			# Establish connection
 			if peer.key is None:
-				logging.info('################ Evaluating a new peer ################')
+				logging.info('################ Connecting to new peer ... ################')
 			else:
-				logging.info('################ Revisiting peer with database id {} ################'.format(peer.key))
-			logging.info('Connecting to peer ...')
+				logging.info('################ Reconnecting to peer {} ... ################'.format(peer.key))
 			try:
 				sock = socket.create_connection((peer.ip_address, peer.port), self.timeout)
 			except OSError as err:
@@ -160,11 +165,10 @@ class SwarmAnalyzer:
 				continue
 			logging.info('Connection established')
 
-			# Contact peer and update attributes
-			torrent = self.torrents[peer.torrent]
+			# Contact peer
 			try:
-				peer = peer_wire_protocol.evaluate_peer(peer, sock,
-						torrent.info_hash, self.own_peer_id, torrent.pieces_count, self.delay)
+				peer_results = peer_wire_protocol.evaluate_peer(sock, self.torrents[peer.torrent].info_hash,
+						self.own_peer_id, self.torrents[peer.torrent].pieces_count)
 
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
@@ -190,8 +194,9 @@ class SwarmAnalyzer:
 				logging.info('Connection closed')
 
 			# Put in archiver queue
+			revisit_time = time.perf_counter() + delay
+			self.database_queue.put((peer, peer_results, revisit_time))
 			self.active_success.increment()
-			self.database_queue.put(peer)
 
 		# Propagate shutdown finish
 		self.active_shutdown_done.wait()
@@ -238,7 +243,7 @@ class SwarmAnalyzer:
 				# Put peers in queue
 				self.peers.duplicate.reset()
 				for peer_ip in peer_ips:
-					new_peer = peer_wire_protocol.Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
+					new_peer = Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
 							id=None, bitfield=None, pieces=None, source=0, torrent=torrent_key, key=None)
 					self.peers.put(new_peer)
 				duplicate_counter = self.peers.duplicate.get() # TODO inaccurate due to passive evaluation?
@@ -296,12 +301,12 @@ class SwarmAnalyzer:
 		logging.info('Listening on port {} for incomming peer connections'.format(port))
 
 	## Comsumes peers from database queue and put back in main queue
-	def start_database_archiver(self):
+	def start_peer_handler(self):
 		# Get database session
 		self.database_session = self.database.get_session()
 
-		# Start database thread
-		thread = threading.Thread(target=self._database_archivator, args=(self.database_session,))
+		# Start handler thread
+		thread = threading.Thread(target=self._peer_handler)
 		thread.daemon = True
 		thread.start()
 
@@ -309,31 +314,41 @@ class SwarmAnalyzer:
 		self.database_archive = True
 
 	## Consumes peers and stores them in the database
-	#  @param database_session Database session instance
 	#  @note This is a worker method to be started as a thread
-	def _database_archivator(self, database_session):
+	def _peer_handler(self):
 		# Log thread id
 		logging.info('The identifier for this database archiver thread is {}'.format(threading.get_ident()))
 
 		while True:
 			# Get new peer to store
-			peer = self.database_queue.get()
-			first_evaluation = peer.key is None
+			peer, results, revisit = self.database_queue.get()
+			rec_peer_id, reserved, rec_info_hash, bitfield, pieces_count = results
 
-			# Store evaluated peer and fill peer.key
+			# Update peer with results
+			if rec_info_hash != self.torrents[peer.torrent].info_hash:
+				logging.warning('Discarding peer with changed info hash: {}'.format(rec_info_hash))
+				self.database_queue.task_done()
+				continue
+			peer = Peer(revisit, peer.ip_address, peer.port,
+					rec_peer_id, bitfield, pieces_count,
+					peer.source, peer.torrent, peer.key)
+
+			# Store evaluated peer and receive database key
 			try:
-				peer = self.database.store_peer(peer, database_session)
+				peer_key = self.database.store_peer(peer, self.database_session)
 
 			# Catch all exceptions to enable ongoing thread, should never happen
 			except Exception as err:
-				database_session.rollback()
+				self.database_session.rollback()
 				self.database_queue.task_done()
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('Unexpected error during database update: {}\n{}'.format(err, ''.join(tb)))
 				continue
 
-			# Update statistical counters
-			if first_evaluation:
+			# Remember database key and update statistical counters
+			if peer.key is None:
+				*old_peer, key = peer
+				peer = Peer(*old_peer, key=peer_key)
 				self.database_new_peer.increment()
 			else:
 				self.database_peer_update.increment()
@@ -344,6 +359,14 @@ class SwarmAnalyzer:
 
 			# Allow waiting for all peers to be stored at shutdown
 			self.database_queue.task_done()
+
+	## Starts a DHT node and extracts new peers
+	def start_dht_node(self):
+		# TODO
+		logging.info('DHT node not implemented')
+
+		# Remember activation to enable shutdown
+		self.dht_started = True
 
 	## Print evaluation statistics
 	def log_statistics(self):
@@ -369,6 +392,9 @@ class SwarmAnalyzer:
 	def __exit__(self, exception_type, exception_value, traceback):
 		# Propagate shutdown request
 		self.shutdown_request.set()
+
+		if self.dht_started:
+			pass
 
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
@@ -455,7 +481,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			logging.warning('Could not set timeout on incoming connection')
 			return
 		logging.info('################ Evaluating an incoming peer ################')
-		old_peer = peer_wire_protocol.Peer(None, self.client_address[0], self.client_address[1], None, None, None, 1, None)
+		old_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, 1, None)
 		try:
 			peer = peer_wire_protocol.evaluate_peer(old_peer, self.request,
 					self.server.info_hash, self.server.own_peer_id, self.server.pieces_number, self.server.delay)

@@ -84,7 +84,7 @@ class Database:
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
 	#  @param session Database session, must only be used in one thread
-	#  @return Peer named tuple with peer.key filled
+	#  @return Database id if peer is new, None else
 	def store_peer(self, peer, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
 		# Check if this is a new peer
 		if peer.key is None:
@@ -104,8 +104,7 @@ class Database:
 			# Return Peer with key
 			database_id = new_peer.id
 			logging.info('Stored new peer with database id {}'.format(database_id))
-			*old_peer, key = peer
-			return peer_wire_protocol.Peer(*old_peer, key=database_id)
+			return database_id
 
 		# Update former stored peer
 		else:
@@ -137,7 +136,6 @@ class Database:
 			session.add(database_peer)
 			session.commit()
 			logging.info('Updated peer with database id {}'.format(peer.key))
-			return peer
 
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question
