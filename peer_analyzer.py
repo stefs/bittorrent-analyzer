@@ -379,6 +379,7 @@ class SwarmAnalyzer:
 	def start_dht(self, node_port, control_port, interval):
 		# Initialte telnet control session
 		try:
+			# TODO assure telnet is only reachable on locally
 			self.dht = telnetlib.Telnet(host='localhost', port=control_port)
 		except ConnectionRefusedError as err:
 			raise AnalyzerError('Cound not connect to DHT telnet control server at port {}: {}'.format(control_port, err))
@@ -395,11 +396,11 @@ class SwarmAnalyzer:
 	#  @param interval Time delay between contacting the dht in seconds
 	def _dht_requestor(self, interval):
 		while not self.shutdown_request.is_set():
-			for key in torrents:
+			for key in self.torrents:
 				print('peers for torrent {}:'.format(key))
 				# Receive new peers
 				try:
-					self.dht.write('0 OPEN 0 HASH {} 0'.format(torrents[key].info_hash_hex)) # debug
+					self.dht.write('0 OPEN 0 HASH {} 0'.format(self.torrents[key].info_hash_hex).encode()) # debug
 					dht_response = self.dht.read_unitl('CLOSE')
 				except OSError:
 					logging.error('Could not write to DHT telnet control')
@@ -438,7 +439,7 @@ class SwarmAnalyzer:
 
 		if self.dht_started:
 			try:
-				self.dht.write('EXIT')
+				self.dht.write(b'EXIT')
 			except OSError as err:
 				logging.warning('Failed to send EXIT command: {}'.format(err))
 			self.dht.close() # TODO necessary?
