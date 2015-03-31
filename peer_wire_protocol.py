@@ -103,7 +103,7 @@ class PeerSession:
 		pstr = b'BitTorrent protocol'
 		peer_id_bytes = self.peer_id.encode()
 		format_string = '>B' + str(len(pstr)) + 'sQ20s20s'
-		reserved = 0 # 1 # indicating DHT support # TODO test
+		reserved = 0 # 1 # indicating DHT support # debug
 		handshake = struct.pack(format_string, len(pstr), pstr, reserved, info_hash, peer_id_bytes)
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'
 		logging.debug('Prepared handshake is ' + str(handshake))
@@ -299,6 +299,7 @@ def count_bits(bitfield):
 			mask *= 2
 	return count
 
+# debug
 ## Extract the DHT port from the first PORT message
 #  @param messages List of peer wire portocol messages
 #  @return Reported DHT node UDP port

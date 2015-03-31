@@ -3,7 +3,6 @@ import logging
 import socket
 import datetime
 import ipaddress
-import base64
 
 # Extern modules
 import sqlalchemy
@@ -156,12 +155,9 @@ class Database:
 	#  @param session Database session
 	#  @return Database id
 	def store_torrent(self, torrent, path, session):
-		# Calculate hex hash
-		hex_hash = base64.b16encode(torrent.info_hash).decode()
-
 		# Write to database
 		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
-				info_hash_hex=hex_hash, pieces_count=torrent.pieces_count,
+				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
 				piece_size=torrent.piece_size, filepath=path)
 		session.add(new_torrent)
 		session.commit()

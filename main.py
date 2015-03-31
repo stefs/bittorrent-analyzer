@@ -16,12 +16,17 @@ parser.add_argument('-i', '--interval', type=float, default=15, help='Time delay
 parser.add_argument('-p', '--port', type=int, help='Passive peer evaluation of incoming peers at the specified port number', metavar='<port>')
 parser.add_argument('-t', '--timeout', type=int, default='10', help='Timeout in seconds for network connections', metavar='<seconds>')
 parser.add_argument('-r', '--revisit', type=float, default='15', help='Time delay for revisiting unfinished peers in minutes', metavar='<minutes>')
+parser.add_argument('--dht-node', type=int, help='Integrate an already running DHT node with the given UDP port', metavar='<port>')
+parser.add_argument('--dht-control', type=int, help='Use an already running DHT node over the given localhost telnet port', metavar='<port>')
+parser.add_argument('--dht-interval', type=int, default=15, help='Time delay between contacting the DHT in minutes', metavar='<minutes>')
 parser.add_argument('-d', '--debug', action='store_true', help='Write log messages to stdout instead of a file and include debug messages')
 args = parser.parse_args()
 
 # Check argument plausibility
 if args.jobs is None and args.port is None:
 	parser.error('Please enable active and/or passive peer evaluation via commandline switches')
+if args.dht_node is not None and args.dht_control is None:
+	parser.error('When using a DHT node specify also the telnet control port')
 
 # Set output path
 directory = 'output/'
@@ -58,6 +63,10 @@ try:
 			analyzer.start_tracker_requests(args.interval) # start after passive evaluation
 			analyzer.start_active_evaluation(args.jobs)
 
+		# Integrate DHT node
+		if args.dht_node is not None:
+			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval)
+
 		# Wait for termination
 		try:
 			print('End with Ctrl+C or kill -SIGINT {}'.format(os.getpid()))
@@ -67,7 +76,7 @@ try:
 			print('\nPlease wait for termination ...')
 			logging.info('Received interrupt signal, exiting')
 except peer_analyzer.AnalyzerError as err:
-	logging.error(str(err))
+	logging.critical(str(err))
 	raise SystemExit
 finally:
 	analyzer.log_statistics()

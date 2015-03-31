@@ -8,6 +8,8 @@ import socketserver
 import socket
 import os
 import collections
+import telnetlib
+import base64
 
 # Project modules
 import tracker_request
@@ -17,7 +19,7 @@ import torrent_file
 
 ## Named tuples representing cached peer and a torrent file
 Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
-Torrent = collections.namedtuple('Torrent', 'announce_url info_hash pieces_count piece_size')
+Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size')
 
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
@@ -100,7 +102,8 @@ class SwarmAnalyzer:
 					continue
 
 				# Store in database and dictionary
-				torrent = Torrent(announce_url, info_hash, pieces_number, piece_size)
+				hex_hash = base64.b16encode(info_hash).decode()
+				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
 
@@ -369,13 +372,44 @@ class SwarmAnalyzer:
 			# Allow waiting for all peers to be stored at shutdown
 			self.visited_peers.task_done()
 
-	## Starts a DHT node and extracts new peers
-	def start_dht_node(self):
-		# TODO
-		logging.info('DHT node not implemented')
+	## Use an already running DHT node to extracts new peers
+	#  @param node_port UDP port where the node is running # TODO use
+	#  @param control_port TCP port for sending telnet commands
+	#  @param interval Time delay between contacting the dht in minutes
+	def start_dht(self, node_port, control_port, interval):
+		# Initialte telnet control session
+		try:
+			self.dht = telnetlib.Telnet(host='localhost', port=control_port)
+		except ConnectionRefusedError as err:
+			raise AnalyzerError('Cound not connect to DHT telnet control server at port {}: {}'.format(control_port, err))
+ 
+		# Start handler thread
+		thread = threading.Thread(target=self._dht_requestor, args=(interval*60,))
+		thread.daemon = True
+		thread.start()
 
 		# Remember activation to enable shutdown
 		self.dht_started = True
+	
+	## Requests new peers from the node for all torrents repeatingly
+	#  @param interval Time delay between contacting the dht in seconds
+	def _dht_requestor(self, interval):
+		while not self.shutdown_request.is_set():
+			for key in torrents:
+				print('peers for torrent {}:'.format(key))
+				# Receive new peers
+				try:
+					self.dht.write('0 OPEN 0 HASH {} 0'.format(torrents[key].info_hash_hex)) # debug
+					dht_response = self.dht.read_unitl('CLOSE')
+				except OSError:
+					logging.error('Could not write to DHT telnet control')
+				
+				# TODO put in self.peers
+				print(dht_response)
+
+			# Wait interval
+			logging.info('Waiting {} minutes until next dht request ...'.format(interval/60))
+			self.shutdown_request.wait(interval)
 
 	## Print evaluation statistics
 	def log_statistics(self):
@@ -403,7 +437,13 @@ class SwarmAnalyzer:
 		self.shutdown_request.set()
 
 		if self.dht_started:
-			pass
+			try:
+				self.dht.write('EXIT')
+			except OSError as err:
+				logging.warning('Failed to send EXIT command: {}'.format(err))
+			self.dht.close() # TODO necessary?
+			self.dht.close() # debug
+			logging.info('Ordered DHT node to exit and closed telnet connection')
 
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
