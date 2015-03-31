@@ -401,7 +401,7 @@ class SwarmAnalyzer:
 				# Receive new peers
 				try:
 					self.dht.write('0 OPEN 0 HASH {} 0'.format(self.torrents[key].info_hash_hex).encode()) # debug
-					dht_response = self.dht.read_unitl('CLOSE')
+					dht_response = self.dht.read_until(b'CLOSE')
 				except OSError:
 					logging.error('Could not write to DHT telnet control')
 				
@@ -439,12 +439,12 @@ class SwarmAnalyzer:
 
 		if self.dht_started:
 			try:
-				self.dht.write(b'EXIT')
+				self.dht.write(b'KILL')
 			except OSError as err:
 				logging.warning('Failed to send EXIT command: {}'.format(err))
 			self.dht.close() # TODO necessary?
 			self.dht.close() # debug
-			logging.info('Ordered DHT node to exit and closed telnet connection')
+			logging.info('Ordered DHT node to kill itself and closed telnet connection')
 
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
