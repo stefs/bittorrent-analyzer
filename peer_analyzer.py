@@ -510,8 +510,8 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			else:
 				logging.info('Storing incoming peer for torrent {}'.format(torrent))
 			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, 1, torrent, None)
-			revisit_time = time.perf_counter() + delay
-			self.server.visited_peers.put((peer, result, revisit_time))
+			revisit_time = time.perf_counter() + self.server.delay
+			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()
 
 ## Simple thread safe counter

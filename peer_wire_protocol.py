@@ -103,7 +103,8 @@ class PeerSession:
 		pstr = b'BitTorrent protocol'
 		peer_id_bytes = self.peer_id.encode()
 		format_string = '>B' + str(len(pstr)) + 'sQ20s20s'
-		handshake = struct.pack(format_string, len(pstr), pstr, 0, info_hash, peer_id_bytes)
+		reserved = 0 # 1 # indicating DHT support # TODO test
+		handshake = struct.pack(format_string, len(pstr), pstr, reserved, info_hash, peer_id_bytes)
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'
 		logging.debug('Prepared handshake is ' + str(handshake))
 
@@ -135,7 +136,7 @@ class PeerSession:
 
 		# Return message id and payload tuple
 		message_str = message_to_string(message_id, payload, 80)
-		logging.debug('Received message: ' + message_str)
+		logging.info('Received message: ' + message_str)
 		return (message_id, payload)
 
 	## Collect all messages from the peer until timeout or error
@@ -154,6 +155,18 @@ class PeerSession:
 		if len(messages) == max_messages:
 			logging.error('Reached message limit of ' + str(max_messages))
 		return messages
+
+	## Sends a message to the peer
+	#  @param message_id Protocol specific id
+	#  @param payload Message content
+	#  @exception PeerError
+	#def send_message(self, message_id, payload):
+	#	length_prefix = 1 + len(payload)
+	#	data = struct.pack('>I{}s'.format(len(payload)), 0)
+
+	## Sends a bitfield message reporting to have all pieces
+	#  @exception PeerError
+	#def send_full_bitfield(self):
 
 ## Exception for not expected behavior of other peers and network failures
 class PeerError(Exception):
@@ -285,4 +298,12 @@ def count_bits(bitfield):
 				count += 1
 			mask *= 2
 	return count
+
+## Extract the DHT port from the first PORT message
+#  @param messages List of peer wire portocol messages
+#  @return Reported DHT node UDP port
+#def dht_node_port_from_messsages(messages):
+#	for message in messages:
+#		if message[0] == 0x09 and len(message[1] == 2):
+#			return struct.unpack('!H', message[1])[0]
 
