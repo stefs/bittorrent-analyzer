@@ -278,7 +278,7 @@ class SwarmAnalyzer:
 		# Create the server, binding to outside address on custom port
 		if not 0 <= port <= 65535:
 			raise AnalyzerError('Invalid port number: {}'.format(port))
-		address = (socket.gethostname(), port)
+		address = ('0.0.0.0', port)
 		try:
 			self.server = PeerEvaluationServer(address, PeerHandler,
 					own_peer_id=self.own_peer_id,
@@ -491,7 +491,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			return
 		logging.info('################ Evaluating an incoming peer ################')
 		try:
-			session = peer_wire_protocol.PeerSession(sock, self.server.own_peer_id)
+			session = peer_wire_protocol.PeerSession(self.request, self.server.own_peer_id)
 			rec_peer_id, reserved, rec_info_hash = session.receive_handshake() # PeerError
 			session.send_handshake(rec_info_hash) # PeerError
 			messages = session.receive_all_messages(100)
