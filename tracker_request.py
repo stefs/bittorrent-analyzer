@@ -29,6 +29,7 @@ class TrackerCommunicator:
 			logging.warning('Port 0 will be announced')
 		else:
 			logging.info('Port {} will be announced'.format(self.port))
+		self.first_announce = True
 
 		# Faked transmission statistics as factors
 		# TODO This are in-code configuration parameters
@@ -52,6 +53,7 @@ class TrackerCommunicator:
 				raise TrackerError('UDP tracker request failed: {}'.format(err))
 		else:
 			raise TrackerError('Unsupported protocol: {}'.format(parsed.scheme))
+		self.first_announce = False
 		ips = parse_ips(ip_bytes)
 		#ips = random.sample(ips, 8) # debug
 		return interval, ips
@@ -65,7 +67,8 @@ class TrackerCommunicator:
 		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': self.port,
 				'uploaded': str(self.uploaded), 'downloaded': str(self.downloaded), 'left': str(self.left)}
 		request_parameters['compact'] = '1'
-		request_parameters_optional = {'ip': None, 'event': None}
+		if self.first_announce:
+			request_parameters['event'] = 'started'
 		request_parameters_encoded = urllib.parse.urlencode(request_parameters)
 		request_parameters_bytes = request_parameters_encoded
 		request_url = self.announce_url + '?' + request_parameters_bytes
@@ -146,9 +149,10 @@ class TrackerCommunicator:
 		# Send announce request
 		transaction_id = udp_transaction_id()
 		port = 0 if self.port is None else self.port
+		event = 2 if self.first_announce else 0
 		req = struct.pack('!qii20s20sqqqiiiih', connection_id, 0x1, transaction_id, info_hash, self.peer_id.encode(),
 				self.downloaded, self.left, self.uploaded,
-				0x0, 0x0, 0x0, -1, port)
+				event, 0x0, 0x0, -1, port)
 		logging.debug('Announce request is {}'.format(req))
 		sock.sendto(req, conn)
 
