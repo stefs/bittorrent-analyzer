@@ -405,6 +405,9 @@ class SwarmAnalyzer:
 				# TODO put in self.peers
 				print(dht_peers)
 
+			# Print stats at DHT node
+			self.dht.print_stats()
+
 			# Wait interval
 			logging.info('Waiting {} minutes until next dht request ...'.format(interval/60))
 			self.shutdown_request.wait(interval)

@@ -39,7 +39,7 @@ class DHT:
 					dht_response.append(line)
 					if 'CLOSE' in line:
 						break
-			except OSError:
+			except (OSError, EOFError) as err:
 				raise DHTError('Telnet write failed: {}'.format(err))
 
 		# Parse peers
@@ -49,6 +49,13 @@ class DHT:
 				ip_port = line.split(' ')[-1].split(':')
 				peers.append((ip_port[0], int(ip_port[1])))
 		return peers
+
+	## Send STATS command for debug purposes
+	def print_stats(self):
+		try:
+			self.dht.write('STATS\n')
+		except (OSError, EOFError) as err:
+			logging.warning('Telnet write failed: {}'.format(err))
 
 	## Exit pymdht node and close telnet connection
 	#  @param is_final Sends KILL instead of EXIT command
