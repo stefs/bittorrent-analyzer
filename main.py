@@ -44,7 +44,7 @@ else:
 	print('Log is written to file ' + logfile)
 	logging_config['filename'] = logfile
 logging.basicConfig(**logging_config)
-logging.info('Command line was "{}"'.format(' '.join(argv)))
+logging.info('Command line arguments are {}'.format(args))
 
 # Analysis routine
 try:

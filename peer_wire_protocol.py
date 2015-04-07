@@ -163,7 +163,7 @@ class PeerSession:
 	def send_message(self, message_id, payload):
 		length_prefix = 1 + len(payload)
 		format_string = '>I{}s'.format(len(payload))
-		data = struct.pack(format_string, len_prefix, payload)
+		data = struct.pack(format_string, length_prefix, payload)
 		self.send_bytes(data) # PeerError
 		logging.info('Sent message {} {}'.format(message_id, payload))
 
