@@ -5,24 +5,29 @@ import threading
 class DHT:
 	## Construct a telnet controller for the given port
 	#  @param control_port Telnet port to connect to
+	#  @exception DHTError
 	def __init__(self, control_port):
 		try:
-			# TODO assure telnet is only reachable on locally
 			self.dht = telnetlib.Telnet(host='localhost', port=control_port)
 		except ConnectionRefusedError as err:
-			raise DHTError('Cound not connect to DHT telnet control server at port {}: {}'.format(control_port, err))
+			raise DHTError('Cound not connect to telnet server at port {}: {}'.format(control_port, err))
 		self.lock = threading.Lock()
 
 	## Issue lookup for given info hash
 	#  @param info_hash_hex Hex string representing the info hash
+	#  @param bt_port Own BitTorrent listening port to be announced to nodes
 	#  @return List of ip port tuples of peers
-	def get_peers(self, info_hash_hex):
+	#  @exception DHTError
+	def get_peers(self, info_hash_hex, bt_port=0):
 		with self.lock:
 			try:
-				self.dht.write('0 OPEN 0 HASH {} 0'.format(info_hash_hex.encode()) # debug
+				self.dht.write('0 OPEN 0 HASH {} {}'.format(info_hash_hex.encode(), bt_port))
 				dht_response = self.dht.read_until(b'CLOSE')
 			except OSError:
-				logging.error('Could not write to DHT telnet control')
+				raise DHTError('Telnet write failed: {}'.format(err))
+			# TODO parse peers
+			logging.debug(dht_response)
+			return list()
 
 	## Insert nodes in routing table
 	#  @param nodes List of ip port tuples of nodes

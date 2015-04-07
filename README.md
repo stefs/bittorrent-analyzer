@@ -32,8 +32,9 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 
 ## Features
 * Analyze multiple torrent files at once
-* Log city, country and continent via IP address - NEW
-* Request new IPv4 peers using the HTTP and UDP tracker protocols (BEP 15) - NEW
+* Log city, country and continent via IP address
+* Request new IPv4 peers using the HTTP and UDP tracker protocols (BEP 15)
+* Integrate a running pymdht DHT node via telnet by sending PORT messages and performing peer lookups - NEW
 * (list incomplete)
 
 ### Restrictions

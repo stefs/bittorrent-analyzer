@@ -79,9 +79,8 @@ class PeerSession:
 
 		# Parse reserved bytes for protocol extensions according to https://wiki.theory.org/BitTorrentSpecification#Reserved_Bytes
 		reserved = handshake_tuple[1]
-		if reserved != 0:
-			reserved_bitmap = number_to_64_bitmap(reserved)
-			logging.info('Reserved bytes of received handshake set: ' + reserved_bitmap)
+		reserved_bitmap = number_to_64_bitmap(reserved)
+		logging.info('Reserved bytes in handshake: ' + reserved_bitmap)
 
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
@@ -96,14 +95,15 @@ class PeerSession:
 
 	## Sends handshake to initiate BitTorrent Protocol
 	#  @param info_hash The info hash to be sent
+	#  @param is_dht_supported Switch for indicating DHT support
 	#  @return Tuple of ID choosen by other peer and reserved bytes as unsigned integer
 	#  @exception PeerError
-	def send_handshake(self, info_hash):
+	def send_handshake(self, info_hash, is_dht_supported):
 		# Pack handshake string
 		pstr = b'BitTorrent protocol'
 		peer_id_bytes = self.peer_id.encode()
 		format_string = '>B' + str(len(pstr)) + 'sQ20s20s'
-		reserved = 0 # 1 # indicating DHT support # debug
+		reserved = 1 if is_dht_supported else 0
 		handshake = struct.pack(format_string, len(pstr), pstr, reserved, info_hash, peer_id_bytes)
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'
 		logging.debug('Prepared handshake is ' + str(handshake))
@@ -160,13 +160,12 @@ class PeerSession:
 	#  @param message_id Protocol specific id
 	#  @param payload Message content
 	#  @exception PeerError
-	#def send_message(self, message_id, payload):
-	#	length_prefix = 1 + len(payload)
-	#	data = struct.pack('>I{}s'.format(len(payload)), 0)
-
-	## Sends a bitfield message reporting to have all pieces
-	#  @exception PeerError
-	#def send_full_bitfield(self):
+	def send_message(self, message_id, payload):
+		length_prefix = 1 + len(payload)
+		format_string = '>I{}s'.format(len(payload))
+		data = struct.pack(format_string, len_prefix, payload)
+		self.send_bytes(data) # PeerError
+		logging.info('Sent message {} {}'.format(message_id, payload))
 
 ## Exception for not expected behavior of other peers and network failures
 class PeerError(Exception):
@@ -299,12 +298,41 @@ def count_bits(bitfield):
 			mask *= 2
 	return count
 
-# debug
-## Extract the DHT port from the first PORT message
-#  @param messages List of peer wire portocol messages
-#  @return Reported DHT node UDP port
-#def dht_node_port_from_messsages(messages):
-#	for message in messages:
-#		if message[0] == 0x09 and len(message[1] == 2):
-#			return struct.unpack('!H', message[1])[0]
+## Evaluate a peer by receiving and parsing all messages; send a dht PORT message
+#  @param sock Connection socket
+#  @param own_peer_id Own peer id
+#  @param dht_port DHT node port to be announced, None for no announce
+#  @param info_hash Info hash for outgoing evaluations, None for incoming connections
+#  @exception PeerError
+def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
+	# Establish session
+	session = PeerSession(sock, own_peer_id)
+
+	# Incoming connection
+	if info_hash is None:
+		rec_peer_id, reserved, rec_info_hash = session.receive_handshake() # PeerError
+		session.send_handshake(rec_info_hash, dht_port is not None) # PeerError
+
+	# Outgoning connection
+	else:
+		session.send_handshake(info_hash, dht_port is not None) # PeerError
+		rec_peer_id, reserved, rec_info_hash = session.receive_handshake(info_hash) # PeerError
+
+	# Receive messages
+	messages = session.receive_all_messages(100)
+
+	# Send own DHT node UDP port to peer if supported
+	if dht_port is None:
+		logging.info('No DHT port specified')
+	elif reserved & 1 == 0:
+		logging.info('DHT not supported by remote peer')
+	else:
+		try:
+			self.send_message(0x09, dht_port) # PeerError
+		except PeerError as err:
+			logging.warning('Could not send PORT message: {}'.format(err))
+		logging.info('Send DHT port {} to remote peer'.format(dht_port))
+
+	# Return results
+	return rec_peer_id, reserved, rec_info_hash, messages
 

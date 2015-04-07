@@ -43,6 +43,7 @@ class SwarmAnalyzer:
 		self.timeout = timeout
 		logging.info('Timeout for network operations is {} seconds'.format(timeout))
 		self.listen_port = None
+		self.dht_port = None
 
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
@@ -171,11 +172,7 @@ class SwarmAnalyzer:
 
 			# Contact peer
 			try:
-				session = peer_wire_protocol.PeerSession(sock, self.own_peer_id)
-				session.send_handshake(self.torrents[peer.torrent].info_hash) # PeerError
-				rec_peer_id, reserved, rec_info_hash = session.receive_handshake(self.torrents[peer.torrent].info_hash) # PeerError
-				messages = session.receive_all_messages(100)
-				result = rec_peer_id, reserved, rec_info_hash, messages
+				result = peer_wire_protocol.evaluate_peer(sock, self.own_peer_id, self.dht_port, self.torrents[peer.torrent].info_hash)
 
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
@@ -291,7 +288,8 @@ class SwarmAnalyzer:
 					delay=self.delay,
 					sock_timeout=self.timeout,
 					success=self.passive_success,
-					error=self.passive_error)
+					error=self.passive_error,
+					dht_port=self.dht_port)
 		except PermissionError as err:
 			raise AnalyzerError('Could not start server on port {}: {}'.format(port, err))
 		self.listen_port = port
@@ -374,12 +372,17 @@ class SwarmAnalyzer:
 			self.visited_peers.task_done()
 
 	## Use an already running DHT node to extracts new peers
-	#  @param node_port UDP port where the node is running # TODO use
+	#  @param node_port UDP port where the node is running
 	#  @param control_port TCP port for sending telnet commands
 	#  @param interval Time delay between contacting the dht in minutes
+	#  @exception AnalyzerError
 	def start_dht(self, node_port, control_port, interval):
 		# Start communication
-		self.dht = pymdht_connector.DHT(control_port)
+		try:
+			self.dht = pymdht_connector.DHT(control_port)
+		except DHTError as err:
+			raise AnalyzerError(str(err))
+		self.dht_port = node_port
 
 		# Start handler thread
 		thread = threading.Thread(target=self._dht_requestor, args=(interval*60,))
@@ -388,20 +391,20 @@ class SwarmAnalyzer:
 
 		# Remember activation to enable shutdown
 		self.dht_started = True
-	
+
 	## Requests new peers from the node for all torrents repeatingly
 	#  @param interval Time delay between contacting the dht in seconds
 	def _dht_requestor(self, interval):
 		while not self.shutdown_request.is_set():
 			for key in self.torrents:
-				print('peers for torrent {}:'.format(key))
+				logging.info('Performing DHT peer lookup for torrent {} ...'.format(key))
 				try:
 					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex)
-				except DHTError:
+				except DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
-				
+
 				# TODO put in self.peers
-				print(dht_peers)
+				logging.debug('Received DHT peers: {}'.format(dht_peers))
 
 			# Wait interval
 			logging.info('Waiting {} minutes until next dht request ...'.format(interval/60))
@@ -518,11 +521,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			return
 		logging.info('################ Evaluating an incoming peer ################')
 		try:
-			session = peer_wire_protocol.PeerSession(self.request, self.server.own_peer_id)
-			rec_peer_id, reserved, rec_info_hash = session.receive_handshake() # PeerError
-			session.send_handshake(rec_info_hash) # PeerError
-			messages = session.receive_all_messages(100)
-			result = rec_peer_id, reserved, rec_info_hash, messages
+			result = peer_wire_protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_port)
 		except peer_wire_protocol.PeerError as err:
 			logging.warning('Could not evaluate incoming peer: {}'.format(err))
 			self.server.error.increment()
