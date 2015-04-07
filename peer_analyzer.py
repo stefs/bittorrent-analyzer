@@ -16,6 +16,7 @@ import tracker_request
 import peer_wire_protocol
 import database_storage
 import torrent_file
+import pymdht_connector
 
 ## Named tuples representing cached peer and a torrent file
 Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
@@ -377,13 +378,9 @@ class SwarmAnalyzer:
 	#  @param control_port TCP port for sending telnet commands
 	#  @param interval Time delay between contacting the dht in minutes
 	def start_dht(self, node_port, control_port, interval):
-		# Initialte telnet control session
-		try:
-			# TODO assure telnet is only reachable on locally
-			self.dht = telnetlib.Telnet(host='localhost', port=control_port)
-		except ConnectionRefusedError as err:
-			raise AnalyzerError('Cound not connect to DHT telnet control server at port {}: {}'.format(control_port, err))
- 
+		# Start communication
+		self.dht = pymdht_connector.DHT(control_port)
+
 		# Start handler thread
 		thread = threading.Thread(target=self._dht_requestor, args=(interval*60,))
 		thread.daemon = True
@@ -398,15 +395,13 @@ class SwarmAnalyzer:
 		while not self.shutdown_request.is_set():
 			for key in self.torrents:
 				print('peers for torrent {}:'.format(key))
-				# Receive new peers
 				try:
-					self.dht.write('0 OPEN 0 HASH {} 0'.format(self.torrents[key].info_hash_hex).encode()) # debug
-					dht_response = self.dht.read_until(b'CLOSE')
-				except OSError:
-					logging.error('Could not write to DHT telnet control')
+					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex)
+				except DHTError:
+					logging.error('Could not receive DHT peers: {}'.format(err))
 				
 				# TODO put in self.peers
-				print(dht_response)
+				print(dht_peers)
 
 			# Wait interval
 			logging.info('Waiting {} minutes until next dht request ...'.format(interval/60))
@@ -437,33 +432,24 @@ class SwarmAnalyzer:
 		# Propagate shutdown request
 		self.shutdown_request.set()
 
+		# Wait for termination
 		if self.dht_started:
-			try:
-				self.dht.write(b'KILL')
-			except OSError as err:
-				logging.warning('Failed to send EXIT command: {}'.format(err))
-			self.dht.close() # TODO necessary?
-			self.dht.close() # debug
-			logging.info('Ordered DHT node to kill itself and closed telnet connection')
-
+			self.dht.shutdown()
+			logging.info('Exited DHT node')
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
 			self.active_shutdown_done.wait()
-
 		if self.tracker_requests:
 			logging.info('Waiting for current tracker requests to finish ...')
 			self.tracker_shutdown_done.wait()
-
 		if self.passive_evaluation:
 			logging.info('Shutdown peer evaluation server ...')
 			self.server.shutdown()
-
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
 			self.visited_peers.join()
 			self.database_session.close()
 			logging.info('Database session closed')
-
 		self.database.close()
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits

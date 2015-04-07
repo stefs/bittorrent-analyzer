@@ -61,5 +61,5 @@ output/
 input/
 
 # virtualenv
-py3env/
+env-*
 
