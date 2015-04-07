@@ -32,7 +32,7 @@ class DHT:
 			except OSError:
 				raise DHTError('Telnet write failed: {}'.format(err))
 		# TODO parse peers
-		logging.debug('DHT response is {}'.format(dht_response))
+		logging.info('DHT response is {}'.format(dht_response))
 		return list()
 
 	## Insert nodes in routing table

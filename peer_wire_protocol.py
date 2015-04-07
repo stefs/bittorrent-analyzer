@@ -158,7 +158,7 @@ class PeerSession:
 
 	## Sends a message to the peer
 	#  @param message_id Protocol specific id
-	#  @param payload Message content
+	#  @param payload Message content of type bytes
 	#  @exception PeerError
 	def send_message(self, message_id, payload):
 		length_prefix = 1 + len(payload)
@@ -166,6 +166,13 @@ class PeerSession:
 		data = struct.pack(format_string, length_prefix, payload)
 		self.send_bytes(data) # PeerError
 		logging.info('Sent message {} {}'.format(message_id, payload))
+
+	## Sends a port message, according to BEP 5
+	#  @param dht_port UDP port of DHT node
+	#  @exception PeerError
+	def send_port(self, dht_port):
+		port = struct.pack('!H', dht_port)
+		self.send_message(0x09, port)
 
 ## Exception for not expected behavior of other peers and network failures
 class PeerError(Exception):
@@ -328,7 +335,7 @@ def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
 		logging.info('DHT not supported by remote peer')
 	else:
 		try:
-			session.send_message(0x09, str(dht_port)) # PeerError
+			session.send_port(dht_port) # PeerError
 		except PeerError as err:
 			logging.warning('Could not send PORT message: {}'.format(err))
 		logging.info('Send DHT port {} to remote peer'.format(dht_port))
