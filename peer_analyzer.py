@@ -374,6 +374,10 @@ class SwarmAnalyzer:
 	#  @param interval Time delay between contacting the dht in minutes
 	#  @exception AnalyzerError
 	def start_dht(self, node_port, control_port, interval):
+		# Concurrency management
+		self.dht_started = True
+		self.dht_shutdown_done = threading.Event()
+
 		# Start communication
 		try:
 			self.dht = pymdht_connector.DHT(control_port, self.timeout)
@@ -386,13 +390,16 @@ class SwarmAnalyzer:
 		thread.daemon = True
 		thread.start()
 
-		# Remember activation to enable shutdown
-		self.dht_started = True
-
 	## Requests new peers from the node for all torrents repeatingly
 	#  @param interval Time delay between contacting the dht in seconds
 	def _dht_requestor(self, interval):
 		while not self.shutdown_request.is_set():
+			# Wait interval
+			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
+			if self.shutdown_request.wait(interval)
+				break
+
+			# Request peers for all torrents
 			for key in self.torrents:
 				logging.info('Performing DHT peer lookup for torrent {} ...'.format(key))
 				start = time.perf_counter()
@@ -408,9 +415,8 @@ class SwarmAnalyzer:
 			# Print stats at DHT node
 			self.dht.print_stats()
 
-			# Wait interval
-			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
-			self.shutdown_request.wait(interval)
+		# Propagate thread termination
+		self.dht_shutdown_done.set()
 
 	## Print evaluation statistics
 	def log_statistics(self):
@@ -439,8 +445,9 @@ class SwarmAnalyzer:
 
 		# Wait for termination
 		if self.dht_started:
-			self.dht.shutdown()
-			logging.info('Exited DHT node')
+			logging.info('Waiting for DHT requests to finish ...')
+			self.dht_shutdown_done.wait()
+			self.dht.close()
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
 			self.active_shutdown_done.wait()

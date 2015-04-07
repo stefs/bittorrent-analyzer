@@ -156,23 +156,13 @@ class PeerSession:
 			logging.error('Reached message limit of ' + str(max_messages))
 		return messages
 
-	## Sends a message to the peer
-	#  @param message_id Protocol specific id
-	#  @param payload Message content of type bytes
-	#  @exception PeerError
-	def send_message(self, message_id, payload):
-		length_prefix = 1 + len(payload)
-		format_string = '>B{}s'.format(len(payload))
-		data = struct.pack(format_string, length_prefix, payload)
-		self.send_bytes(data) # PeerError
-		logging.info('Sent message {} {}'.format(message_id, payload))
-
 	## Sends a port message, according to BEP 5
 	#  @param dht_port UDP port of DHT node
 	#  @exception PeerError
 	def send_port(self, dht_port):
-		port = struct.pack('!H', dht_port)
-		self.send_message(0x09, port)
+		data = struct.pack('!BH', 9, dht_port)
+		self.send_bytes(data) # PeerError
+		logging.info('Sent DHT port {} to remote peer'.format(dht_port))
 
 ## Exception for not expected behavior of other peers and network failures
 class PeerError(Exception):

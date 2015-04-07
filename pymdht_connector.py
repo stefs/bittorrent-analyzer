@@ -61,7 +61,7 @@ class DHT:
 
 	## Exit pymdht node and close telnet connection
 	#  @param is_final Sends KILL instead of EXIT command
-	def shutdown(self, is_final=False):
+	def close(self, is_final=False):
 		self.is_shutdown = True
 		cmd = 'KILL' if is_final else 'EXIT'
 		with self.lock:
