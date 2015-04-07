@@ -116,7 +116,6 @@ class SwarmAnalyzer:
 	#  @param jobs Number of parallel thread to use
 	def start_active_evaluation(self, jobs):
 		# Concurrency management
-		self.active_evaluation = True
 		self.active_shutdown_done = threading.Barrier(jobs + 1)
 
 		# Create thread pool
@@ -128,6 +127,9 @@ class SwarmAnalyzer:
 			thread.daemon = True
 			# Start thread
 			thread.start()
+
+		# Remember activation to enable shutdown
+		self.active_evaluation = True
 
 	## Evaluate peers from main queue
 	#  @note This is a worker method to be started as a thread
@@ -204,7 +206,6 @@ class SwarmAnalyzer:
 	#  @note Start passive evaluation first to ensure port propagation
 	def start_tracker_requests(self, interval):
 		# Concurrency management
-		self.tracker_requests = True
 		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
 
 		# Create tracker request threads
@@ -213,6 +214,9 @@ class SwarmAnalyzer:
 			thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
 			thread.daemon = True
 			thread.start()
+
+		# Remember activation to enable shutdown
+		self.tracker_requests = True
 
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
 	#  @param torrent_key Torrent key specifying the target torrent and tracker
@@ -363,7 +367,6 @@ class SwarmAnalyzer:
 	#  @exception AnalyzerError
 	def start_dht(self, node_port, control_port, interval):
 		# Concurrency management
-		self.dht_started = True
 		self.dht_shutdown_done = threading.Event()
 
 		# Start communication
@@ -377,6 +380,9 @@ class SwarmAnalyzer:
 		thread = threading.Thread(target=self._dht_requestor, args=(interval*60,))
 		thread.daemon = True
 		thread.start()
+
+		# Remember activation to enable shutdown
+		self.dht_started = True
 
 	## Requests new peers from the node for all torrents repeatingly
 	#  @param interval Time delay between contacting the dht in seconds
