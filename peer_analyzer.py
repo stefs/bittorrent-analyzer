@@ -379,7 +379,7 @@ class SwarmAnalyzer:
 		# Start communication
 		try:
 			self.dht = pymdht_connector.DHT(control_port)
-		except DHTError as err:
+		except pymdht_connector.DHTError as err:
 			raise AnalyzerError(str(err))
 		self.dht_port = node_port
 
