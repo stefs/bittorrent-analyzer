@@ -15,6 +15,7 @@ class DHT:
 		except ConnectionRefusedError as err:
 			raise DHTError('Cound not connect to telnet server at port {}: {}'.format(control_port, err))
 		self.lock = threading.Lock()
+		self.is_shutdown = False
 
 	## Issue lookup for given info hash
 	#  @param info_hash_hex Hex string representing the info hash
@@ -22,37 +23,48 @@ class DHT:
 	#  @return List of ip port tuples of peers
 	#  @exception DHTError
 	def get_peers(self, info_hash_hex, bt_port=None):
+		# Receive peers
 		if bt_port is None:
 			bt_port = 0
-		lookup_timeout = 60
+		dht_response = list()
 		with self.lock:
 			try:
-				self.dht.write('0 OPEN 0 HASH {} {}\n'.format(info_hash_hex.encode(), bt_port).encode(encoding='ascii'))
-				dht_response = self.dht.read_until(b'CLOSE', lookup_timeout) # TODO does not work, what if it does not occur
+				self.dht.write('0 OPEN 0 HASH {} {}\n'.format(info_hash_hex, bt_port).encode())
+				while not self.is_shutdown:
+					line = self.dht.read_until(b'\n', self.timeout)
+					if line == b'':
+						continue
+					line = line.decode().rstrip('\r\n')
+					logging.debug('Received line {}'.format(line)) # debug
+					dht_response.append(line)
+					if 'CLOSE' in line:
+						break
 			except OSError:
 				raise DHTError('Telnet write failed: {}'.format(err))
-		# TODO parse peers
-		logging.info('DHT response is {}'.format(dht_response))
-		return list()
 
-	## Insert nodes in routing table
-	#  @param nodes List of ip port tuples of nodes
-	def add_nodes(self, nodes):
-		raise NotImplementedError
+		# Parse peers
+		peers = list()
+		for line in dht_response:
+			if 'PEER' in line:
+				ip_port = line.split(' ')[-1].split(':')
+				peers.append((ip_port[0], int(ip_port[1])))
+		logging.debug('Received DHT peers are {}'.format(peers)) # debug
+		logging.info('Received {} peers via DHT'.format(len(peers)))
+		return peers
 
 	## Exit pymdht node and close telnet connection
 	#  @param is_final Sends KILL instead of EXIT command
 	def shutdown(self, is_final=False):
+		self.is_shutdown = True
 		cmd = 'KILL' if is_final else 'EXIT'
 		with self.lock:
 			try:
-				self.dht.write('{}\n'.format(cmd).encode(encoding='ascii'))
+				self.dht.write('{}\n'.format(cmd).encode())
 			except OSError as err:
 				logging.warning('Failed to send {} command: {}'.format(cmd, err))
 			else:
 				logging.info('Sent {} command to pymdht'.format(cmd))
-			self.dht.close() # TODO necessary?
-			self.dht.close() # debug
+			#self.dht.close() # TODO necessary? # debug
 
 # Indicates an pymdht error
 class DHTError(Exception):
