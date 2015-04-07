@@ -117,11 +117,12 @@ class SwarmAnalyzer:
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
 	def start_active_evaluation(self, jobs):
-		# Thread termination barrier
+		# Concurrency management
+		self.active_evaluation = True
 		self.active_shutdown_done = threading.Barrier(jobs + 1)
-		logging.info('Connecting to peers in {} threads'.format(jobs))
 
 		# Create thread pool
+		logging.info('Connecting to peers in {} threads'.format(jobs))
 		for i in range(jobs):
 			# Create a thread with worker callable
 			thread = threading.Thread(target=self._evaluator)
@@ -129,9 +130,6 @@ class SwarmAnalyzer:
 			thread.daemon = True
 			# Start thread
 			thread.start()
-
-		# Remember activation to enable shutdown
-		self.active_evaluation = True
 
 	## Evaluate peers from main queue
 	#  @note This is a worker method to be started as a thread
@@ -207,7 +205,8 @@ class SwarmAnalyzer:
 	#  @param interval Timer interval between tracker requests are issued in minutes
 	#  @note Start passive evaluation first to ensure port propagation
 	def start_tracker_requests(self, interval):
-		# Thread termination indicator
+		# Concurrency management
+		self.tracker_requests = True
 		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
 
 		# Create tracker request threads
@@ -216,9 +215,6 @@ class SwarmAnalyzer:
 			thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
 			thread.daemon = True
 			thread.start()
-
-		# Remember activation to enable shutdown
-		self.tracker_requests = True
 
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
 	#  @param torrent_key Torrent key specifying the target torrent and tracker
@@ -396,7 +392,7 @@ class SwarmAnalyzer:
 		while not self.shutdown_request.is_set():
 			# Wait interval
 			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
-			if self.shutdown_request.wait(interval)
+			if self.shutdown_request.wait(interval):
 				break
 
 			# Request peers for all torrents
