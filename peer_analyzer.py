@@ -399,7 +399,7 @@ class SwarmAnalyzer:
 			for key in self.torrents:
 				logging.info('Performing DHT peer lookup for torrent {} ...'.format(key))
 				try:
-					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex)
+					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex, self.listen_port)
 				except pymdht_connector.DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
 

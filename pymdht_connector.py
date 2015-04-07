@@ -18,16 +18,18 @@ class DHT:
 	#  @param bt_port Own BitTorrent listening port to be announced to nodes
 	#  @return List of ip port tuples of peers
 	#  @exception DHTError
-	def get_peers(self, info_hash_hex, bt_port=0):
+	def get_peers(self, info_hash_hex, bt_port=None):
+		if bt_port is None:
+			bt_port = 0
 		with self.lock:
 			try:
 				self.dht.write('0 OPEN 0 HASH {} {}'.format(info_hash_hex.encode(), bt_port).encode(encoding='ascii'))
 				dht_response = self.dht.read_until(b'CLOSE')
 			except OSError:
 				raise DHTError('Telnet write failed: {}'.format(err))
-			# TODO parse peers
-			logging.debug(dht_response)
-			return list()
+		# TODO parse peers
+		logging.debug(dht_response)
+		return list()
 
 	## Insert nodes in routing table
 	#  @param nodes List of ip port tuples of nodes
@@ -37,8 +39,8 @@ class DHT:
 	## Exit pymdht node and close telnet connection
 	#  @param is_final Sends KILL instead of EXIT command
 	def shutdown(self, is_final=False):
+		cmd = b'KILL' if is_final else b'EXIT'
 		with self.lock:
-			cmd = b'KILL' if is_final else b'EXIT'
 			try:
 				self.dht.write(cmd)
 			except OSError as err:
