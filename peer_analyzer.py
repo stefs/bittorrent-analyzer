@@ -39,9 +39,7 @@ class SwarmAnalyzer:
 
 		# Network parameters
 		self.delay = delay * 60
-		logging.info('Time delay for revisiting unfinished peers is {} minutes'.format(delay))
 		self.timeout = timeout
-		logging.info('Timeout for network operations is {} seconds'.format(timeout))
 		self.listen_port = None
 		self.dht_port = None
 
@@ -446,7 +444,8 @@ class SwarmAnalyzer:
 			self.tracker_shutdown_done.wait()
 		if self.passive_evaluation:
 			logging.info('Shutdown peer evaluation server ...')
-			self.server.shutdown()
+			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish
+			time.sleep(self.timeout+3) # debug
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
 			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
