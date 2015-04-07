@@ -19,7 +19,7 @@ import torrent_file
 import pymdht_connector
 
 ## Named tuples representing cached peer and a torrent file
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key') # source 0=tracker, 1=incoming, 2=dht
 Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size')
 
 ## Requests peers from tracker and initiates peer connections
@@ -48,8 +48,6 @@ class SwarmAnalyzer:
 		self.late_evaluation_error = SharedCounter()
 		self.database_peer_update = SharedCounter()
 		self.database_new_peer = SharedCounter()
-		self.total_received_peers = 0
-		self.total_duplicate = 0
 		self.active_success = SharedCounter()
 		self.passive_success = SharedCounter()
 		self.passive_error = SharedCounter()
@@ -147,7 +145,7 @@ class SwarmAnalyzer:
 			if delay > 0:
 				logging.info('Delaying peer evaluation for {} seconds, target is {} minutes ...'.format(better_peer_reaction, delay/60))
 				self.shutdown_request.wait(better_peer_reaction)
-				self.peers.put(peer)
+				self.peers.put((peer, None))
 				continue
 
 			# Establish connection
@@ -239,21 +237,15 @@ class SwarmAnalyzer:
 					logging.info('Tracker recommended interval of {} minutes'.format(tracker_interval/60))
 
 				# Put peers in queue
-				self.peers.duplicate.reset()
+				duplicate_counter = 0
 				for peer_ip in peer_ips:
 					new_peer = Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
 							id=None, bitfield=None, pieces=None, source=0, torrent=torrent_key, key=None)
-					self.peers.put(new_peer)
-				duplicate_counter = self.peers.duplicate.get() # TODO inaccurate due to passive evaluation?
-				self.total_duplicate += duplicate_counter
-				self.total_received_peers += len(peer_ips)
-
-				# Calculate number of new peers
-				try:
-					percentage = int(duplicate_counter * 100 / len(peer_ips))
-				except ZeroDivisionError:
-					percentage = 0
-				logging.info('{} peers received, {} duplicates, equals {}%'.format(len(peer_ips), duplicate_counter, percentage))
+					is_duplicate = [False]
+					self.peers.put((new_peer, is_duplicate))
+					if is_duplicate[0]:
+						duplicate_counter += 1
+				logging.info('Received {} peers from tracker, {} duplicates'.format(len(peer_ips), duplicate_counter))
 
 			# Log queue stats
 			self.log_statistics()
@@ -359,7 +351,7 @@ class SwarmAnalyzer:
 			if peer.pieces < self.torrents[peer.torrent].pieces_count:
 				# Exclude incoming peers
 				if peer.source != 1:
-					self.peers.put(peer)
+					self.peers.put((peer, None))
 
 			# Allow waiting for all peers to be stored at shutdown
 			self.visited_peers.task_done()
@@ -395,18 +387,26 @@ class SwarmAnalyzer:
 			if self.shutdown_request.wait(interval):
 				break
 
-			# Request peers for all torrents
 			for key in self.torrents:
+				# Request peers
 				logging.info('Performing DHT peer lookup for torrent {} ...'.format(key))
 				start = time.perf_counter()
 				try:
 					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex, self.listen_port)
 				except pymdht_connector.DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
-				logging.info('Received {} DHT peers in {} seconds'.format(len(dht_peers), int(time.perf_counter()-start)))
+				end = time.perf_counter()
 
-				# TODO put in self.peers
-				print(dht_peers)
+				# Put in queue
+				duplicate_counter = 0
+				for peer in dht_peers:
+					new_peer = Peer(revisit=0, ip_address=peer[0], port=peer[1],
+							id=None, bitfield=None, pieces=None, source=2, torrent=key, key=None)
+					is_duplicate = [False]
+					self.peers.put((new_peer, is_duplicate))
+					if is_duplicate[0]:
+						duplicate_counter += 1
+				logging.info('Received {} DHT peers in {} seconds, {} duplicates'.format(len(dht_peers), end-start, duplicate_counter))
 
 			# Print stats at DHT node
 			self.dht.print_stats()
@@ -418,13 +418,6 @@ class SwarmAnalyzer:
 	def log_statistics(self):
 		# Peer queue, inaccurate due to consumer threads
 		logging.info('Currently are about {} peers in queue left'.format(self.peers.qsize()))
-
-		# Received peers
-		try:
-			percentage = int(self.total_duplicate * 100 / self.total_received_peers)
-		except ZeroDivisionError:
-			percentage = 0
-		logging.info('In total {} peers received, {} duplicates, equals {}%'.format(self.total_received_peers, self.total_duplicate, percentage))
 
 		# Evaluation errors
 		logging.info('Active evaluations: {} successful, {} failed on first contact, {} failed on later contact'.format(
@@ -474,15 +467,15 @@ class PeerQueue(queue.PriorityQueue):
 		# Add new attribute
 		self.all_peers = set()
 
-		# Add a duplicate counter
-		self.duplicate = SharedCounter()
-
 	## Put new peer in queue if not already processed, does not exclude peers with database id
-	#  @param peer Peer named tuple
+	#  @param peer Peer named tuple and duplicate indicator
 	#  @return True if this is a new peer, False if it has already been put
 	#  @note Overrides intern method
 	#  @warning Disables join option according to http://stackoverflow.com/a/24183479 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l147
 	def _put(self, peer):
+		# Unpack duplicate indicator
+		peer, is_duplicate = peer
+
 		# Create copy peer data for equality check
 		peer_equalality = (peer.ip_address, peer.port, peer.torrent)
 
@@ -494,7 +487,7 @@ class PeerQueue(queue.PriorityQueue):
 			# Remember equality information, set discards revisit duplicates
 			self.all_peers.add(peer_equalality)
 		else:
-			self.duplicate.increment()
+			is_duplicate[0] = True
 
 ## Subclass of library class to change parameters, add attributes and add multithreading mix-in class
 class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
