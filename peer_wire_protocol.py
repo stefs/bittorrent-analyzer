@@ -328,7 +328,6 @@ def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
 			session.send_port(dht_port) # PeerError
 		except PeerError as err:
 			logging.warning('Could not send PORT message: {}'.format(err))
-		logging.info('Send DHT port {} to remote peer'.format(dht_port))
 
 	# Return results
 	return rec_peer_id, rec_info_hash, messages
