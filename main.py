@@ -44,6 +44,7 @@ else:
 	print('Log is written to file ' + logfile)
 	logging_config['filename'] = logfile
 logging.basicConfig(**logging_config)
+logging.info('Command line was "{}"'.format(' '.join(argv)))
 
 # Analysis routine
 try:
@@ -54,6 +55,10 @@ try:
 		# Handle evaluated peers
 		analyzer.start_peer_handler()
 
+		# Integrate DHT node
+		if args.dht_node is not None:
+			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval) # start before evaluation
+
 		# Start passive evaluation server
 		if args.port is not None:
 			analyzer.start_passive_evaluation(args.port)
@@ -62,10 +67,6 @@ try:
 		if args.jobs is not None:
 			analyzer.start_tracker_requests(args.interval) # start after passive evaluation
 			analyzer.start_active_evaluation(args.jobs)
-
-		# Integrate DHT node
-		if args.dht_node is not None:
-			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval)
 
 		# Wait for termination
 		try:

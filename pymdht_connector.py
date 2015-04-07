@@ -1,5 +1,6 @@
 import telnetlib
 import threading
+import logging
 
 # Threadsafe pymdht telnet communication
 class DHT:
@@ -10,7 +11,7 @@ class DHT:
 	def __init__(self, control_port, timeout):
 		self.timeout = timeout
 		try:
-			self.dht = telnetlib.Telnet(host='localhost', port=control_port, self.timeout)
+			self.dht = telnetlib.Telnet('localhost', control_port, self.timeout)
 		except ConnectionRefusedError as err:
 			raise DHTError('Cound not connect to telnet server at port {}: {}'.format(control_port, err))
 		self.lock = threading.Lock()
