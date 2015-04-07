@@ -56,6 +56,8 @@ class DHT:
 			self.dht.write('STATS\n')
 		except (OSError, EOFError) as err:
 			logging.warning('Telnet write failed: {}'.format(err))
+		else:
+			logging.info('Sent STATS command to DHT node')
 
 	## Exit pymdht node and close telnet connection
 	#  @param is_final Sends KILL instead of EXIT command
@@ -68,7 +70,7 @@ class DHT:
 			except OSError as err:
 				logging.warning('Failed to send {} command: {}'.format(cmd, err))
 			else:
-				logging.info('Sent {} command to pymdht'.format(cmd))
+				logging.info('Sent {} command to DHT node'.format(cmd))
 			#self.dht.close() # TODO necessary? # debug
 
 # Indicates an pymdht error
