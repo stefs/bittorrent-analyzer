@@ -35,7 +35,7 @@ class DHT:
 					if line == b'':
 						continue
 					line = line.decode().rstrip('\r\n')
-					logging.debug('Received line {}'.format(line)) # debug
+					print('Received line {}'.format(line)) # debug
 					dht_response.append(line)
 					if 'CLOSE' in line:
 						break
@@ -48,8 +48,6 @@ class DHT:
 			if 'PEER' in line:
 				ip_port = line.split(' ')[-1].split(':')
 				peers.append((ip_port[0], int(ip_port[1])))
-		logging.debug('Received DHT peers are {}'.format(peers)) # debug
-		logging.info('Received {} peers via DHT'.format(len(peers)))
 		return peers
 
 	## Exit pymdht node and close telnet connection
