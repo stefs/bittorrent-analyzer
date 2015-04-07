@@ -378,7 +378,7 @@ class SwarmAnalyzer:
 	def start_dht(self, node_port, control_port, interval):
 		# Start communication
 		try:
-			self.dht = pymdht_connector.DHT(control_port)
+			self.dht = pymdht_connector.DHT(control_port, self.timeout)
 		except pymdht_connector.DHTError as err:
 			raise AnalyzerError(str(err))
 		self.dht_port = node_port

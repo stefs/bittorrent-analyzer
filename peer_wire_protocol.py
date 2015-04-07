@@ -328,7 +328,7 @@ def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
 		logging.info('DHT not supported by remote peer')
 	else:
 		try:
-			session.send_message(0x09, dht_port) # PeerError
+			session.send_message(0x09, str(dht_port)) # PeerError
 		except PeerError as err:
 			logging.warning('Could not send PORT message: {}'.format(err))
 		logging.info('Send DHT port {} to remote peer'.format(dht_port))

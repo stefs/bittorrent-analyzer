@@ -5,10 +5,12 @@ import threading
 class DHT:
 	## Construct a telnet controller for the given port
 	#  @param control_port Telnet port to connect to
+	#  @param timeout Timeout for node communication
 	#  @exception DHTError
-	def __init__(self, control_port):
+	def __init__(self, control_port, timeout):
+		self.timeout = timeout
 		try:
-			self.dht = telnetlib.Telnet(host='localhost', port=control_port)
+			self.dht = telnetlib.Telnet(host='localhost', port=control_port, self.timeout)
 		except ConnectionRefusedError as err:
 			raise DHTError('Cound not connect to telnet server at port {}: {}'.format(control_port, err))
 		self.lock = threading.Lock()
@@ -21,14 +23,15 @@ class DHT:
 	def get_peers(self, info_hash_hex, bt_port=None):
 		if bt_port is None:
 			bt_port = 0
+		lookup_timeout = 60
 		with self.lock:
 			try:
 				self.dht.write('0 OPEN 0 HASH {} {}'.format(info_hash_hex.encode(), bt_port).encode(encoding='ascii'))
-				dht_response = self.dht.read_until(b'CLOSE')
+				dht_response = self.dht.read_until(b'CLOSE', lookup_timeout) # TODO does not work, what if it does not occur
 			except OSError:
 				raise DHTError('Telnet write failed: {}'.format(err))
 		# TODO parse peers
-		logging.debug(dht_response)
+		logging.debug('DHT response is {}'.format(dht_response))
 		return list()
 
 	## Insert nodes in routing table
