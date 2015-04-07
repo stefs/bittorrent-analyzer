@@ -400,7 +400,7 @@ class SwarmAnalyzer:
 					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex, self.listen_port)
 				except pymdht_connector.DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
-				logging.info('Received {} DHT peers in {} seconds'.format(len(dht_peers), time.perf_counter()-start))
+				logging.info('Received {} DHT peers in {} seconds'.format(len(dht_peers), int(time.perf_counter()-start)))
 
 				# TODO put in self.peers
 				print(dht_peers)
@@ -409,7 +409,7 @@ class SwarmAnalyzer:
 			self.dht.print_stats()
 
 			# Wait interval
-			logging.info('Waiting {} minutes until next dht request ...'.format(interval/60))
+			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
 			self.shutdown_request.wait(interval)
 
 	## Print evaluation statistics
