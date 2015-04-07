@@ -21,7 +21,7 @@ class DHT:
 	def get_peers(self, info_hash_hex, bt_port=0):
 		with self.lock:
 			try:
-				self.dht.write('0 OPEN 0 HASH {} {}'.format(info_hash_hex.encode(), bt_port))
+				self.dht.write('0 OPEN 0 HASH {} {}'.format(info_hash_hex.encode(), bt_port).encode(encoding='ascii'))
 				dht_response = self.dht.read_until(b'CLOSE')
 			except OSError:
 				raise DHTError('Telnet write failed: {}'.format(err))
@@ -34,13 +34,17 @@ class DHT:
 	def add_nodes(self, nodes):
 		raise NotImplementedError
 
-	## Kill pymdht node and close telnet connection
-	def shutdown(self):
+	## Exit pymdht node and close telnet connection
+	#  @param is_final Sends KILL instead of EXIT command
+	def shutdown(self, is_final=False):
 		with self.lock:
+			cmd = b'KILL' if is_final else b'EXIT'
 			try:
-				self.dht.write(b'KILL')
+				self.dht.write(cmd)
 			except OSError as err:
-				logging.warning('Failed to send KILL command: {}'.format(err))
+				logging.warning('Failed to send {} command: {}'.format(cmd, err))
+			else:
+				logging.info('Sent {} command to pymdht'.format(cmd))
 			self.dht.close() # TODO necessary?
 			self.dht.close() # debug
 
