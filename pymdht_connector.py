@@ -27,15 +27,16 @@ class DHT:
 		if bt_port is None:
 			bt_port = 0
 		dht_response = list()
+		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex, bt_port) # TODO use existing channel?
+		logging.info('DHT lookup request: {}'.format(request_line))
 		with self.lock:
 			try:
-				self.dht.write('0 OPEN 0 HASH {} {}\n'.format(info_hash_hex, bt_port).encode())
+				self.dht.write(request_line.encode())
 				while not self.is_shutdown:
 					line = self.dht.read_until(b'\n', self.timeout)
 					if line == b'':
 						continue
 					line = line.decode().rstrip('\r\n')
-					print('Received line {}'.format(line)) # debug
 					dht_response.append(line)
 					if 'CLOSE' in line:
 						break
@@ -48,6 +49,8 @@ class DHT:
 			if 'PEER' in line:
 				ip_port = line.split(' ')[-1].split(':')
 				peers.append((ip_port[0], int(ip_port[1])))
+			elif not 'OPEN' in line and not 'CLOSE' in line:
+				logging.error('Unexpected telnet line: {}'.format(line))
 		return peers
 
 	## Send STATS command for debug purposes

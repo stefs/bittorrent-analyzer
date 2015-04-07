@@ -57,7 +57,7 @@ try:
 
 		# Integrate DHT node
 		if args.dht_node is not None:
-			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval) # start before evaluation
+			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval) # start before evaluation, they announce node port
 
 		# Start passive evaluation server
 		if args.port is not None:
@@ -65,7 +65,7 @@ try:
 
 		# Start active evaluator threads
 		if args.jobs is not None:
-			analyzer.start_tracker_requests(args.interval) # start after passive evaluation
+			analyzer.start_tracker_requests(args.interval) # start after passive, needs bt_port
 			analyzer.start_active_evaluation(args.jobs)
 
 		# Wait for termination

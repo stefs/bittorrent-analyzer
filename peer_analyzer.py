@@ -395,7 +395,6 @@ class SwarmAnalyzer:
 
 			for key in self.torrents:
 				# Request peers
-				logging.info('Performing DHT peer lookup for torrent {} ...'.format(key))
 				start = time.perf_counter()
 				try:
 					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex, self.listen_port)
