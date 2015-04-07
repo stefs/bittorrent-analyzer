@@ -274,7 +274,6 @@ class SwarmAnalyzer:
 	## Starts a multithreaded TCP server to analyze incoming peers
 	#  @param port Extern listen port number
 	#  @exception AnalyzerError
-	# TODO test with real data
 	def start_passive_evaluation(self, port):
 		# Create the server, binding to outside address on custom port
 		if not 0 <= port <= 65535:
@@ -326,7 +325,7 @@ class SwarmAnalyzer:
 		while True:
 			# Get new peer to store
 			peer, result, revisit = self.visited_peers.get()
-			rec_peer_id, reserved, rec_info_hash, messages = result
+			rec_peer_id, rec_info_hash, messages = result
 
 			# Evaluate messages
 			bitfield = peer_wire_protocol.bitfield_from_messages(messages, self.torrents[peer.torrent].pieces_count)
@@ -526,15 +525,18 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			logging.warning('Could not evaluate incoming peer: {}'.format(err))
 			self.server.error.increment()
 		else:
+			# Search received info hash in torrents dict
 			torrent = None
 			for key in self.server.torrents:
-				if rec_info_hash == self.server.torrents[key].info_hash:
+				if result[1] == self.server.torrents[key].info_hash:
 					torrent = key
 			if torrent is None:
 				logging.warning('Ignoring incoming peer with unknown info hash')
 				return
 			else:
 				logging.info('Storing incoming peer for torrent {}'.format(torrent))
+
+			# Queue for peer handler
 			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, 1, torrent, None)
 			revisit_time = time.perf_counter() + self.server.delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))

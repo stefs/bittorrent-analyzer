@@ -334,5 +334,5 @@ def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
 		logging.info('Send DHT port {} to remote peer'.format(dht_port))
 
 	# Return results
-	return rec_peer_id, reserved, rec_info_hash, messages
+	return rec_peer_id, rec_info_hash, messages
 
