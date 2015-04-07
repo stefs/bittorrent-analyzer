@@ -136,7 +136,7 @@ class PeerSession:
 
 		# Return message id and payload tuple
 		message_str = message_to_string(message_id, payload, 80)
-		logging.info('Received message: ' + message_str)
+		logging.debug('Received message: ' + message_str)
 		return (message_id, payload)
 
 	## Collect all messages from the peer until timeout or error
@@ -161,6 +161,7 @@ class PeerSession:
 	#  @exception PeerError
 	def send_port(self, dht_port):
 		data = struct.pack('!BH', 9, dht_port)
+		assert len(data) == 3, 'port message has wrong length'
 		self.send_bytes(data) # PeerError
 		logging.info('Sent DHT port {} to remote peer'.format(dht_port))
 

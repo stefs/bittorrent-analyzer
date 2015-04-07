@@ -412,7 +412,7 @@ class SwarmAnalyzer:
 					self.peers.put((new_peer, is_duplicate))
 					if is_duplicate[0]:
 						duplicate_counter += 1
-				logging.info('Received {} DHT peers in {} seconds, {} duplicates'.format(len(dht_peers), end-start, duplicate_counter))
+				logging.info('Received {} DHT peers in {} seconds, {} duplicates'.format(len(dht_peers), int(end-start), duplicate_counter))
 
 			# Print stats at DHT node
 			self.dht.print_stats()
