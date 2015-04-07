@@ -53,7 +53,7 @@ class DHT:
 	## Send STATS command for debug purposes
 	def print_stats(self):
 		try:
-			self.dht.write('STATS\n')
+			self.dht.write(b'STATS\n')
 		except (OSError, EOFError) as err:
 			logging.warning('Telnet write failed: {}'.format(err))
 		else:
