@@ -449,7 +449,7 @@ class SwarmAnalyzer:
 			self.server.shutdown()
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
-			self.visited_peers.join()
+			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
 			self.database_session.close()
 			logging.info('Database session closed')
 		self.database.close()

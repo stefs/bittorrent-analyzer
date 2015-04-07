@@ -201,7 +201,7 @@ def number_to_64_bitmap(number):
 #  @return Printable string with type string
 def message_to_string(message_id, payload, length):
 	# Known message types according to http://www.bittorrent.org/beps/bep_0003.html#peer-messages
-	peer_message_type = {0: 'choke', 1: 'unchoke', 2: 'interested', 3: 'not interested', 4: 'have', 5: 'bitfield', 6: 'request', 7: 'piece', 8: 'cancel'}
+	peer_message_type = {0: 'choke', 1: 'unchoke', 2: 'interested', 3: 'not interested', 4: 'have', 5: 'bitfield', 6: 'request', 7: 'piece', 8: 'cancel', 9: 'port'}
 
 	# Custom id for a keepalive signal
 	peer_message_type[-1] = 'keepalive'
@@ -328,7 +328,7 @@ def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
 		logging.info('DHT not supported by remote peer')
 	else:
 		try:
-			self.send_message(0x09, dht_port) # PeerError
+			session.send_message(0x09, dht_port) # PeerError
 		except PeerError as err:
 			logging.warning('Could not send PORT message: {}'.format(err))
 		logging.info('Send DHT port {} to remote peer'.format(dht_port))
