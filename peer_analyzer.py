@@ -336,7 +336,7 @@ class SwarmAnalyzer:
 			key = peer.key
 			assert (peer.source is Source.incoming) == (peer.source == Source.incoming), 'problem with enum comparison' # debug
 			if peer.source is Source.incoming:
-				equality = (peer.ip_address, peer.port, peer.torrent)
+				equality = (peer.ip_address, peer.torrent) # Port differs every time
 				try:
 					key = self.all_incoming_peers[equality]
 				except KeyError:
