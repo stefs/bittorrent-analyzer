@@ -70,11 +70,12 @@ try:
 
 		# Wait for termination
 		try:
-			print('End with Ctrl+C or kill -SIGINT {}'.format(os.getpid()))
+			print('End with Ctrl+C')
+			logging.info('End with "kill -SIGINT {}"'.format(os.getpid()))
 			while True:
 				time.sleep(1024)
 		except KeyboardInterrupt:
-			print('\nPlease wait for termination ...')
+			print('Please wait for termination ...')
 			logging.info('Received interrupt signal, exiting')
 except peer_analyzer.AnalyzerError as err:
 	logging.critical(str(err))

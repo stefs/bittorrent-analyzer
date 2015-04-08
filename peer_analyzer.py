@@ -33,6 +33,7 @@ class SwarmAnalyzer:
 		# Smart queue for peer management
 		self.peers = PeerQueue()
 		self.visited_peers = queue.Queue()
+		self.all_incoming_peers = dict() # equality check
 
 		# Generate peer id
 		self.own_peer_id = tracker_request.generate_peer_id()
@@ -326,10 +327,19 @@ class SwarmAnalyzer:
 			remaining = self.torrents[peer.torrent].pieces_count - downloaded_pieces
 			logging.info('Peer reports to have {} pieces, {} remaining, equals {}%'.format(downloaded_pieces, remaining, percentage))
 
+			# Retrieve key for reoccurred incoming peers
+			key = peer.key
+			if peer.source == 1:
+				equality = (peer.ip_address, peer.port, peer.torrent)
+				try:
+					key = self.all_incoming_peers[equality]
+				except KeyError:
+					pass
+
 			# Update peer with results
 			peer = Peer(revisit, peer.ip_address, peer.port,
 					rec_peer_id, bitfield, downloaded_pieces,
-					peer.source, peer.torrent, peer.key)
+					peer.source, peer.torrent, key)
 
 			# Store evaluated peer and receive database key
 			try:
@@ -343,19 +353,25 @@ class SwarmAnalyzer:
 				logging.critical('Unexpected error during database update: {}\n{}'.format(err, ''.join(tb)))
 				continue
 
-			# Remember database key and update statistical counters
-			if peer.key is None:
-				*old_peer, key = peer
-				peer = Peer(*old_peer, key=peer_key)
-				self.database_new_peer.increment()
-			else:
+			# Update statistical counters
+			if peer_key is None:
 				self.database_peer_update.increment()
+			else:
+				self.database_new_peer.increment()
 
-			# Write back in progress peers, discard finished ones
+			# Remember equality information of new incoming peers and discard all incoming
+			if peer.source == 1:
+				if peer_key is not None:
+					self.all_incoming_peers[equality] = peer_key
+				self.visited_peers.task_done()
+				continue
+
+			# Write back peer when not finished and add key if necessary
 			if peer.pieces < self.torrents[peer.torrent].pieces_count:
-				# Exclude incoming peers
-				if peer.source != 1:
-					self.peers.put((peer, None))
+				if peer.key is None:
+					*old_peer, key = peer
+					peer = Peer(*old_peer, key=peer_key)
+				self.peers.put((peer, None))
 
 			# Allow waiting for all peers to be stored at shutdown
 			self.visited_peers.task_done()
@@ -396,10 +412,14 @@ class SwarmAnalyzer:
 			for key in self.torrents:
 				# Request peers
 				start = time.perf_counter()
+				dht_peers = list()
 				try:
 					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex, self.listen_port)
 				except pymdht_connector.DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
+				except Exception as err:
+					tb = traceback.format_tb(err.__traceback__)
+					logging.critical('Unexpected error during DHT request: {}\n{}'.format(err, ''.join(tb)))
 				end = time.perf_counter()
 
 				# Put in queue
@@ -413,8 +433,12 @@ class SwarmAnalyzer:
 						duplicate_counter += 1
 				logging.info('Received {} DHT peers in {} seconds, {} duplicates'.format(len(dht_peers), int(end-start), duplicate_counter))
 
-			# Print stats at DHT node
-			self.dht.print_stats()
+			# Print stats at DHT node # TODO receive instead of print
+			try:
+				self.dht.print_stats()
+			except Exception as err:
+				tb = traceback.format_tb(err.__traceback__)
+				logging.critical('Unexpected error during DHT stats printing: {}\n{}'.format(err, ''.join(tb)))
 
 		# Propagate thread termination
 		self.dht_shutdown_done.set()
@@ -482,15 +506,15 @@ class PeerQueue(queue.PriorityQueue):
 		peer, is_duplicate = peer
 
 		# Create copy peer data for equality check
-		peer_equalality = (peer.ip_address, peer.port, peer.torrent)
+		peer_equality = (peer.ip_address, peer.port, peer.torrent)
 
 		# Check if this is a revisit or if it is a new peer
-		if peer.key is not None or peer_equalality not in self.all_peers:
+		if peer.key is not None or peer_equality not in self.all_peers:
 			# Call parent method
 			queue.PriorityQueue._put(self, peer)
 
 			# Remember equality information, set discards revisit duplicates
-			self.all_peers.add(peer_equalality)
+			self.all_peers.add(peer_equality)
 		else:
 			is_duplicate[0] = True
 
