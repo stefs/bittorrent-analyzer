@@ -35,9 +35,8 @@ class Peer(Base):
 	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)
 	visits = sqlalchemy.Column(sqlalchemy.types.Integer)
-	source = sqlalchemy.Column(sqlalchemy.types.Integer)
+	source = sqlalchemy.Column(sqlalchemy.types.Enum)
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
-
 
 ## Declarative class for torrent table
 class Torrent(Base):

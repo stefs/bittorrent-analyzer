@@ -83,4 +83,5 @@ except peer_analyzer.AnalyzerError as err:
 finally:
 	analyzer.log_statistics()
 print('Finished')
+logging.info('Finished')
 
