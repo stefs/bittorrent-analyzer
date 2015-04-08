@@ -453,6 +453,9 @@ class SwarmAnalyzer:
 		# Peer queue, inaccurate due to consumer threads
 		logging.info('Currently are about {} peers in queue left'.format(self.peers.qsize()))
 
+		# Unique incoming peers
+		logging.info('Seen {} unique incoming peers'.format(len(self.all_incoming_peers)))
+
 		# Evaluation errors
 		logging.info('Active evaluations: {} successful, {} failed on first contact, {} failed on later contact'.format(
 				self.active_success.get(), self.first_evaluation_error.get(), self.late_evaluation_error.get()))

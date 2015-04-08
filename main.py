@@ -77,11 +77,15 @@ try:
 		except KeyboardInterrupt:
 			print('Please wait for termination ...')
 			logging.info('Received interrupt signal, exiting')
-except peer_analyzer.AnalyzerError as err:
-	logging.critical(str(err))
-	raise SystemExit
-finally:
+except Exception as err:
+	tb = traceback.format_tb(err.__traceback__)
+	logging.critical('Unexpected error: {}\n{}'.format(err, ''.join(tb)))
+
+# Finally
+try:
 	analyzer.log_statistics()
+except Exception as err:
+	logging.critical('Failed to log final statistic: {}'.format(err))
 logging.info('Finished')
 print('Finished')
 
