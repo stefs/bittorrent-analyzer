@@ -410,11 +410,6 @@ class SwarmAnalyzer:
 	#  @param interval Time delay between contacting the dht in seconds
 	def _dht_requestor(self, interval):
 		while not self.shutdown_request.is_set():
-			# Wait interval
-			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
-			if self.shutdown_request.wait(interval):
-				break
-
 			for key in self.torrents:
 				# Request peers
 				start = time.perf_counter()
@@ -445,6 +440,10 @@ class SwarmAnalyzer:
 			except Exception as err:
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('Unexpected error during DHT stats printing: {}\n{}'.format(err, ''.join(tb)))
+
+			# Wait interval
+			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
+			self.shutdown_request.wait(interval)
 
 		# Propagate thread termination
 		self.dht_shutdown_done.set()

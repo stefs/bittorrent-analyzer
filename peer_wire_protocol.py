@@ -262,7 +262,7 @@ def bitfield_from_messages(messages, pieces_number):
 			other_count += 1
 
 	# Return peer_id and bitfield
-	logging.info('Received ' + str(bitfield_count) + ' bitfield, ' + str(have_count) + ' have and ' + str(other_count) + ' other messages')
+	logging.info('Received ' + str(bitfield_count) + ' bitfield, ' + str(have_count) + ' have and ' + str(other_count) + ' other messages') # TODO hard log
 	return bitfield
 
 ## Sets a bit at a given index in a given bitfield on true
