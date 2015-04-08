@@ -70,8 +70,8 @@ try:
 
 		# Wait for termination
 		try:
-			print('End with Ctrl+C')
 			logging.info('End with "kill -SIGINT {}"'.format(os.getpid()))
+			print('End with Ctrl+C')
 			while True:
 				time.sleep(1024)
 		except KeyboardInterrupt:
@@ -82,6 +82,6 @@ except peer_analyzer.AnalyzerError as err:
 	raise SystemExit
 finally:
 	analyzer.log_statistics()
-print('Finished')
 logging.info('Finished')
+print('Finished')
 

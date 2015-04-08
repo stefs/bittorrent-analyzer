@@ -10,6 +10,7 @@ import os
 import collections
 import telnetlib
 import base64
+import enum
 
 # Project modules
 import tracker_request
@@ -19,8 +20,12 @@ import torrent_file
 import pymdht_connector
 
 ## Named tuples representing cached peer and a torrent file
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key') # source 0=tracker, 1=incoming, 2=dht
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
 Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size')
+class Source(enum.Enum):
+	tracker = 0
+	incoming = 1
+	dht = 2
 
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
@@ -245,7 +250,7 @@ class SwarmAnalyzer:
 				duplicate_counter = 0
 				for peer_ip in peer_ips:
 					new_peer = Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
-							id=None, bitfield=None, pieces=None, source=0, torrent=torrent_key, key=None)
+							id=None, bitfield=None, pieces=None, source=Source.tracker, torrent=torrent_key, key=None)
 					is_duplicate = [False]
 					self.peers.put((new_peer, is_duplicate))
 					if is_duplicate[0]:
@@ -329,7 +334,8 @@ class SwarmAnalyzer:
 
 			# Retrieve key for reoccurred incoming peers
 			key = peer.key
-			if peer.source == 1:
+			assert (peer.source is Source.incoming) == (peer.source == Source.incoming), 'problem with enum comparison' # debug
+			if peer.source is Source.incoming:
 				equality = (peer.ip_address, peer.port, peer.torrent)
 				try:
 					key = self.all_incoming_peers[equality]
@@ -360,7 +366,7 @@ class SwarmAnalyzer:
 				self.database_new_peer.increment()
 
 			# Remember equality information of new incoming peers and discard all incoming
-			if peer.source == 1:
+			if peer.source is Source.incoming:
 				if peer_key is not None:
 					self.all_incoming_peers[equality] = peer_key
 				self.visited_peers.task_done()
@@ -426,7 +432,7 @@ class SwarmAnalyzer:
 				duplicate_counter = 0
 				for peer in dht_peers:
 					new_peer = Peer(revisit=0, ip_address=peer[0], port=peer[1],
-							id=None, bitfield=None, pieces=None, source=2, torrent=key, key=None)
+							id=None, bitfield=None, pieces=None, source=Source.dht, torrent=key, key=None)
 					is_duplicate = [False]
 					self.peers.put((new_peer, is_duplicate))
 					if is_duplicate[0]:
@@ -566,7 +572,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 				logging.info('Storing incoming peer for torrent {}'.format(torrent))
 
 			# Queue for peer handler
-			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, 1, torrent, None)
+			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, Source.incoming, torrent, None)
 			revisit_time = time.perf_counter() + self.server.delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()

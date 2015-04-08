@@ -35,7 +35,7 @@ class Peer(Base):
 	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)
 	visits = sqlalchemy.Column(sqlalchemy.types.Integer)
-	source = sqlalchemy.Column(sqlalchemy.types.Enum)
+	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht')) # TODO database should have enum support
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
 
 ## Declarative class for torrent table
@@ -95,7 +95,7 @@ class Database:
 			# Write to database
 			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, city=location[0], country=location[1], continent=location[2],
 					first_pieces=peer.pieces, last_pieces=None, first_seen=timestamp, last_seen=None,
-					max_speed=None, visits=1, source=peer.source, torrent=peer.torrent)
+					max_speed=None, visits=1, source=peer.source.name, torrent=peer.torrent)
 			session.add(new_peer)
 			session.commit()
 
