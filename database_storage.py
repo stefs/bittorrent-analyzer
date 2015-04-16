@@ -188,7 +188,13 @@ def get_short_hostname(ip_address):
 		return None
 	else:
 		host_list = long_host.split('.')
-		return host_list[-2] + '.' + host_list[-1]
+		try:
+			return host_list[-2] + '.' + host_list[-1]
+		except IndexError:
+			try:
+				return host_list[-1]
+			except IndexError:
+				return None
 
 ## Anonymize an IP address according to https://support.google.com/analytics/answer/2763052?hl=en
 #  @param ip_address Not anonymized ip adderss
