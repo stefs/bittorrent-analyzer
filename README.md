@@ -68,13 +68,17 @@ These are the standard installation steps on a Debian based system.
 
 ## Usage
 1. Place torrent files in the `input/` directory.
-2. `source py3env/bin/activate`
-3. `./main.py [-h] [-j <number>] [-p <port>] [-t <seconds>] [-d <minutes>] [-i <minutes>] [-l <level>] <torrent>`
-4. Stop with Ctl+C or SIGINT
-5. `deactivate`
-6. Logs and results are saved in the `output/` directory.
+2. `tmux new-session -s bittorrent-analyzer`
+3. `source env-main/bin/activate`
+4. `./main.py`
+5. `tmux detach-client`
+6. Wait arbitrary time for peer analysis
+7. `tmux attach-session -t bittorrent-analyzer`
+8. Stop program with Ctrl+C
+9. `deactivate`
+10. Logs and results are saved in the `output/` directory.
 
-The following commandline options are available:
+The following **commandline options** are available:
 
 * `<torrent>`  
   File system path to the torrent file to be examined
@@ -101,4 +105,3 @@ The following commandline options are available:
 ### Copyright
 Copyright © 2015 Stefan Schindler  
 Licensed under the GNU General Public License Version 3
-
