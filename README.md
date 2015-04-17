@@ -1,13 +1,18 @@
+[TOC]
+
 # BitTorrent Download Analyzer
 This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 
 ## Todo
 ### Next steps
+* Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
+* Statistik mit Grafik in LaTeX
+
+* ! Statistical evaluation with R
+	* Count downloads within evaluation period
 * ! Accept magnet links (partial BEP 9)
-* ! Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?  
+* Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?  
     --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
-* ! More tests on VM
-* ! Search peers via IPv4 DHT (BEP 5) and IPv6 DHT (BEP 32)
 * Revisit incoming peers?
 
 ### Later steps
@@ -35,17 +40,18 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * Log city, country and continent via IP address
 * Request new IPv4 peers using the HTTP and UDP tracker protocols (BEP 15)
 * Integrate a running pymdht DHT node via telnet by sending PORT messages and performing peer lookups - NEW
+* Perform IPv4 DHT (BEP 5) requests to a pymdht DHT node through telnet
 * (list incomplete)
 
 ### Restrictions
 * No IPv6 only peers
 * No uTP only peers
 * No PEX
-* No DHT
+* No IPv6 DHT (BEP 32)
 * No Local Peer Discovery
 
-## Installation
-### Requirements
+## Requirements
+### BitTorrent Download Analyzer
 * Unix-like operating system
 * Python 3.4+
 * [pip](https://pip.pypa.io/) 1.5+
@@ -55,6 +61,13 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * Database
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
 
+### Mainline DHT node
+* [pymdht](https://github.com/rauljim/pymdht) with patches
+
+### Statistical evaluation
+* r-base
+
+## Installation
 ### Steps
 These are the standard installation steps on a Debian based system.
 
@@ -66,36 +79,39 @@ These are the standard installation steps on a Debian based system.
 6. `deactivate`
 7. Download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-City.mmdb`
 
+R
+
+1. `sudo R`
+2. install.packages("DBI")
+3. install.packages("RSQLite")
+
 ## Usage
-1. Place torrent files in the `input/` directory.
-2. `tmux new-session -s bittorrent-analyzer`
+### Start pymdh DHT node
+1. `tmux new-session -s pymdht`
+2. `./run_pymdht_node.py -p 17000 --telnet-port=17001`
+3. Tmux detach with `Ctrl+B` followed by `d`
+
+Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still works as expected!
+
+### Start bittorrent-analyzer peer evaluation
+1. Prepare a directory with `*.torrent` files **or** a single file `input/magnet.txt` with one magnet link per line
+2. `tmux new-session -s bta`
 3. `source env-main/bin/activate`
 4. `./main.py`
-5. `tmux detach-client`
-6. Wait arbitrary time for peer analysis
-7. `tmux attach-session -t bittorrent-analyzer`
-8. Stop program with Ctrl+C
-9. `deactivate`
-10. Logs and results are saved in the `output/` directory.
+5. Tmux detach with `Ctrl+B` followed by `d`
 
-The following **commandline options** are available:
+Logs are saved in `output/`.
 
-* `<torrent>`  
-  File system path to the torrent file to be examined
-* `-h, --help`  
-  Show this help message and exit
-* `-j <number>, --jobs <number>`  
-  Active peer evaluation using the specified number of threads (default: None)
-* `-p <port>, --port <port>`  
-  Passive peer evaluation of incoming peers at the specified port number (default: None)
-* `-t <seconds>, --timeout <seconds>`  
-  Timeout in seconds for network connections (default: 10)
-* `-d <minutes>, --delay <minutes>`  
-  Time delay for revisiting unfinished peers in minutes (default: 10)
-* `-i <minutes>, --interval <minutes>`  
-  Time delay between asking the tracker server for new peers in minutes, defaults to a value recommended by the tracker server (default: None)
-* `-l <level>, --loglevel <level>`  
-  Level of detail for log messages (default: INFO)
+### End bittorrent-analyzer
+1. `tmux attach-session -t bta`
+2. Stop program with Ctrl+C
+3. `deactivate`
+
+Results are saved in `output/`.
+
+### End pymdht
+1. `telnet localhost 17001`
+2. Type `KILL\n`
 
 ## About
 ### Thanks to

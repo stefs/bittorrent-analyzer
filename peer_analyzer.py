@@ -20,8 +20,8 @@ import torrent_file
 import pymdht_connector
 
 ## Named tuples representing cached peer and a torrent file
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
-Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size')
+Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key') # no None allowed
+Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size') # only announce_url may be None
 class Source(enum.Enum):
 	tracker = 0
 	incoming = 1
@@ -39,6 +39,9 @@ class SwarmAnalyzer:
 		self.peers = PeerQueue()
 		self.visited_peers = queue.Queue()
 		self.all_incoming_peers = dict() # equality check
+
+		# Create torrent dictionary
+		self.torrents = dict()
 
 		# Generate peer id
 		self.own_peer_id = tracker_request.generate_peer_id()
@@ -78,9 +81,6 @@ class SwarmAnalyzer:
 
 	## Reads all torrent files from input directory
 	def import_torrents(self):
-		# Create torrent dictionary
-		self.torrents = dict()
-
 		# Import all files
 		database_session = self.database.get_session()
 		try:
@@ -117,6 +117,46 @@ class SwarmAnalyzer:
 			logging.info('Imported {} torrent files'.format(len(self.torrents)))
 		else:
 			raise AnalyzerError('No valid torrent files found')
+
+	## Read magnet links from file
+	#  @filename File system path to text file with one magnet link per line
+	def import_magnets(self, filename):
+		database_session = self.database.get_session()
+		success = 0
+		linenumber = 0
+		with open(filename) as file:
+			for magnet in file:
+				# Skip empty lines
+				linenumber += 1
+				logging.info('Parsing magnet link form {}, line {} ...'.format(filename, linenumber))
+				magnet = magnet.rstrip('\n')
+				if magnet == '':
+					continue
+
+				# Parse magnet link
+				try:
+					parser = torrent_file.MagnetParser(magnet)
+					info_hash = parser.get_info_hash()
+					display_name = parser.get_display_name()
+					announce_url = parser.get_announce_url()
+					pieces_number = parser.get_pieces_number()
+					piece_size = parser.get_piece_size()
+				except torrent_file.FileError as err:
+					raise AnalyzerError('Could not import magnet link: {}'.format(err))
+				success += 1
+
+				# Store in database and dictionary
+				hex_hash = base64.b16encode(info_hash).decode()
+				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
+				key = self.database.store_torrent(torrent, display_name, database_session)
+				self.torrents[key] = torrent
+
+		# Close database sesssion
+		database_session.close()
+		if success > 0:
+			logging.info('Imported {} magnet links'.format(success))
+		else:
+			raise AnalyzerError('No magnet links found')
 
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
@@ -188,7 +228,7 @@ class SwarmAnalyzer:
 			# Catch all exceptions to enable ongoing analysis, should never happen
 			except Exception as err:
 				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('Unexpected error during peer evaluation: {}\n{}'.format(err, ''.join(tb)))
+				logging.critical('{} during peer evaluation: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 				continue
 
 			# Close connection
@@ -217,9 +257,10 @@ class SwarmAnalyzer:
 		# Create tracker request threads
 		interval_seconds = interval * 60
 		for torrent in self.torrents:
-			thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
-			thread.daemon = True
-			thread.start()
+			if self.torrents[torrent].announce_url is not None:
+				thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
+				thread.daemon = True
+				thread.start()
 
 		# Remember activation to enable shutdown
 		self.tracker_requests = True
@@ -356,7 +397,7 @@ class SwarmAnalyzer:
 				self.database_session.rollback()
 				self.visited_peers.task_done()
 				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('Unexpected error during database update: {}\n{}'.format(err, ''.join(tb)))
+				logging.critical('{} during database update: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 				continue
 
 			# Update statistical counters
@@ -420,7 +461,7 @@ class SwarmAnalyzer:
 					logging.error('Could not receive DHT peers: {}'.format(err))
 				except Exception as err:
 					tb = traceback.format_tb(err.__traceback__)
-					logging.critical('Unexpected error during DHT request: {}\n{}'.format(err, ''.join(tb)))
+					logging.critical('{} during DHT request: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 				end = time.perf_counter()
 
 				# Put in queue
@@ -439,7 +480,7 @@ class SwarmAnalyzer:
 				self.dht.print_stats()
 			except Exception as err:
 				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('Unexpected error during DHT stats printing: {}\n{}'.format(err, ''.join(tb)))
+				logging.critical('{} during DHT stats printing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 			# Wait interval
 			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))

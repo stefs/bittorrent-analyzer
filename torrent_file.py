@@ -1,6 +1,7 @@
 # Built-in modules
 import hashlib
 import logging
+import urllib.parse
 
 # Extern modules
 import bencodepy
@@ -83,6 +84,59 @@ class TorrentParser:
 		if size == 0:
 			raise FileError('Piece size is zero')
 		return size
+
+## Providing methods for analysis of a magnet link according to BEP 9
+class MagnetParser:
+	## Parse the magnet URI
+	#  @param magnet Given magnet URI
+	def __init__(self, magnet):
+		url = urllib.parse.urlparse(magnet)
+		if url.scheme != 'magnet':
+			raise FileError('Wrong scheme: {}'.format(url.scheme))
+		self.params = urllib.parse.parse_qs(url.query)
+
+	## Extract the info hash
+	#  @return Info hash as bytes
+	#  @exception FileError
+	def get_info_hash(self):
+		if len(self.params['xt']) > 1:
+			logging.error('Magnet links with multiple info hashes are not supported')
+		splitted = self.params['xt'][0].split(':')
+		if len(splitted) != 3 or splitted[0] != 'urn' or splitted[1] != 'btih':
+			raise FileError('Bad xt parameter')
+		if len(splitted[2]) == 40:
+			return bytes.fromhex(splitted[2])
+		elif len(splitted[2]) == 32:
+			return bytes.fromhex(splitted[2])
+		raise FileError('Bad info hash length')
+
+	## Extract the display name
+	#  @return Display name or None
+	def get_display_name(self):
+		try:
+			return self.params['dn'][0]
+		except KeyError:
+			return None
+
+	## Extract the announce URL
+	#  @return Announce URL or None
+	def get_announce_url(self):
+		if len(self.params['tr']) > 1:
+			logging.warning('Ignoring additional trackers')
+		try:
+			return self.params['tr'][0]
+		except KeyError:
+			return None
+
+	## Retrieve pieces number
+	#  @return Pieces number
+	def get_pieces_number(self):
+		return 1 # TODO
+
+	## Retrieve pieces size
+	#  @return Pieces size
+	def get_piece_size(self):
+		return 1 # TODO
 
 ## Exception for a unreachable or bad torrent file
 class FileError(Exception):

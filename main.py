@@ -5,6 +5,7 @@ import argparse
 import logging
 import time
 import os
+import traceback
 
 # Project modules
 import peer_analyzer
@@ -19,6 +20,7 @@ parser.add_argument('-r', '--revisit', type=float, default='15', help='Time dela
 parser.add_argument('--dht-node', type=int, help='Integrate an already running DHT node with the given UDP port', metavar='<port>')
 parser.add_argument('--dht-control', type=int, help='Use an already running DHT node over the given localhost telnet port', metavar='<port>')
 parser.add_argument('--dht-interval', type=int, default=15, help='Time delay between contacting the DHT in minutes', metavar='<minutes>')
+parser.add_argument('-m', '--magnet', help='Read one magnet link per line from file instead torrent files', metavar='<filename>')
 parser.add_argument('-d', '--debug', action='store_true', help='Write log messages to stdout instead of a file and include debug messages')
 args = parser.parse_args()
 
@@ -49,8 +51,11 @@ logging.info('Command line arguments are {}'.format(args))
 # Analysis routine
 try:
 	with peer_analyzer.SwarmAnalyzer(args.revisit, args.timeout, output) as analyzer:
-		# Import torrents from directory
-		analyzer.import_torrents()
+		# Import torrents
+		if args.magnet:
+			analyzer.import_magnets(args.magnet)
+		else:
+			analyzer.import_torrents()
 
 		# Handle evaluated peers
 		analyzer.start_peer_handler()
@@ -77,9 +82,11 @@ try:
 		except KeyboardInterrupt:
 			print('Please wait for termination ...')
 			logging.info('Received interrupt signal, exiting')
+except peer_analyzer.AnalyzerError as err:
+	logging.error(err)
 except Exception as err:
 	tb = traceback.format_tb(err.__traceback__)
-	logging.critical('Unexpected error: {}\n{}'.format(err, ''.join(tb)))
+	logging.critical('{}: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 # Finally
 try:
