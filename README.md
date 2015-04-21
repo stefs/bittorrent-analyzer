@@ -5,12 +5,10 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 
 ## Todo
 ### Next steps
-* Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
-* Statistik mit Grafik in LaTeX
+* ! Accept magnet links (BEP 9, BEP 10)
+* ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period)
+* ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
 
-* ! Statistical evaluation with R
-	* Count downloads within evaluation period
-* ! Accept magnet links (partial BEP 9)
 * Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?  
     --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
 * Revisit incoming peers?
