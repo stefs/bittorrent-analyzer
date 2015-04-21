@@ -94,11 +94,10 @@ R
 Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still works as expected!
 
 ### Start bittorrent-analyzer peer evaluation
-1. Prepare a directory with `*.torrent` files **or** a single file `input/magnet.txt` with one magnet link per line
-2. `tmux new-session -s bta`
-3. `source env-main/bin/activate`
-4. `./main.py`
-5. Tmux detach with `Ctrl+B` followed by `d`
+1. `tmux new-session -s bta`
+2. `source env-main/bin/activate`
+3. `./main.py`
+4. Tmux detach with `Ctrl+B` followed by `d`
 
 Logs are saved in `output/`.
 
