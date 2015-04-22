@@ -56,6 +56,7 @@ try:
 		# Integrate DHT node
 		# start before evaluation, they announce node port
 		# start before import_magnets, needs running DHT
+		# TODO start after import_magnets and import_torrents, needs torrents
 		if args.dht_node is not None:
 			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval)
 
