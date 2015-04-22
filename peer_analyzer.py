@@ -103,7 +103,7 @@ class SwarmAnalyzer:
 					continue
 
 				# Store in database and dictionary
-				hex_hash = torrent_file.bytes_to_hex(info_hash)
+				hex_hash = bytes.fromhex(info_hash)
 				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
@@ -138,12 +138,14 @@ class SwarmAnalyzer:
 
 				# Parse magnet link
 				timeout = 60 # TODO in code config
-				name, info_hash, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
+				name, info_hash_fetch, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
+				if info_hash_fetch != bytes.fromhex(info_hash):
+					raise AnalyzerError('Wrong info hash after fetching magnet metadata')
 				print(name, info_hash, announce_url, piece_size, pieces_number) # debug
 				success += 1
 
 				# Store in database and dictionary
-				hex_hash = torrent_file.bytes_to_hex(info_hash)
+				hex_hash = bytes.fromhex(info_hash)
 				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, name, database_session)
 				self.torrents[key] = torrent

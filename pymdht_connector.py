@@ -27,6 +27,9 @@ class DHT:
 	#  @return List of ip port tuples of peers
 	#  @exception DHTError
 	def get_peers(self, info_hash_hex, bt_port=None):
+		# Test type of hash
+		assert isinstance(info_hash_hex, str), 'info_hash_hex must be a string'
+
 		# Receive peers
 		if bt_port is None:
 			bt_port = 0
@@ -55,6 +58,7 @@ class DHT:
 				peers.append((ip_port[0], int(ip_port[1])))
 			elif not 'OPEN' in line and not 'CLOSE' in line:
 				logging.error('Unexpected telnet line: {}'.format(line))
+		logging.info('DHT lookup ended with {} peers'.format(len(peers)))
 		return peers
 
 	## Send STATS command for debug purposes

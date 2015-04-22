@@ -92,14 +92,8 @@ class TorrentParser:
 			raise FileError('Piece size is zero')
 		return size
 
-## Converts bytes to hex string
-#  @param data Byte input
-#  @return Hex string
-def bytes_to_hex(data):
-	return base64.b16encode(info_hash).decode()
-
 ## Extract the info hash
-#  @return Info hash as bytes
+#  @return Info hash as hex string
 #  @exception FileError
 def hash_from_magnet(magnet):
 	url = urllib.parse.urlparse(magnet)
@@ -112,7 +106,7 @@ def hash_from_magnet(magnet):
 	if len(splitted) != 3 or splitted[0] != 'urn' or splitted[1] != 'btih':
 		raise FileError('Bad xt parameter')
 	if len(splitted[2]) == 40:
-		return bytes.fromhex(splitted[2])
+		return splitted[2]
 	elif len(splitted[2]) == 32:
 		raise FileError('Base32 hashes not supported')
 	raise FileError('Bad info hash length')
