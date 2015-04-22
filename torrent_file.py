@@ -157,9 +157,10 @@ def fetch_magnet(magnet, peers, timeout):
 			logging.info('Libtorrent session closed')
 
 	# Sanitize trackers
+	trackers = list(trackers)
 	if len(trackers) > 1:
 		logging.warning('Only using first tracker: {}'.format(trackers))
-	tracker = trackers[0] if len(tracker) > 0 else None
+	tracker = trackers[0] if trackers else None
 
 	# Return result
 	return name, info_hash, tracker, piece_length, num_pieces
