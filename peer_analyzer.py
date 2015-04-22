@@ -248,16 +248,21 @@ class SwarmAnalyzer:
 	#  @param interval Timer interval between tracker requests are issued in minutes
 	#  @note Start passive evaluation first to ensure port propagation
 	def start_tracker_requests(self, interval):
+		# Extract torrents with tracker
+		torrents_with_tracker = list()
+		for torrent in self.torrents:
+			if self.torrents[torrent].announce_url is not None:
+				torrents_with_tracker.append(torrent)
+
 		# Concurrency management
-		self.tracker_shutdown_done = threading.Barrier(len(self.torrents) + 1)
+		self.tracker_shutdown_done = threading.Barrier(len(torrents_with_tracker) + 1)
 
 		# Create tracker request threads
 		interval_seconds = interval * 60
-		for torrent in self.torrents:
-			if self.torrents[torrent].announce_url is not None:
-				thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
-				thread.daemon = True
-				thread.start()
+		for torrent in torrents_with_tracker:
+			thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
+			thread.daemon = True
+			thread.start()
 
 		# Remember activation to enable shutdown
 		self.tracker_requests = True
