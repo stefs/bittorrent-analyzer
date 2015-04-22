@@ -139,9 +139,10 @@ class SwarmAnalyzer:
 				# Parse magnet link
 				timeout = 60 # TODO in code config
 				name, info_hash_fetch, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
-				if info_hash_fetch != bytes.fromhex(info_hash):
-					raise AnalyzerError('Mismatch info hash before {} (={}), after metadata fetch {}'.format(
-						info_hash, bytes.fromhex(info_hash), info_hash_fetch))
+				print(type(info_hash))
+				print(type(info_hash_fetch))
+				if info_hash_fetch != info_hash:
+					raise AnalyzerError('Hash mismatch after metadata fetch: {} to {}'.format(info_hash, info_hash_fetch))
 				success += 1
 
 				# Store in database and dictionary

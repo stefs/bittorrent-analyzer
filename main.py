@@ -65,6 +65,7 @@ try:
 			analyzer.import_magnets(args.magnet)
 		else:
 			analyzer.import_torrents()
+		raise SystemExit # debug
 
 		# Handle evaluated peers
 		analyzer.start_peer_handler()
