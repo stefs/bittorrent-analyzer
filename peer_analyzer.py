@@ -117,9 +117,8 @@ class SwarmAnalyzer:
 
 	## Read magnet links from file
 	#  @filename File system path to text file with one magnet link per line
+	#  @note Call start_dht_connection first
 	def import_magnets(self, filename):
-		if not self.dht_started:
-			raise AnalyzerError('Magnet links need DHT')
 		database_session = self.database.get_session()
 		success = 0
 		linenumber = 0
