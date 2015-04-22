@@ -53,6 +53,12 @@ logging.info('Command line arguments are {}'.format(args))
 try:
 	# TODO pass all SwarmAnalyzer parameters in constructor
 	with peer_analyzer.SwarmAnalyzer(args.revisit, args.timeout, output) as analyzer:
+		# Integrate DHT node
+		# start before evaluation, they announce node port
+		# start before import_magnets, needs running DHT
+		if args.dht_node is not None:
+			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval)
+
 		# Import torrents
 		if args.magnet:
 			analyzer.import_magnets(args.magnet)
@@ -61,10 +67,6 @@ try:
 
 		# Handle evaluated peers
 		analyzer.start_peer_handler()
-
-		# Integrate DHT node
-		if args.dht_node is not None:
-			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval) # start before evaluation, they announce node port
 
 		# Start passive evaluation server
 		if args.port is not None:

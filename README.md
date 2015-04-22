@@ -70,9 +70,9 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 ### Steps
 These are the standard installation steps on a Debian based system.
 
-1. `sudo apt-get install python3 python3-pip`
+1. `sudo apt-get install python3 python3-pip python3-libtorrent`
 2. `sudo pip3 install virtualenv`
-3. `virtualenv -p /usr/bin/python3 env-main`
+3. `virtualenv --python=/usr/bin/python3 --system-site-packages env-main`
 4. `source env-main/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`
@@ -93,7 +93,7 @@ R
 Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still works as expected!
 
 ### Start bittorrent-analyzer peer evaluation
-1. `tmux new-session -s bta`
+1. `tmux new-session -s btda`
 2. `source env-main/bin/activate`
 3. `./main.py`
 4. Tmux detach with `Ctrl+B` followed by `d`
@@ -101,7 +101,7 @@ Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still 
 Logs are saved in `output/`.
 
 ### End bittorrent-analyzer
-1. `tmux attach-session -t bta`
+1. `tmux attach-session -t btda`
 2. Stop program with Ctrl+C
 3. `deactivate`
 
