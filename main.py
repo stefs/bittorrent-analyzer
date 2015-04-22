@@ -30,6 +30,8 @@ if args.jobs is None and args.port is None:
 	parser.error('Please enable active and/or passive peer evaluation via commandline switches')
 if args.dht_node is not None and args.dht_control is None:
 	parser.error('When using a DHT node specify also the telnet control port')
+if args.magnet is not None and args.dht_node is None:
+	parser.error('Cannot use magnet links without DHT')
 
 # Set output path
 directory = 'output/'
@@ -56,16 +58,18 @@ try:
 		# Integrate DHT node
 		# start before evaluation, they announce node port
 		# start before import_magnets, needs running DHT
-		# TODO start after import_magnets and import_torrents, needs torrents
 		if args.dht_node is not None:
-			analyzer.start_dht(args.dht_node, args.dht_control, args.dht_interval)
+			analyzer.start_dht_connection(args.dht_node, args.dht_control)
 
 		# Import torrents
 		if args.magnet:
 			analyzer.import_magnets(args.magnet)
 		else:
 			analyzer.import_torrents()
-		raise SystemExit # debug
+
+		# start after import_magnets and import_torrents, needs torrents
+		if args.dht_node is not None:
+			analyzer.start_dht_requests(args.dht_interval)
 
 		# Handle evaluated peers
 		analyzer.start_peer_handler()

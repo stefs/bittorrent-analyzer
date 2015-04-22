@@ -421,20 +421,23 @@ class SwarmAnalyzer:
 			# Allow waiting for all peers to be stored at shutdown
 			self.visited_peers.task_done()
 
-	## Use an already running DHT node to extracts new peers
+	## Contact an already running DHT node
 	#  @param node_port UDP port where the node is running
 	#  @param control_port TCP port for sending telnet commands
-	#  @param interval Time delay between contacting the dht in minutes
 	#  @exception AnalyzerError
-	def start_dht(self, node_port, control_port, interval):
-		# Concurrency management
-		self.dht_shutdown_done = threading.Event()
-
-		# Start communication
+	def start_dht_connection(self, node_port, control_port):
 		self.dht = pymdht_connector.DHT(control_port, self.timeout)
 		self.dht_port = node_port
 
-		# Start handler thread
+	## Extract new peers from DHT
+	#  @param interval Time delay between contacting the dht in minutes
+	#  @exception AnalyzerError
+	#  @note Call start_dht_connection first
+	def start_dht_requests(self, interval):
+		# Concurrency management
+		self.dht_shutdown_done = threading.Event()
+
+		# Start requestor thread
 		thread = threading.Thread(target=self._dht_requestor, args=(interval*60,))
 		thread.daemon = True
 		thread.start()
