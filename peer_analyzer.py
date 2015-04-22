@@ -141,7 +141,7 @@ class SwarmAnalyzer:
 				name, info_hash_fetch, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
 				print(type(info_hash))
 				print(type(info_hash_fetch))
-				if info_hash_fetch != info_hash:
+				if info_hash_fetch.lower() != info_hash.lower():
 					raise AnalyzerError('Hash mismatch after metadata fetch: {} to {}'.format(info_hash, info_hash_fetch))
 				success += 1
 

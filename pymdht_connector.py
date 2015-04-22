@@ -34,7 +34,7 @@ class DHT:
 		if bt_port is None:
 			bt_port = 0
 		dht_response = list()
-		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex, bt_port) # TODO use existing channel?
+		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex.upper(), bt_port) # TODO use existing channel?
 		logging.info('DHT lookup request: {}'.format(request_line.rstrip('\n')))
 		with self.lock:
 			try:
