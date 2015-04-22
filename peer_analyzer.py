@@ -98,13 +98,13 @@ class SwarmAnalyzer:
 					info_hash = parser.get_info_hash()
 					pieces_number = parser.get_pieces_number()
 					piece_size = parser.get_piece_size()
-				except torrent_file.FileError as err:
+				except FileError as err:
 					logging.error('Could not import torrent {}: {}'.format(filename, err))
 					continue
 
 				# Store in database and dictionary
-				hex_hash = bytes.fromhex(info_hash)
-				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
+				bytes_hash = bytes.fromhex(info_hash)
+				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
 
@@ -139,15 +139,13 @@ class SwarmAnalyzer:
 				# Parse magnet link
 				timeout = 60 # TODO in code config
 				name, info_hash_fetch, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
-				print(type(info_hash))
-				print(type(info_hash_fetch))
 				if info_hash_fetch.lower() != info_hash.lower():
 					raise AnalyzerError('Hash mismatch after metadata fetch: {} to {}'.format(info_hash, info_hash_fetch))
 				success += 1
 
 				# Store in database and dictionary
-				hex_hash = bytes.fromhex(info_hash)
-				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
+				bytes_hash = bytes.fromhex(info_hash)
+				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, name, database_session)
 				self.torrents[key] = torrent
 

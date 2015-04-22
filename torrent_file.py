@@ -4,7 +4,7 @@ import logging
 import urllib.parse
 import tempfile
 import time
-import base64
+import binascii
 
 # Project modules
 from error import *
@@ -51,7 +51,7 @@ class TorrentParser:
 		return announce_url_bytes.decode()
 
 	## Extract info hash
-	#  @return The info hash
+	#  @return The info hash as a string
 	#  @exception FileError
 	def get_info_hash(self):
 		try:
@@ -63,7 +63,8 @@ class TorrentParser:
 		except bencodepy.exceptions.EncodingError as err:
 			raise FileError('Bencoding failed: ' + str(err))
 		sha1_hasher = hashlib.sha1(info_dict_bencoded)
-		return sha1_hasher.digest()
+		hash_bytes = sha1_hasher.digest()
+		return hexer(hash_bytes)
 
 	## Extract the number of pieces
 	#  @return Pieces number
@@ -91,6 +92,12 @@ class TorrentParser:
 		if size == 0:
 			raise FileError('Piece size is zero')
 		return size
+
+## Converte bytes to hex string
+#  @param data Input bytes
+#  @return Hex string
+def hexer(data):
+	return binascii.hexlify(data).decode()
 
 ## Extract the info hash
 #  @return Info hash as hex string
