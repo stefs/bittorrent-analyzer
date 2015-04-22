@@ -58,6 +58,7 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
 * Database
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
+* libtorrent
 
 ### Mainline DHT node
 * [pymdht](https://github.com/rauljim/pymdht) with patches
@@ -114,6 +115,7 @@ Results are saved in `output/`.
 ### Thanks to
 * ..., advisor
 * Erin Drummond, for *[m2t](https://github.com/erindru/m2t/tree/75b457e65d71b0c42afdc924750448c4aaeefa0b)* under GPLv3
+* pymdht
 
 ### Copyright
 Copyright © 2015 Stefan Schindler  

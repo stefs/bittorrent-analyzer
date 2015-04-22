@@ -9,6 +9,7 @@ import traceback
 
 # Project modules
 import peer_analyzer
+from error import *
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -50,6 +51,7 @@ logging.info('Command line arguments are {}'.format(args))
 
 # Analysis routine
 try:
+	# TODO pass all SwarmAnalyzer parameters in constructor
 	with peer_analyzer.SwarmAnalyzer(args.revisit, args.timeout, output) as analyzer:
 		# Import torrents
 		if args.magnet:
@@ -82,8 +84,8 @@ try:
 		except KeyboardInterrupt:
 			print('Please wait for termination ...')
 			logging.info('Received interrupt signal, exiting')
-except peer_analyzer.AnalyzerError as err:
-	logging.error(err)
+except AnalyzerError as err:
+	logging.error('{}: {}'.format(type(err).__name__, err))
 except Exception as err:
 	tb = traceback.format_tb(err.__traceback__)
 	logging.critical('{}: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))

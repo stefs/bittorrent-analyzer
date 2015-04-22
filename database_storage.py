@@ -13,6 +13,7 @@ import maxminddb.errors
 
 # Project modules
 import peer_wire_protocol
+from error import *
 
 # Create declarative base class, from which table classes are inherited
 Base = sqlalchemy.ext.declarative.declarative_base()
@@ -172,10 +173,6 @@ class Database:
 		self.reader.close()
 		logging.info('GeoIP2 database closed')
 		logging.info('Results written to {}'.format(self.database_path))
-
-## Indicates database related errors
-class DatabaseError(Exception):
-	pass
 
 ## Get the host via reverse DNS
 #  @param ip_address The address in question

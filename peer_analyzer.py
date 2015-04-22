@@ -9,7 +9,6 @@ import socket
 import os
 import collections
 import telnetlib
-import base64
 import enum
 
 # Project modules
@@ -18,6 +17,7 @@ import peer_wire_protocol
 import database_storage
 import torrent_file
 import pymdht_connector
+from error import *
 
 ## Named tuples representing cached peer and a torrent file
 Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key') # no None allowed
@@ -70,10 +70,7 @@ class SwarmAnalyzer:
 		self.dht_started = False
 
 		# Create database
-		try:
-			self.database = database_storage.Database(output)
-		except database_storage.DatabaseError as err:
-			raise AnalyzerError('Could not create database: {}'.format(err))
+		self.database = database_storage.Database(output)
 
 	## Resouces are allocated in starter methods
 	def __enter__(self):
@@ -106,7 +103,7 @@ class SwarmAnalyzer:
 					continue
 
 				# Store in database and dictionary
-				hex_hash = base64.b16encode(info_hash).decode()
+				hex_hash = torrent_file.bytes_to_hex(info_hash)
 				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
@@ -121,6 +118,8 @@ class SwarmAnalyzer:
 	## Read magnet links from file
 	#  @filename File system path to text file with one magnet link per line
 	def import_magnets(self, filename):
+		if not self.dht_started:
+			raise AnalyzerError('Magnet links need DHT')
 		database_session = self.database.get_session()
 		success = 0
 		linenumber = 0
@@ -133,22 +132,20 @@ class SwarmAnalyzer:
 				if magnet == '':
 					continue
 
+				# Get peers for metadata aquisition
+				info_hash = torrent_file.hash_from_magnet(magnet)
+				metadata_peers = self.dht.get_peers(info_hash, self.listen_port)
+
 				# Parse magnet link
-				try:
-					parser = torrent_file.MagnetParser(magnet)
-					info_hash = parser.get_info_hash()
-					display_name = parser.get_display_name()
-					announce_url = parser.get_announce_url()
-					pieces_number = parser.get_pieces_number()
-					piece_size = parser.get_piece_size()
-				except torrent_file.FileError as err:
-					raise AnalyzerError('Could not import magnet link: {}'.format(err))
+				timeout = 60 # TODO in code config
+				name, info_hash, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
+				print(name, info_hash, announce_url, piece_size, pieces_number) # debug
 				success += 1
 
 				# Store in database and dictionary
-				hex_hash = base64.b16encode(info_hash).decode()
+				hex_hash = torrent_file.bytes_to_hex(info_hash)
 				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size)
-				key = self.database.store_torrent(torrent, display_name, database_session)
+				key = self.database.store_torrent(torrent, name, database_session)
 				self.torrents[key] = torrent
 
 		# Close database sesssion
@@ -433,10 +430,7 @@ class SwarmAnalyzer:
 		self.dht_shutdown_done = threading.Event()
 
 		# Start communication
-		try:
-			self.dht = pymdht_connector.DHT(control_port, self.timeout)
-		except pymdht_connector.DHTError as err:
-			raise AnalyzerError(str(err))
+		self.dht = pymdht_connector.DHT(control_port, self.timeout)
 		self.dht_port = node_port
 
 		# Start handler thread
@@ -642,8 +636,4 @@ class SharedCounter:
 	def reset(self):
 		with self.lock:
 			self.value = 0
-
-## Indicates an error for this module
-class AnalyzerError(Exception):
-	pass
 

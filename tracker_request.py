@@ -9,6 +9,9 @@ import urllib.request
 import urllib.parse
 import socket
 
+# Project modules
+from error import *
+
 # Extern modules
 import bencodepy
 
@@ -176,10 +179,6 @@ class TrackerCommunicator:
 		interval = struct.unpack_from('!i', buf, 8)[0]
 		ip_bytes = buf[20:]
 		return interval, ip_bytes
-
-## Exception for bad tracker response
-class TrackerError(Exception):
-	pass
 
 ## Generate a random peer id without client software information
 #  @return A random peer id as a string

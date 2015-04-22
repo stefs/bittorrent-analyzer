@@ -2,12 +2,16 @@
 import hashlib
 import logging
 import urllib.parse
-import libtorrent
 import tempfile
 import time
+import base64
+
+# Project modules
+from error import *
 
 # Extern modules
 import bencodepy
+import libtorrent
 
 ## Providing methods for analysis of torrent files
 class TorrentParser:
@@ -88,9 +92,30 @@ class TorrentParser:
 			raise FileError('Piece size is zero')
 		return size
 
-## Exception for a unreachable or bad torrent file
-class FileError(Exception):
-	pass
+## Converts bytes to hex string
+#  @param data Byte input
+#  @return Hex string
+def bytes_to_hex(data):
+	return base64.b16encode(info_hash).decode()
+
+## Extract the info hash
+#  @return Info hash as bytes
+#  @exception FileError
+def hash_from_magnet(magnet):
+	url = urllib.parse.urlparse(magnet)
+	if url.scheme != 'magnet':
+		raise FileError('Wrong scheme: {}'.format(url.scheme))
+	params = urllib.parse.parse_qs(url.query)
+	if len(params['xt']) > 1:
+		logging.error('Magnet links with multiple info hashes are not supported')
+	splitted = params['xt'][0].split(':')
+	if len(splitted) != 3 or splitted[0] != 'urn' or splitted[1] != 'btih':
+		raise FileError('Bad xt parameter')
+	if len(splitted[2]) == 40:
+		return bytes.fromhex(splitted[2])
+	elif len(splitted[2]) == 32:
+		raise FileError('Base32 hashes not supported')
+	raise FileError('Bad info hash length')
 
 ## Uses libtorrent to get pieces count and pieces size of an info hash
 #  @param magnet Magnet URI, will not be validated, in case of bad magnet returns after timeout
@@ -103,6 +128,7 @@ def fetch_magnet(magnet, peers, timeout):
 	# Creating temporary directory
 	with tempfile.TemporaryDirectory() as tempdir:
 		# Create libtorrent session
+		logging.info('Fetching metadata with libtorrent in directory {} ...'.format(tempdir))
 		lt_ses = libtorrent.session()
 		params = {"save_path": tempdir, "paused": False, "auto_managed": False, "url": magnet}
 		handle = lt_ses.add_torrent(params)
@@ -113,14 +139,16 @@ def fetch_magnet(magnet, peers, timeout):
 			while not handle.has_metadata():
 				# Connect known peers successive to minimize uptime
 				if i < len(peers):
-					handle.connect_peer(peers[i]) # TODO test
+					handle.connect_peer(peers[i], 0) # TODO test
 
 				# Respect timeout and wait
 				if i >= timeout:
 					raise FileError('Could not get pieces info from magnet link in time')
 				time.sleep(1)
+				i += 1
 
 			# Extract metadata
+			name = handle.name()
 			info_hash = handle.info_hash()
 			torrent_info = handle.get_torrent_info()
 			trackers = torrent_info.trackers()
@@ -132,12 +160,13 @@ def fetch_magnet(magnet, peers, timeout):
 			# End libtorrent session in any case
 			lt_ses.remove_torrent(handle)
 			del lt_ses
+			logging.info('Libtorrent session closed')
 
 	# Sanitize trackers
 	if len(trackers) > 1:
 		logging.warning('Only using first tracker: {}'.format(trackers))
-	tracker = trackers[0] if len(tracker)>0 else None
+	tracker = trackers[0] if len(tracker) > 0 else None
 
 	# Return result
-	return info_hash, tracker, piece_length, num_pieces
+	return name, info_hash, tracker, piece_length, num_pieces
 

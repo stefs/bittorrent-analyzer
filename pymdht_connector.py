@@ -1,6 +1,10 @@
+# Built-in modules
 import telnetlib
 import threading
 import logging
+
+# Project modules
+from error import *
 
 # Threadsafe pymdht telnet communication
 class DHT:
@@ -75,8 +79,4 @@ class DHT:
 			else:
 				logging.info('Sent {} command to DHT node'.format(cmd))
 			#self.dht.close() # TODO necessary? # debug
-
-# Indicates an pymdht error
-class DHTError(Exception):
-	pass
 
