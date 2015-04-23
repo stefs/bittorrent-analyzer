@@ -35,11 +35,20 @@ filter_peers <- function(peers){
 
 aggregate_time <- function(peers){
 	# Aggregate by last seen and torrent
-	values_df <- data.frame(pieces_dleta=peers$pieces_delta)
+	values_df <- data.frame(pieces_delta=peers$pieces_delta)
 	groups <- list(last_seen=peers$last_seen, torrent=peers$torrent)
 	aggregated_peers <- aggregate(values_df, by=groups, FUN=sum)
 	# Return result
 	return(aggregated_peers)
+}
+
+plot_downloads_t1 <- function(peers){
+	# Filter for first torrent
+	peers <- peers[peers$torrent==1,]
+	# Create barplot
+	values <- peers$pieces_delta
+	names(values) <- peers$last_seen
+	barplot(values)
 }
 
 print("*** Head of raw peers ***")
@@ -51,5 +60,8 @@ print(head(peers))
 print("*** Aggregated downloads ***")
 peers <- aggregate_time(peers)
 print(peers)
+print("*** Plot downloads ***")
+plot_downloads_t1(peers)
 print("*** End ***")
+print(peers)
 

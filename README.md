@@ -10,11 +10,10 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
 * Organize SwarmAnalyzer in modules
 
+### Later steps
 * Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?  
     --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
 * Revisit incoming peers?
-
-### Later steps
 * Scrape request zum Vergleich
 * Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 * Tracker exchange message support (BEP 28)
