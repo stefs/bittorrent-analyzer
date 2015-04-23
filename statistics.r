@@ -63,5 +63,4 @@ print(peers)
 print("*** Plot downloads ***")
 plot_downloads_t1(peers)
 print("*** End ***")
-print(peers)
 

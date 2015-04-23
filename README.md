@@ -8,6 +8,8 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * ! Accept magnet links (BEP 9, BEP 10)
 * ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period)
 * ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
+* Save more statistics about duplicate peers and peer connection failures
+* Note used torrents with time frame and send to RRZE
 * Organize SwarmAnalyzer in modules
 
 ### Later steps
