@@ -1,49 +1,55 @@
 #!/usr/bin/env Rscript
 
-# Import packet with error on failure
 library(DBI)
 
-# Open mydatabase connection
-con <- dbConnect(RSQLite::SQLite(), "output/2015-04-16_11-26-46_faui1-246.sqlite")
+read_db <- function(path){
+	# Open raw_peersbase connection
+	con <- dbConnect(RSQLite::SQLite(), path)
+	# Disable auto commit
+	dbBegin(con)
+	# Execute SQL
+	sql <- "SELECT first_pieces, last_pieces, last_seen, torrent FROM peer"
+	peers <- dbGetQuery(con, sql)
+	# Close database connection
+	dbDisconnect(con)
+	# Return result
+	return(peers)
+}
 
-# Disable auto commit
-dbBegin(con)
+filter_peers <- function(peers){
+	# Filter for usable last pieces
+	peers <- peers[complete.cases(peers$last_pieces),]
+	# Add pieces delta and filter for positive delta
+	peers$pieces_delta <- peers$last_pieces - peers$first_pieces
+	peers <- peers[peers$pieces_delta>0,]
+	# Drop first and last pieces
+	peers$first_pieces <- NULL
+	peers$last_pieces <- NULL
+	# Parse timestamps and truncate to hours
+	peers$last_seen <- as.POSIXct(peers$last_seen, tz="GMT")
+	peers$last_seen <- trunc(peers$last_seen, units="hours")
+	peers$last_seen <- as.character(peers$last_seen)
+	# Return result
+	return(peers)
+}
 
-# Get total pieces
-total_pieces <- dbGetQuery(con, "SELECT id, pieces_count FROM torrent")
+aggregate_time <- function(peers){
+	# Aggregate by last seen and torrent
+	values_df <- data.frame(pieces_dleta=peers$pieces_delta)
+	groups <- list(last_seen=peers$last_seen, torrent=peers$torrent)
+	aggregated_peers <- aggregate(values_df, by=groups, FUN=sum)
+	# Return result
+	return(aggregated_peers)
+}
 
-# Get example mydata
-res <- dbSendQuery(con, "SELECT first_pieces, last_pieces, last_seen, torrent FROM peer")
-mydata <- dbFetch(res, n=5)
-dbClearResult(res)
-print("*** Input ***")
-print(mydata)
-
-# Filter for first torrent, debug
-mydata <- mydata[mydata$torrent==1,]
-
-# Filter for usable last pieces
-mydata <- mydata[complete.cases(mydata$last_pieces),]
-
-# Add pieces delta, drop absolute pieces, filter for positive delta
-mydata$pieces_delta <- mydata$last_pieces - mydata$first_pieces
-mydata$first_pieces <- NULL
-mydata$last_pieces <- NULL
-mydata <- mydata[mydata$pieces_delta>0,]
-
-# Parse timestamps and truncate to hours
-mydata$last_seen <- as.POSIXct(mydata$last_seen, tz="GMT")
-mydata$last_seen <- trunc(mydata$last_seen, units="hours")
-print("*** Processed ***")
-print(mydata)
-
-# TODO
-print("*** Aggregated ***")
-aggregate(last_seen ~ pieces_delta, mydata, sum)
-
-# Disconnect from the mydatabase
-dbDisconnect(con)
-
-# Indicate complete execution of script
-print("Finished")
+print("*** Head of raw peers ***")
+peers <- read_db("output/2015-04-16_11-26-46_faui1-246.sqlite")
+print(head(peers))
+print("*** Head of filtered peers ***")
+peers <- filter_peers(peers)
+print(head(peers))
+print("*** Aggregated downloads ***")
+peers <- aggregate_time(peers)
+print(peers)
+print("*** End ***")
 
