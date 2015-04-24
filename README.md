@@ -3,30 +3,22 @@
 # BitTorrent Download Analyzer
 This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 
+This is work in progress.
+
 ## Todo
+### Questions
+* Count uploads?
+* Minimal libtorrent usage for magent link metadata fetching OK?
+* Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
+
 ### Next steps
 * ! Accept magnet links (BEP 9, BEP 10)
 * ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period)
 * ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
-* Save more statistics about duplicate peers and peer connection failures
+* Save statistics about double received peers and communication failures per peer source
+* Tool organization in analyis modules
 * Note used torrents with time frame and send to RRZE
-* Organize SwarmAnalyzer in modules
-
-### Later steps
-* Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet?  
-    --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
-* Revisit incoming peers?
-* Scrape request zum Vergleich
-* Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
-* Tracker exchange message support (BEP 28)
-* Evaluate database by merging peers via IP, ISP, Client, maybe bitfields (programming language R)
-* Import Torrent file(s) in database and start evaluating from there (incl. file name, name collissions!)
-* ? Support encrypted peer connections
-* ? Pause evaluation on network outage
-* (Multiple torrent support for passive evaluation)
-* (Record active thread sleeping statistics)
-* (Document database needed)
-* (Use start-stop-daemon?)
+* Check name collisions of torrent files and magnet links
 
 ### Code quality
 * Review logging messages
@@ -35,23 +27,40 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * Compact some statements
 * Implement unit tests?
 
+### Optional steps
+* Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet? --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
+* Revisit incoming peers?
+* Scrape request zum Vergleich
+* Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
+* Tracker exchange message support (BEP 28)
+* ? Support encrypted peer connections
+* ? Pause evaluation on network outage
+* (Record active thread sleeping statistics)
+
 ## Features
-* Analyze multiple torrent files at once
-* Log city, country and continent via IP address
-* Request new IPv4 peers using the HTTP and UDP tracker protocols (BEP 15)
-* Integrate a running pymdht DHT node via telnet by sending PORT messages and performing peer lookups - NEW
-* Perform IPv4 DHT (BEP 5) requests to a pymdht DHT node through telnet
-* (list incomplete)
+* Import torrent from file (BEP 3) or fetch metadata (BEP 9, BEP 10) via magnet link (BEP 9) using libtorrent
+* Continuously get IPv4 peers from the tracker using HTTP (BEP 3) and UDP announce requests (BEP 15)
+* Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
+* Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the *pymdht* project using local telnet
+* Actively contact collected peers and calculate minimum number of downloaded pieces by receiving alle *have* and *bitfield* messages until a timeout
+* Passively listen for incoming peer connections and calculate minimum number of downloaded pieces analog
+* Save number of downloaded pieces from first and last visit and maximum download speed per peer in a SQLite database
+* Save city, country and continent via IP address geolocation
+* Save ISP by hostname and anonymized IP address
+* Analyze multiple torrents at once
+* Synchronized analysis shutdown process
+* Produce extensive log output
 
 ### Restrictions
-* No IPv6 only peers
-* No uTP only peers
-* No PEX
-* No IPv6 DHT (BEP 32)
-* No Local Peer Discovery
+* No support for IPv6 on HTTP, UDP or DHT requests
+* No support for the Micro Transport Protocol (µTP)
+* No support for Peer exchange (PeX)
+* No support for the Tracker exchange extension (BEP 28)
+* No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
 
-## Requirements
-### BitTorrent Download Analyzer
+## Installation
+### Requirements
+#### BitTorrent Download Analyzer
 * Unix-like operating system
 * Python 3.4+
 * [pip](https://pip.pypa.io/) 1.5+
@@ -62,13 +71,12 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
 * libtorrent
 
-### Mainline DHT node
+#### Mainline DHT node
 * [pymdht](https://github.com/rauljim/pymdht) with patches
 
-### Statistical evaluation
+#### Statistical evaluation
 * r-base
 
-## Installation
 ### Steps
 These are the standard installation steps on a Debian based system.
 
