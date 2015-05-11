@@ -7,18 +7,22 @@ This is work in progress.
 
 ## Todo
 ### Questions
-* Count uploads?
-* Minimal libtorrent usage for magent link metadata fetching OK?
+* Count uploads? (Original assignment) Ignore
+* Minimal libtorrent usage for magent link metadata fetching OK? No, try to alter libtorrent code.
 * Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
+* Compare results with tracker scrape requests?
 
 ### Next steps
 * ! Accept magnet links (BEP 9, BEP 10)
-* ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period)
+* ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period) --> Store timestamp of Übergang von leecher to seeder (~98%)
 * ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
 * Save statistics about double received peers and communication failures per peer source
+* Save statistics about work load of active evaluation threads
 * Tool organization in analyis modules
-* Note used torrents with time frame and send to RRZE
-* Check name collisions of torrent files and magnet links
+* (Note used torrents with time frame and send to RRZE)
+* (Check name collisions of torrent files and magnet links)
+* (Tidy readme: Requirements, installation, usage, thanks)
+* Hardwaredaten der VM notieren
 
 ### Code quality
 * Review logging messages
@@ -30,12 +34,10 @@ This is work in progress.
 ### Optional steps
 * Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet? --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
 * Revisit incoming peers?
-* Scrape request zum Vergleich
 * Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
 * Tracker exchange message support (BEP 28)
 * ? Support encrypted peer connections
 * ? Pause evaluation on network outage
-* (Record active thread sleeping statistics)
 
 ## Features
 * Import torrent from file (BEP 3) or fetch metadata (BEP 9, BEP 10) via magnet link (BEP 9) using libtorrent

@@ -140,7 +140,7 @@ def fetch_magnet(magnet, peers, timeout):
 			while not handle.has_metadata():
 				# Connect known peers successive to minimize uptime
 				if i < len(peers):
-					handle.connect_peer(peers[i], 0) # TODO test
+					handle.connect_peer(peers[i], 0)
 
 				# Respect timeout and wait
 				if i >= timeout:
