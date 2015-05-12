@@ -282,7 +282,9 @@ class SwarmAnalyzer:
 			# Ask tracker
 			logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
 			try:
+				start = time.perf_counter()
 				tracker_interval, peer_ips = tracker.announce_request(self.torrents[torrent_key].info_hash)
+				end = time.perf_counter()
 			except tracker_request.TrackerError as err:
 				logging.error('Could not receive peers from tracker: {}'.format(err))
 			else:
@@ -301,7 +303,7 @@ class SwarmAnalyzer:
 					self.peers.put((new_peer, is_duplicate))
 					if is_duplicate[0]:
 						duplicate_counter += 1
-				logging.info('Received {} peers from tracker, {} duplicates'.format(len(peer_ips), duplicate_counter))
+				self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter, end-start)
 
 			# Log queue stats
 			self.log_statistics()
@@ -478,7 +480,7 @@ class SwarmAnalyzer:
 					self.peers.put((new_peer, is_duplicate))
 					if is_duplicate[0]:
 						duplicate_counter += 1
-				logging.info('Received {} DHT peers in {} seconds, {} duplicates'.format(len(dht_peers), int(end-start), duplicate_counter))
+				self.database.store_request(Source.dht, len(dht_peers), duplicate_counter, end-start)
 
 			# Print stats at DHT node # TODO receive instead of print
 			try:

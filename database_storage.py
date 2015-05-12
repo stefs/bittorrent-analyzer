@@ -53,6 +53,17 @@ class Torrent(Base):
 	filepath = sqlalchemy.Column(sqlalchemy.types.String)
 	display_name = sqlalchemy.Column(sqlalchemy.types.String)
 
+## Declarative class for requests table
+class Requests(Base):
+	__tablename__ = 'requests'
+
+	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
+	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht'))
+	received_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
+	duplicate_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
+	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
+	duration_sec = sqlalchemy.Column(sqlalchemy.types.Integer)
+
 ## Handling database access with SQLAlchemy
 class Database:
 	## Prepare SQLAlchemy backend
@@ -170,6 +181,20 @@ class Database:
 		database_id = new_torrent.id
 		logging.info('Stored {} with database id {}'.format(torrent, database_id))
 		return database_id
+
+	## Store statistics about a request for new peers
+	#  @param source A peer_analyzer.Source enum
+	#  @param received_peers Number of received peers
+	#  @param duplicate_peers Number of duplicate peers
+	#  @param duration Duration in seconds
+	def store_request(self, source, received_peers, duplicate_peers, duration):
+		# Write to database
+		new_request = Request(source=source, received_peers=received_peers, duplicate_peers=duplicate_peers,
+				timestamp=datetime.datetime.utcnow(),
+				duration_sec=round(duration))
+		session.add(new_request)
+		session.commit()
+		logging.info('Stored request: {}'.format(new_request))
 
 	## Relase resources
 	def close(self):
