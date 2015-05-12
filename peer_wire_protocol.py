@@ -4,6 +4,9 @@ import struct
 import math
 import time
 
+# Project modules
+import config
+
 ## Communicates to a peer according to https://wiki.theory.org/BitTorrentSpecification#Peer_wire_protocol_.28TCP.29
 class PeerSession:
 	## Construct a peer session
@@ -295,6 +298,12 @@ def count_bits(bitfield):
 				count += 1
 			mask *= 2
 	return count
+
+## Determine the threshold in pieces where a download is considered complete
+#  @param total_pieces Number of total pieces
+#  @return True false answer
+def get_complete_threshold(total_pieces):
+	return math.ceil(total_pieces * config.torrent_complete_threshold)
 
 ## Evaluate a peer by receiving and parsing all messages; send a dht PORT message
 #  @param sock Connection socket

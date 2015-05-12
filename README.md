@@ -7,10 +7,9 @@ This is work in progress.
 
 ## Todo
 ### Questions
-* Count uploads? (Original assignment) Ignore
 * Minimal libtorrent usage for magent link metadata fetching OK? No, try to alter libtorrent code.
 * Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
-* Compare results with tracker scrape requests?
+* Compare results with tracker scrape requests? - optional
 
 ### Next steps
 * ! Accept magnet links (BEP 9, BEP 10)
@@ -59,6 +58,7 @@ This is work in progress.
 * No support for Peer exchange (PeX)
 * No support for the Tracker exchange extension (BEP 28)
 * No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
+* No analysis of peer upload behaviour
 
 ## Installation
 ### Requirements

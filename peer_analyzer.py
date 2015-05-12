@@ -21,7 +21,7 @@ from error import *
 
 ## Named tuples representing cached peer and a torrent file
 Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key') # no None allowed
-Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size') # only announce_url may be None
+Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size complete_threshold') # only announce_url may be None
 class Source(enum.Enum):
 	tracker = 0
 	incoming = 1
@@ -104,7 +104,8 @@ class SwarmAnalyzer:
 
 				# Store in database and dictionary
 				bytes_hash = bytes.fromhex(info_hash)
-				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size)
+				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
+				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, path, database_session)
 				self.torrents[key] = torrent
 
@@ -144,7 +145,8 @@ class SwarmAnalyzer:
 
 				# Store in database and dictionary
 				bytes_hash = bytes.fromhex(info_hash)
-				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size)
+				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
+				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, name, database_session)
 				self.torrents[key] = torrent
 
@@ -416,7 +418,7 @@ class SwarmAnalyzer:
 				continue
 
 			# Write back peer when not finished and add key if necessary
-			if peer.pieces < self.torrents[peer.torrent].pieces_count:
+			if peer.pieces < self.torrents[peer.torrent].complete_threshold:
 				if peer.key is None:
 					*old_peer, key = peer
 					peer = Peer(*old_peer, key=peer_key)
