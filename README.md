@@ -15,7 +15,7 @@ This is work in progress.
 * ! Accept magnet links (BEP 9, BEP 10)
 * ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period) --> Store timestamp of Übergang von leecher to seeder (~98%)
 * ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
-* Save statistics about double received peers and communication failures per peer source
+* Save statistics about peer communication failures
 * Save statistics about work load of active evaluation threads
 * Tool organization in analyis modules
 * (Note used torrents with time frame and send to RRZE)
@@ -51,6 +51,7 @@ This is work in progress.
 * Analyze multiple torrents at once
 * Synchronized analysis shutdown process
 * Produce extensive log output
+* Save duplicate and timing statistics about peers received via DHT and tracker
 
 ### Restrictions
 * No support for IPv6 on HTTP, UDP or DHT requests

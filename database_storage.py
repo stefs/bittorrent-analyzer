@@ -56,7 +56,7 @@ class Torrent(Base):
 
 ## Declarative class for requests table
 class Request(Base):
-	__tablename__ = 'requests'
+	__tablename__ = 'request'
 
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
 	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht'))

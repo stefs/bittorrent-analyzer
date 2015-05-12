@@ -7,11 +7,23 @@ read_db <- function(path){
 	con <- dbConnect(RSQLite::SQLite(), path)
 	# Disable auto commit
 	dbBegin(con)
-	# Execute SQL
-	sql <- "SELECT first_pieces, last_pieces, last_seen, torrent FROM peer"
+	# Read peer table
+	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
+	# Read torrent table
+	sql <- "SELECT id, complete_threshold, info_hash_hex, display_name FROM torrent"
+	torrents <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
+	# Combine tables
+	ret <- list(peers, torrents)
+	# Return result
+	return(ret)
+}
+
+merge_with_torrents <- function(peers, torrents){
+	# Inner join
+	peers <- merge(peers, torrents, by.x="torrent", by.y="id")
 	# Return result
 	return(peers)
 }
@@ -19,12 +31,8 @@ read_db <- function(path){
 filter_peers <- function(peers){
 	# Filter for usable last pieces
 	peers <- peers[complete.cases(peers$last_pieces),]
-	# Add pieces delta and filter for positive delta
-	peers$pieces_delta <- peers$last_pieces - peers$first_pieces
-	peers <- peers[peers$pieces_delta>0,]
-	# Drop first and last pieces
-	peers$first_pieces <- NULL
-	peers$last_pieces <- NULL
+	# Filter according to threshold
+	peers <- peers[peers$first_pieces < peers$complete_threashold & peers$last_pieces >= peers$complete_threshold,]
 	# Parse timestamps and truncate to hours
 	peers$last_seen <- as.POSIXct(peers$last_seen, tz="GMT")
 	peers$last_seen <- trunc(peers$last_seen, units="hours")
@@ -51,10 +59,15 @@ plot_downloads_t1 <- function(peers){
 	barplot(values)
 }
 
-print("*** Head of raw peers ***")
-peers <- read_db("output/2015-04-16_11-26-46_faui1-246.sqlite")
+args <- commandArgs(trailingOnly=TRUE)
+print("*** Read for database ***")
+peers, torrents <- read_db(args[1])
 print(head(peers))
-print("*** Head of filtered peers ***")
+print(head(torrents))
+print("*** Join peers and torrents ***")
+peers <- merge_with_torrents(peers, torrents)
+print(head(peers))
+print("*** Filter peers ***")
 peers <- filter_peers(peers)
 print(head(peers))
 print("*** Aggregated downloads ***")
