@@ -54,7 +54,7 @@ class Torrent(Base):
 	display_name = sqlalchemy.Column(sqlalchemy.types.String)
 
 ## Declarative class for requests table
-class Requests(Base):
+class Request(Base):
 	__tablename__ = 'requests'
 
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
