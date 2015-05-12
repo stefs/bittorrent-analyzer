@@ -85,19 +85,20 @@ class Database:
 			raise DatabaseError('Failed to open geolocation database: {}'.format(err))
 		logging.debug('Opened GeoIP2 database')
 
-	## Returnes thread safe scoped session object according to http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html
-	def get_session(self):
 		# Create session factory class
 		session_factory = sqlalchemy.orm.sessionmaker(bind=self.engine)
 
-		# Return thread local proxy
-		return sqlalchemy.orm.scoped_session(session_factory)
+		# Create scoped session factory class according to
+		# http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html#thread-local-scope
+		self.Session = sqlalchemy.orm.scoped_session(session_factory)
 
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
-	#  @param session Database session, must only be used in one thread
 	#  @return Database id if peer is new, None else
-	def store_peer(self, peer, session): # partial_ip, id, bitfield, pieces, hostname, country, torrent):
+	def store_peer(self, peer):
+		# Get thread-local session
+		session = self.Session()
+
 		# Check if this is a new peer
 		if peer.key is None:
 			# Get meta data
@@ -166,9 +167,11 @@ class Database:
 	#  @param torrent Torrent named tuple
 	#  @param path File system path the torrent file was located
 	#  @param dn Display name of torrent
-	#  @param session Database session
 	#  @return Database id
-	def store_torrent(self, torrent, path, dn, session):
+	def store_torrent(self, torrent, path, dn):
+		# Get thread-local session
+		session = self.Session()
+
 		# Write to database
 		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
 				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
@@ -188,6 +191,9 @@ class Database:
 	#  @param duplicate_peers Number of duplicate peers
 	#  @param duration Duration in seconds
 	def store_request(self, source, received_peers, duplicate_peers, duration):
+		# Get thread-local session
+		session = self.Session()
+
 		# Write to database
 		new_request = Request(source=source, received_peers=received_peers, duplicate_peers=duplicate_peers,
 				timestamp=datetime.datetime.utcnow(),

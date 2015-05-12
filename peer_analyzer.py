@@ -79,7 +79,6 @@ class SwarmAnalyzer:
 	## Reads all torrent files from input directory
 	def import_torrents(self):
 		# Import all files
-		database_session = self.database.get_session()
 		try:
 			walk = os.walk('input/')
 		except OSError as err:
@@ -107,11 +106,10 @@ class SwarmAnalyzer:
 				bytes_hash = bytes.fromhex(info_hash)
 				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
 				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
-				key = self.database.store_torrent(torrent, path, name, database_session)
+				key = self.database.store_torrent(torrent, path, name)
 				self.torrents[key] = torrent
 
-		# Close database sesssion
-		database_session.close()
+		# Check result
 		if len(self.torrents) > 0:
 			logging.info('Imported {} torrent files'.format(len(self.torrents)))
 		else:
@@ -121,7 +119,6 @@ class SwarmAnalyzer:
 	#  @filename File system path to text file with one magnet link per line
 	#  @note Call start_dht_connection first
 	def import_magnets(self, filename):
-		database_session = self.database.get_session()
 		success = 0
 		linenumber = 0
 		with open(filename) as file:
@@ -148,11 +145,10 @@ class SwarmAnalyzer:
 				bytes_hash = bytes.fromhex(info_hash)
 				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
 				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
-				key = self.database.store_torrent(torrent, filename, name, database_session)
+				key = self.database.store_torrent(torrent, filename, name)
 				self.torrents[key] = torrent
 
-		# Close database sesssion
-		database_session.close()
+		# Check result
 		if success > 0:
 			logging.info('Imported {} magnet links'.format(success))
 		else:
@@ -349,9 +345,6 @@ class SwarmAnalyzer:
 
 	## Comsumes peers from database queue and put back in main queue
 	def start_peer_handler(self):
-		# Get database session
-		self.database_session = self.database.get_session()
-
 		# Start handler thread
 		thread = threading.Thread(target=self._peer_handler)
 		thread.daemon = True
@@ -397,11 +390,11 @@ class SwarmAnalyzer:
 
 			# Store evaluated peer and receive database key
 			try:
-				peer_key = self.database.store_peer(peer, self.database_session)
+				peer_key = self.database.store_peer(peer)
+				# raise Exception('halt stop') # TODO test this
 
 			# Catch all exceptions to enable ongoing thread, should never happen
 			except Exception as err:
-				self.database_session.rollback()
 				self.visited_peers.task_done()
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('{} during database update: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
@@ -535,8 +528,6 @@ class SwarmAnalyzer:
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
 			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
-			self.database_session.close()
-			logging.info('Database session closed')
 		self.database.close()
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
