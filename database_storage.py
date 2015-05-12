@@ -83,6 +83,7 @@ class Database:
 			self.reader = geoip2.database.Reader('input/GeoLite2-City.mmdb')
 		except (FileNotFoundError, maxminddb.errors.InvalidDatabaseError) as err:
 			raise DatabaseError('Failed to open geolocation database: {}'.format(err))
+		self.geoipdb_closed = False
 		logging.debug('Opened GeoIP2 database')
 
 		# Create session factory class
@@ -154,6 +155,9 @@ class Database:
 	#  @param ip_address The address in question
 	#  @return Tuple of location information or None
 	def get_place_by_ip(self, ip_address):
+		if self.geoipdb_closed:
+			logging.critical('Called get_place_by_ip after close')
+			return None, None, None
 		try:
 			response = self.reader.city(ip_address)
 		except geoip2.errors.AddressNotFoundError as err:
@@ -195,7 +199,7 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_request = Request(source=source.name,
+		new_request = Request(source=source,#.name, #debug
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
 				timestamp=datetime.datetime.utcnow(),
@@ -208,6 +212,7 @@ class Database:
 	def close(self):
 		# Close GeoIP2 database reader
 		self.reader.close()
+		self.geoipdb_closed = True
 		logging.info('GeoIP2 database closed')
 		logging.info('Results written to {}'.format(self.database_path))
 
