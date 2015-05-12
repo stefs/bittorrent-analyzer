@@ -63,7 +63,7 @@ class Request(Base):
 	received_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	duplicate_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
-	duration_sec = sqlalchemy.Column(sqlalchemy.types.Integer)
+	duration_sec = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Handling database access with SQLAlchemy
 class Database:
@@ -222,7 +222,7 @@ class Database:
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
 				timestamp=datetime.datetime.utcnow(),
-				duration_sec=round(duration))
+				duration_sec=duration)
 		try:
 			session.add(new_request)
 			session.commit()
@@ -230,7 +230,7 @@ class Database:
 			session.rollback()
 			tb = traceback.format_tb(err.__traceback__)
 			raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
-		logging.info('Stored request: {}'.format(new_request))
+		logging.info('Stored {} request: {} peers received, {} duplicates, took {} seconds'.format(source.name, received_peers, duplicate_peers, duration))
 
 	## Relase resources
 	def close(self):
