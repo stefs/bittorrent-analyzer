@@ -93,6 +93,15 @@ class TorrentParser:
 			raise FileError('Piece size is zero')
 		return size
 
+	## Extract the name
+	#  @return The name or None
+	def get_name(self):
+		try:
+			info_dict = self.torrent_file[b'info']
+			return info_dict[b'name']
+		except KeyError as err:
+			logging.warning('File did not contain the info dictionary or a name tag: {}'.format(err))
+
 ## Converte bytes to hex string
 #  @param data Input bytes
 #  @return Hex string

@@ -49,7 +49,9 @@ class Torrent(Base):
 	info_hash_hex = sqlalchemy.Column(sqlalchemy.types.String)
 	pieces_count = sqlalchemy.Column(sqlalchemy.types.Integer)
 	piece_size = sqlalchemy.Column(sqlalchemy.types.Integer)
+	complete_threshold = sqlalchemy.Column(sqlalchemy.types.Integer)
 	filepath = sqlalchemy.Column(sqlalchemy.types.String)
+	display_name = sqlalchemy.Column(sqlalchemy.types.String)
 
 ## Handling database access with SQLAlchemy
 class Database:
@@ -152,13 +154,15 @@ class Database:
 	## Store a given torrent in the database
 	#  @param torrent Torrent named tuple
 	#  @param path File system path the torrent file was located
+	#  @param dn Display name of torrent
 	#  @param session Database session
 	#  @return Database id
-	def store_torrent(self, torrent, path, session):
+	def store_torrent(self, torrent, path, dn, session):
 		# Write to database
 		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
 				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
-				piece_size=torrent.piece_size, filepath=path)
+				piece_size=torrent.piece_size, complete_threshold=torrent.complete_threshold,
+				filepath=path, display_name=dn)
 		session.add(new_torrent)
 		session.commit()
 

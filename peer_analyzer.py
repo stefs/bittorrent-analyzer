@@ -98,6 +98,7 @@ class SwarmAnalyzer:
 					info_hash = parser.get_info_hash()
 					pieces_number = parser.get_pieces_number()
 					piece_size = parser.get_piece_size()
+					name = parser.get_name()
 				except FileError as err:
 					logging.error('Could not import torrent {}: {}'.format(filename, err))
 					continue
@@ -106,7 +107,7 @@ class SwarmAnalyzer:
 				bytes_hash = bytes.fromhex(info_hash)
 				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
 				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
-				key = self.database.store_torrent(torrent, path, database_session)
+				key = self.database.store_torrent(torrent, path, name, database_session)
 				self.torrents[key] = torrent
 
 		# Close database sesssion
@@ -147,7 +148,7 @@ class SwarmAnalyzer:
 				bytes_hash = bytes.fromhex(info_hash)
 				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
 				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
-				key = self.database.store_torrent(torrent, name, database_session)
+				key = self.database.store_torrent(torrent, filename, name, database_session)
 				self.torrents[key] = torrent
 
 		# Close database sesssion
