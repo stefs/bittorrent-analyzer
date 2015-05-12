@@ -11,8 +11,9 @@ read_db <- function(path){
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, complete_threshold, info_hash_hex, display_name FROM torrent"
+	sql <- "SELECT id, complete_threshold, display_name FROM torrent"
 	torrents <- dbGetQuery(con, sql)
+	torrents$display_name <- NULL # debug
 	# Close database connection
 	dbDisconnect(con)
 	# Combine tables
@@ -32,7 +33,15 @@ filter_peers <- function(peers){
 	# Filter for usable last pieces
 	peers <- peers[complete.cases(peers$last_pieces),]
 	# Filter according to threshold
-	peers <- peers[peers$first_pieces < peers$complete_threashold & peers$last_pieces >= peers$complete_threshold,]
+	peers <- peers[peers$first_pieces < peers$complete_threshold,]
+	peers <- peers[peers$last_pieces >= peers$complete_threshold,]
+	# Drop complete threshold
+	peers$complete_threshold <- NULL
+	# Return result
+	return(peers)
+}
+
+parse_timestamps <- function(peers){
 	# Parse timestamps and truncate to hours
 	peers$last_seen <- as.POSIXct(peers$last_seen, tz="GMT")
 	peers$last_seen <- trunc(peers$last_seen, units="hours")
@@ -43,7 +52,7 @@ filter_peers <- function(peers){
 
 aggregate_time <- function(peers){
 	# Aggregate by last seen and torrent
-	values_df <- data.frame(pieces_delta=peers$pieces_delta)
+	values_df <- data.frame(
 	groups <- list(last_seen=peers$last_seen, torrent=peers$torrent)
 	aggregated_peers <- aggregate(values_df, by=groups, FUN=sum)
 	# Return result
@@ -60,8 +69,10 @@ plot_downloads_t1 <- function(peers){
 }
 
 args <- commandArgs(trailingOnly=TRUE)
-print("*** Read for database ***")
-peers, torrents <- read_db(args[1])
+print("*** Read from database ***")
+ret <- read_db(args[1])
+peers <- ret[[1]]
+torrents <- ret[[2]]
 print(head(peers))
 print(head(torrents))
 print("*** Join peers and torrents ***")
@@ -69,6 +80,10 @@ peers <- merge_with_torrents(peers, torrents)
 print(head(peers))
 print("*** Filter peers ***")
 peers <- filter_peers(peers)
+stopifnot(nrow(peers) > 0)
+print(head(peers))
+print("*** Parse timesamps ***")
+peers <- parse_timestamps(peers)
 print(head(peers))
 print("*** Aggregated downloads ***")
 peers <- aggregate_time(peers)
