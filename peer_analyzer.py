@@ -301,9 +301,8 @@ class SwarmAnalyzer:
 						duplicate_counter += 1
 				try:
 					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter, end-start)
-				except Exception as err:
-					tb = traceback.format_tb(err.__traceback__)
-					logging.critical('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				except DatabaseError as err:
+					logging.critical(err)
 
 			# Log queue stats
 			self.log_statistics()
@@ -395,13 +394,9 @@ class SwarmAnalyzer:
 			# Store evaluated peer and receive database key
 			try:
 				peer_key = self.database.store_peer(peer)
-				#raise Exception('halt stop') # TODO debug test this
-
-			# Catch all exceptions to enable ongoing thread, should never happen
-			except Exception as err:
+			except DatabaseError as err:
 				self.visited_peers.task_done()
-				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('{} during database update: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				logging.critical(err)
 				continue
 
 			# Update statistical counters
@@ -479,9 +474,8 @@ class SwarmAnalyzer:
 						duplicate_counter += 1
 				try:
 					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter, end-start)
-				except Exception as err:
-					tb = traceback.format_tb(err.__traceback__)
-					logging.critical('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				except DatabaseError as err:
+					logging.critical(err)
 
 			# Print stats at DHT node # TODO receive instead of print
 			try:

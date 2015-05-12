@@ -10,6 +10,7 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 import geoip2.database
 import maxminddb.errors
+import traceback
 
 # Project modules
 import peer_wire_protocol
@@ -96,6 +97,7 @@ class Database:
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
 	#  @return Database id if peer is new, None else
+	#  @exception DatabaseError
 	def store_peer(self, peer):
 		# Get thread-local session
 		session = self.Session()
@@ -112,8 +114,13 @@ class Database:
 			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, city=location[0], country=location[1], continent=location[2],
 					first_pieces=peer.pieces, last_pieces=None, first_seen=timestamp, last_seen=None,
 					max_speed=None, visits=1, source=peer.source.name, torrent=peer.torrent)
-			session.add(new_peer)
-			session.commit()
+			try:
+				session.add(new_peer)
+				session.commit()
+			except Exception as err:
+				session.rollback()
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during store new peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 			# Return Peer with key
 			database_id = new_peer.id
@@ -147,8 +154,13 @@ class Database:
 				database_peer.max_speed = pieces_per_second
 
 			# Store updated peer
-			session.add(database_peer)
-			session.commit()
+			try:
+				session.add(database_peer)
+				session.commit()
+			except Exception as err:
+				session.rollback()
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 			logging.info('Updated peer with database id {}'.format(peer.key))
 
 	## Uses a local GeoIP2 database to geolocate an ip address
@@ -172,6 +184,7 @@ class Database:
 	#  @param path File system path the torrent file was located
 	#  @param dn Display name of torrent
 	#  @return Database id
+	#  @exception DatabaseError
 	def store_torrent(self, torrent, path, dn):
 		# Get thread-local session
 		session = self.Session()
@@ -181,8 +194,13 @@ class Database:
 				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
 				piece_size=torrent.piece_size, complete_threshold=torrent.complete_threshold,
 				filepath=path, display_name=dn)
-		session.add(new_torrent)
-		session.commit()
+		try:
+			session.add(new_torrent)
+			session.commit()
+		except Exception as err:
+			session.rollback()
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during torrent storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 		# Return Torrent with key
 		database_id = new_torrent.id
@@ -194,6 +212,7 @@ class Database:
 	#  @param received_peers Number of received peers
 	#  @param duplicate_peers Number of duplicate peers
 	#  @param duration Duration in seconds
+	#  @exception DatabaseError
 	def store_request(self, source, received_peers, duplicate_peers, duration):
 		# Get thread-local session
 		session = self.Session()
@@ -204,8 +223,13 @@ class Database:
 				duplicate_peers=duplicate_peers,
 				timestamp=datetime.datetime.utcnow(),
 				duration_sec=round(duration))
-		session.add(new_request)
-		session.commit()
+		try:
+			session.add(new_request)
+			session.commit()
+		except Exception as err:
+			session.rollback()
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		logging.info('Stored request: {}'.format(new_request))
 
 	## Relase resources
