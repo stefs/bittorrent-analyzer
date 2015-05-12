@@ -395,7 +395,7 @@ class SwarmAnalyzer:
 			# Store evaluated peer and receive database key
 			try:
 				peer_key = self.database.store_peer(peer)
-				raise Exception('halt stop') # TODO debug test this
+				#raise Exception('halt stop') # TODO debug test this
 
 			# Catch all exceptions to enable ongoing thread, should never happen
 			except Exception as err:
