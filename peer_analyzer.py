@@ -525,8 +525,7 @@ class SwarmAnalyzer:
 			self.tracker_shutdown_done.wait()
 		if self.passive_evaluation:
 			logging.info('Shutdown peer evaluation server ...')
-			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish
-			time.sleep(self.timeout+3) # debug
+			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
 			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log

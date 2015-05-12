@@ -218,7 +218,7 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_request = Request(source=source,#.name, #debug
+		new_request = Request(source=source.name,
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
 				timestamp=datetime.datetime.utcnow(),
