@@ -98,7 +98,7 @@ class TorrentParser:
 	def get_name(self):
 		try:
 			info_dict = self.torrent_file[b'info']
-			return info_dict[b'name']
+			return info_dict[b'name'].decode()
 		except KeyError as err:
 			logging.warning('File did not contain the info dictionary or a name tag: {}'.format(err))
 

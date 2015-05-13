@@ -186,8 +186,6 @@ class Database:
 	#  @return Database id
 	#  @exception DatabaseError
 	def store_torrent(self, torrent, path, dn):
-		assert type(dn) is str # debug
-
 		# Get thread-local session
 		session = self.Session()
 
