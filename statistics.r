@@ -11,9 +11,8 @@ read_db <- function(path){
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, complete_threshold, display_name FROM torrent"
+	sql <- "SELECT id, complete_threshold FROM torrent"
 	torrents <- dbGetQuery(con, sql)
-	torrents$display_name <- NULL # debug
 	# Close database connection
 	dbDisconnect(con)
 	# Combine tables
@@ -35,37 +34,40 @@ filter_peers <- function(peers){
 	# Filter according to threshold
 	peers <- peers[peers$first_pieces < peers$complete_threshold,]
 	peers <- peers[peers$last_pieces >= peers$complete_threshold,]
-	# Drop complete threshold
-	peers$complete_threshold <- NULL
 	# Return result
 	return(peers)
 }
 
-parse_timestamps <- function(peers){
-	# Parse timestamps and truncate to hours
-	peers$last_seen <- as.POSIXct(peers$last_seen, tz="GMT")
-	peers$last_seen <- trunc(peers$last_seen, units="hours")
-	peers$last_seen <- as.character(peers$last_seen)
+hour_timestamps <- function(timestamps){
+	# Parse timestamps
+	timestamps <- as.POSIXct(timestamps, tz="GMT")
+	# Truncate to hours
+	timestamps <- trunc(timestamps, units="hours")
+	# Revert to strings
+	timestamps <- as.character(timestamps)
 	# Return result
-	return(peers)
+	return(timestamps)
 }
 
 aggregate_time <- function(peers){
-	# Aggregate by last seen and torrent
-	values_df <- data.frame(
-	groups <- list(last_seen=peers$last_seen, torrent=peers$torrent)
-	aggregated_peers <- aggregate(values_df, by=groups, FUN=sum)
+	# Aggregate by torrent id and last seen
+	values_df <- data.frame(peer_count=peers$id)
+	groups <- list(group_torrent=peers$torrent, group_last_seen=peers$last_seen)
+	ret <- aggregate(values_df, by=groups, FUN=length)
 	# Return result
-	return(aggregated_peers)
+	return(ret)
 }
 
-plot_downloads_t1 <- function(peers){
-	# Filter for first torrent
-	peers <- peers[peers$torrent==1,]
-	# Create barplot
-	values <- peers$pieces_delta
-	names(values) <- peers$last_seen
-	barplot(values)
+plot_downloads <- function(downloads){
+	# For each torrent id
+	for (torrent in unique(downloads$group_torrent)) {
+		# Extract all rows with that id
+		values <- downloads[downloads$group_torrent==torrent,]
+		# Create barplot
+		values <- downloads$peer_count
+		names(values) <- downloads$group_last_seen
+		barplot(values)
+	}
 }
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -74,21 +76,21 @@ ret <- read_db(args[1])
 peers <- ret[[1]]
 torrents <- ret[[2]]
 print(head(peers))
-print(head(torrents))
+print(torrents)
 print("*** Join peers and torrents ***")
 peers <- merge_with_torrents(peers, torrents)
 print(head(peers))
 print("*** Filter peers ***")
 peers <- filter_peers(peers)
-stopifnot(nrow(peers) > 0)
 print(head(peers))
+stopifnot(nrow(peers) > 0)
 print("*** Parse timesamps ***")
-peers <- parse_timestamps(peers)
+peers$last_seen <- hour_timestamps(peers$last_seen)
 print(head(peers))
 print("*** Aggregated downloads ***")
-peers <- aggregate_time(peers)
-print(peers)
+downloads <- aggregate_time(peers)
+print(downloads)
 print("*** Plot downloads ***")
-plot_downloads_t1(peers)
+plot_downloads(downloads)
 print("*** End ***")
 
