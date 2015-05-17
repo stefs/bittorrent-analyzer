@@ -9,28 +9,25 @@ import traceback
 
 # Project modules
 import peer_analyzer
-from error import *
+import config
+from util import *
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+# TODO Match with config.py
+parser = argparse.ArgumentParser(description='Analyzer of BitTorrent trackers and peers', epilog='Stefan Schindler, 2015')
 parser.add_argument('-j', '--jobs', type=int, help='Active peer evaluation using the specified number of threads', metavar='<number>')
 parser.add_argument('-i', '--interval', type=float, default=15, help='Time delay between asking the tracker server for new peers in minutes', metavar='<minutes>')
 parser.add_argument('-p', '--port', type=int, help='Passive peer evaluation of incoming peers at the specified port number', metavar='<port>')
-parser.add_argument('-t', '--timeout', type=int, default='10', help='Timeout in seconds for network connections', metavar='<seconds>')
 parser.add_argument('-r', '--revisit', type=float, default='15', help='Time delay for revisiting unfinished peers in minutes', metavar='<minutes>')
-parser.add_argument('--dht-node', type=int, help='Integrate an already running DHT node with the given UDP port', metavar='<port>')
-parser.add_argument('--dht-control', type=int, help='Use an already running DHT node over the given localhost telnet port', metavar='<port>')
-parser.add_argument('--dht-interval', type=int, default=15, help='Time delay between contacting the DHT in minutes', metavar='<minutes>')
+parser.add_argument('-d', '--dht', action='store_true', help='Integrate an already running DHT node')
 parser.add_argument('-m', '--magnet', help='Read one magnet link per line from file instead torrent files', metavar='<filename>')
-parser.add_argument('-d', '--debug', action='store_true', help='Write log messages to stdout instead of a file and include debug messages')
+parser.add_argument('-g', '--debug', action='store_true', help='Write log messages to stdout instead of a file and include debug messages')
 args = parser.parse_args()
 
 # Check argument plausibility
 if args.jobs is None and args.port is None:
 	parser.error('Please enable active and/or passive peer evaluation via commandline switches')
-if args.dht_node is not None and args.dht_control is None:
-	parser.error('When using a DHT node specify also the telnet control port')
-if args.magnet is not None and args.dht_node is None:
+if args.magnet is not None and not args.dht:
 	parser.error('Cannot use magnet links without DHT')
 
 # Set output path
@@ -53,13 +50,13 @@ logging.info('Command line arguments are {}'.format(args))
 
 # Analysis routine
 try:
-	# TODO pass all SwarmAnalyzer parameters in constructor
-	with peer_analyzer.SwarmAnalyzer(args.revisit, args.timeout, output) as analyzer:
+	# TODO Check parameters in regards to config.py
+	with peer_analyzer.SwarmAnalyzer(args.revisit, output) as analyzer:
 		# Integrate DHT node
 		# start before evaluation, they announce node port
 		# start before import_magnets, needs running DHT
-		if args.dht_node is not None:
-			analyzer.start_dht_connection(args.dht_node, args.dht_control)
+		if args.dht:
+			analyzer.start_dht_connection()
 
 		# Import torrents
 		if args.magnet:
@@ -68,8 +65,8 @@ try:
 			analyzer.import_torrents()
 
 		# start after import_magnets and import_torrents, needs torrents
-		if args.dht_node is not None:
-			analyzer.start_dht_requests(args.dht_interval)
+		if args.dht is not None:
+			analyzer.start_dht_requests()
 
 		# Handle evaluated peers
 		analyzer.start_peer_handler()

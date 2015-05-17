@@ -14,7 +14,8 @@ import traceback
 
 # Project modules
 import peer_wire_protocol
-from error import *
+import config
+from util import *
 
 # Create declarative base class, from which table classes are inherited
 Base = sqlalchemy.ext.declarative.declarative_base()

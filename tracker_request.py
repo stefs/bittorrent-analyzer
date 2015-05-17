@@ -1,7 +1,6 @@
 # Built-in modules
 import logging
 import random
-import string
 import http.client
 import ipaddress
 import struct
@@ -10,7 +9,8 @@ import urllib.parse
 import socket
 
 # Project modules
-from error import *
+import config
+from util import *
 
 # Extern modules
 import bencodepy
@@ -58,7 +58,6 @@ class TrackerCommunicator:
 			raise TrackerError('Unsupported protocol: {}'.format(parsed.scheme))
 		self.first_announce = False
 		ips = parse_ips(ip_bytes)
-		#ips = random.sample(ips, 8) # debug
 		return interval, ips
 
 	## Issue a HTTP GET request on the announce URL
@@ -179,15 +178,6 @@ class TrackerCommunicator:
 		interval = struct.unpack_from('!i', buf, 8)[0]
 		ip_bytes = buf[20:]
 		return interval, ip_bytes
-
-## Generate a random peer id without client software information
-#  @return A random peer id as a string
-def generate_peer_id():
-	possible_chars = string.ascii_letters + string.digits
-	peer_id_list = random.sample(possible_chars, 20)
-	peer_id = ''.join(peer_id_list)
-	logging.info('Generated peer id is ' + peer_id)
-	return peer_id
 
 ## Generate a transaction id for udp tracker protocol
 #  @return Transaction id

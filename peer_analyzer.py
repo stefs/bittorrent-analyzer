@@ -7,9 +7,7 @@ import time
 import socketserver
 import socket
 import os
-import collections
 import telnetlib
-import enum
 
 # Project modules
 import tracker_request
@@ -17,24 +15,16 @@ import peer_wire_protocol
 import database_storage
 import torrent_file
 import pymdht_connector
-from error import *
-
-## Named tuples representing cached peer and a torrent file
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key') # no None allowed
-Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size complete_threshold') # only announce_url may be None
-class Source(enum.Enum):
-	tracker = 0
-	incoming = 1
-	dht = 2
+import config
+from util import *
 
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
 	## Initializes analyzer for peers of one torrent
 	#  @param delay Minimal timedelta between contacting the same peer in minutes
-	#  @param timeout Timeout for network operations in seconds
 	#  @param output Path for database output without file extension
 	#  @exception AnalyzerError
-	def __init__(self, delay, timeout, output):
+	def __init__(self, delay, output):
 		# Smart queue for peer management
 		self.peers = PeerQueue()
 		self.visited_peers = queue.Queue()
@@ -44,11 +34,11 @@ class SwarmAnalyzer:
 		self.torrents = dict()
 
 		# Generate peer id
-		self.own_peer_id = tracker_request.generate_peer_id()
+		self.own_peer_id = peer_wire_protocol.generate_peer_id()
 
 		# Network parameters
 		self.delay = delay * 60
-		self.timeout = timeout
+		self.timeout = config.network_timeout
 		self.listen_port = None
 		self.dht_port = None
 
@@ -134,17 +124,27 @@ class SwarmAnalyzer:
 				info_hash = torrent_file.hash_from_magnet(magnet)
 				metadata_peers = self.dht.get_peers(info_hash, self.listen_port)
 
-				# Parse magnet link
-				timeout = 60 # TODO in code config
-				name, info_hash_fetch, announce_url, piece_size, pieces_number = torrent_file.fetch_magnet(magnet, metadata_peers, timeout) # FileError
-				if info_hash_fetch.lower() != info_hash.lower():
-					raise AnalyzerError('Hash mismatch after metadata fetch: {} to {}'.format(info_hash, info_hash_fetch))
+				# Fetch metadata from a peer
+				own_peer_id = peer_wire_protocol.generate_peer_id()
+				for peer in metadata_peers:
+					logging.info('Trying to fetching metadata from peer ...')
+					try:
+						info_dict_bencoded = peer_wire_protocol.get_ut_metadata(info_hash, peer, own_peer_id)
+					except PeerError as err:
+						logging.warning('Failed to fetch metadata: {}'.format(err))
+					else:
+						break
+				else:
+					raise AnalyzerError('Could not fetch metadata from any peer')
+				print(info_dict_bencoded) # debug
+				raise SystemExit('breakpoint') # debug
+				name, announce_url, piece_size, pieces_number = peer_wire_protocol.fetch_magnet(info_hash, metadata_peers) # PeerError
 				success += 1
 
 				# Store in database and dictionary
-				bytes_hash = bytes.fromhex(info_hash)
+				hex_hash = bytes_to_hex(info_hash)
 				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
-				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
+				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, filename, name)
 				self.torrents[key] = torrent
 
@@ -423,23 +423,20 @@ class SwarmAnalyzer:
 			self.visited_peers.task_done()
 
 	## Contact an already running DHT node
-	#  @param node_port UDP port where the node is running
-	#  @param control_port TCP port for sending telnet commands
 	#  @exception AnalyzerError
-	def start_dht_connection(self, node_port, control_port):
-		self.dht = pymdht_connector.DHT(control_port, self.timeout)
-		self.dht_port = node_port
+	def start_dht_connection(self):
+		self.dht = pymdht_connector.DHT()
+		self.dht_port = config.dht_node_port
 
 	## Extract new peers from DHT
-	#  @param interval Time delay between contacting the dht in minutes
 	#  @exception AnalyzerError
 	#  @note Call start_dht_connection first
-	def start_dht_requests(self, interval):
+	def start_dht_requests(self):
 		# Concurrency management
 		self.dht_shutdown_done = threading.Event()
 
 		# Start requestor thread
-		thread = threading.Thread(target=self._dht_requestor, args=(interval*60,))
+		thread = threading.Thread(target=self._dht_requestor)
 		thread.daemon = True
 		thread.start()
 
@@ -447,8 +444,7 @@ class SwarmAnalyzer:
 		self.dht_started = True
 
 	## Requests new peers from the node for all torrents repeatingly
-	#  @param interval Time delay between contacting the dht in seconds
-	def _dht_requestor(self, interval):
+	def _dht_requestor(self):
 		while not self.shutdown_request.is_set():
 			for key in self.torrents:
 				# Request peers
@@ -485,8 +481,8 @@ class SwarmAnalyzer:
 				logging.critical('{} during DHT stats printing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 			# Wait interval
-			logging.info('Waiting {} minutes until next DHT request ...'.format(interval/60))
-			self.shutdown_request.wait(interval)
+			logging.info('Waiting {} minutes until next DHT request ...'.format(config.dht_request_interval/60))
+			self.shutdown_request.wait(config.dht_request_interval)
 
 		# Propagate thread termination
 		self.dht_shutdown_done.set()
@@ -618,27 +614,4 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			revisit_time = time.perf_counter() + self.server.delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()
-
-## Simple thread safe counter
-class SharedCounter:
-	## Set value and create a lock
-	def __init__(self):
-		self.value = 0
-		self.lock = threading.Lock()
-
-	## Increase value by one
-	def increment(self):
-		with self.lock:
-			self.value += 1
-
-	## Read value
-	#  @return The value
-	def get(self):
-		with self.lock:
-			return self.value
-
-	## Resets the value to zero
-	def reset(self):
-		with self.lock:
-			self.value = 0
 

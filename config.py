@@ -1,1 +1,24 @@
+# Consider peers to have completely downloaded the torrent at this pieces amount
 torrent_complete_threshold = 0.98
+
+# Timeout for network connections in seconds
+network_timeout = 5 # 10 # debug
+
+# Integrate an already running DHT node with this UDP port
+dht_node_port = 17000
+
+# Uses an already running DHT node over the given localhost telnet port
+dht_control_port = 17001
+
+# Time delay between contacting the DHT in seconds
+dht_request_interval = 15 * 60
+
+# When collecting all messages from a peer, cancel after this amount
+receive_message_max = 100
+
+# Truncate raw BitTorrent Protocol messages in logs to length
+bittorrent_message_log_length = 80
+
+# ut_metadata Extension Protocol message id
+extension_ut_metadata_id = 4
+
