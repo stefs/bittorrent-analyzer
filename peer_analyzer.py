@@ -21,14 +21,13 @@ from util import *
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
 	## Initializes analyzer for peers of one torrent
-	#  @param output Output directory
 	#  @param debug Log to stdout and include debug messages
 	#  @exception AnalyzerError
-	def __init__(self, output, debug):
+	def __init__(self, debug):
 		# Set output path
-		if not os.path.exists(output):
-			os.makedirs(output)
-		outfile = '{}{}_{}'.format(output, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
+		if not os.path.exists(config.output_path):
+			os.makedirs(config.output_path)
+		outfile = '{}{}_{}'.format(config.output_path, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
 
 		# Configure logging
 		logging_config = {'format': '[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', 'datefmt': '%Hh%Mm%Ss'}
@@ -80,11 +79,12 @@ class SwarmAnalyzer:
 		return self
 
 	## Reads all torrent files from input directory
-	#  @param directory Input directory to search for torrent files
-	def import_torrents(self, directory):
+	def import_torrents(self):
 		# Import all files
-		walk = os.walk(directory)
-		success = 0
+		try:
+			walk = os.walk(config.input_path)
+		except OSError as err:
+			raise AnalyzerError('Could not read from input directory: {}'.format(err))
 		for dirname, dirnames, filenames in walk:
 			for filename in filenames:
 				# Sort out non torrents
@@ -108,19 +108,14 @@ class SwarmAnalyzer:
 				torrent = Torrent(announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, path, name)
 				self.torrents[key] = torrent
-				success += 1
-
-		# Check result
-		if success > 0:
-			logging.info('Imported {} torrent files'.format(success))
-		else:
-			raise AnalyzerError('No valid torrent files found')
 
 	## Read magnet links from file
-	#  @filename File system path to text file with one magnet link per line
 	#  @note Call start_dht_connection first
-	def import_magnets(self, filename):
-		success = 0
+	def import_magnets(self):
+		filename = os.path.join(config.input_path, config.magnet_file)
+		if not os.path.exists(filename):
+			logging.info('Magnet file {} does not exist, nothing to import'.format(filename))
+			return
 		linenumber = 0
 		with open(filename) as file:
 			for magnet in file:
@@ -162,13 +157,6 @@ class SwarmAnalyzer:
 				torrent = Torrent(None, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, filename, name)
 				self.torrents[key] = torrent
-				success += 1
-
-		# Check result
-		if success > 0:
-			logging.info('Imported {} magnet links'.format(success))
-		else:
-			raise AnalyzerError('No magnet links found')
 
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
@@ -301,7 +289,8 @@ class SwarmAnalyzer:
 			else:
 				# Log recommended interval
 				if config.tracker_request_interval > tracker_interval:
-					logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60, config.tracker_request_interval/60))
+					logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60,
+							config.tracker_request_interval/60))
 				else:
 					logging.info('Tracker recommended interval of {} minutes'.format(tracker_interval/60))
 
@@ -343,7 +332,7 @@ class SwarmAnalyzer:
 				success=self.passive_success,
 				error=self.passive_error,
 				dht_enabled=self.dht_started)
-		logging.info('Started passive evaluation server on host {}, port {}'.format(address[0], address[1]))
+		logging.info('Listening on {}:{} for incomming peer connections'.format(*address))
 
 		# Activate the server in it's own thread
 		server_thread = threading.Thread(target=self.server.serve_forever)
@@ -352,7 +341,6 @@ class SwarmAnalyzer:
 
 		# Remember activation to enable shutdown
 		self.passive_evaluation = True
-		logging.info('Listening on port {} for incomming peer connections'.format(config.bittorrent_listen_port))
 
 	## Comsumes peers from database queue and put back in main queue
 	def start_peer_handler(self):
@@ -520,39 +508,44 @@ class SwarmAnalyzer:
 	def __exit__(self, exc_type, exc_value, tb):
 		# Log exception when exiting after error
 		if exc_type is not None:
-			tb_lines = traceback.format_tb(tb)
-			logging.critical('{}: {}\n{}'.format(exc_type.__name__, exc_value, ''.join(tb_lines)))
+			if issubclass(exc_type, AnalyzerError):
+				logging.error('{}: {}'.format(exc_type.__name__, exc_value))
+			else:
+				tb_lines = traceback.format_tb(tb)
+				logging.critical('{}: {}\n{}'.format(exc_type.__name__, exc_value, ''.join(tb_lines)))
 
 		# Propagate shutdown request
 		self.shutdown_request.set()
 
 		# Wait for termination
-		if self.dht_started:
-			logging.info('Waiting for DHT requests to finish ...')
-			self.dht_shutdown_done.wait()
-			self.dht.close()
-		if self.active_evaluation:
-			logging.info('Waiting for current evaluations to finish ...')
-			self.active_shutdown_done.wait()
-		if self.tracker_requests:
-			logging.info('Waiting for current tracker requests to finish ...')
-			self.tracker_shutdown_done.wait()
-		if self.passive_evaluation:
-			logging.info('Shutdown peer evaluation server ...')
-			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
-		if self.peer_handler:
-			logging.info('Waiting for peers to be written to database ...')
-			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
-		self.database.close()
+		try:
+			if self.dht_started:
+				logging.info('Waiting for DHT requests to finish ...')
+				self.dht_shutdown_done.wait()
+				self.dht.close()
+			if self.active_evaluation:
+				logging.info('Waiting for current evaluations to finish ...')
+				self.active_shutdown_done.wait()
+			if self.tracker_requests:
+				logging.info('Waiting for current tracker requests to finish ...')
+				self.tracker_shutdown_done.wait()
+			if self.passive_evaluation:
+				logging.info('Shutdown peer evaluation server ...')
+				self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
+			if self.peer_handler:
+				logging.info('Waiting for peers to be written to database ...')
+				self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
+			self.database.close()
 
 		# Log final statistic
-		try:
-			self.log_statistics()
-		except Exception as err:
-			logging.critical('Failed to log final statistic: {}'.format(err))
-		logging.info('Finished')
+		finally:
+			try:
+				self.log_statistics()
+			except Exception as err:
+				logging.critical('Failed to log final statistic: {}'.format(err))
 
-		# Do not reraise any exceptions, as it is already logged above
+		# Do not reraise incoming exceptions, as it is already logged above
+		logging.info('Finished')
 		return True
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits

@@ -31,6 +31,12 @@ extension_ut_metadata_id = 4
 # Evaluate incoming peers at the specified port number
 bittorrent_listen_port = 6881
 
-# Output path for log and database
+# Output path for log and database, with trailing slash
 output_path = 'output/'
+
+# Input path for torrent files and magnet file, with trailing slash
+input_path = 'input/'
+
+# Filename for magnet files, relative to input_path, one magnet link per line
+magnet_file = 'magnet.txt'
 

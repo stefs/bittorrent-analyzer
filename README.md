@@ -12,34 +12,38 @@ This is work in progress.
 * Compare results with tracker scrape requests? - optional
 
 ### Next steps
-* ! Accept magnet links (BEP 9, BEP 10)
-* ! Statistik mit Grafik in LaTeX mit R (Count downloads within evaluation period) --> Store timestamp of Übergang von leecher to seeder (~98%)
-* ! Gliederung Arbeit, Stichpunkte und Vorüberlegungen aufschreiben
+* ! Check name collisions of torrent files and magnet links
+* ! Statistik mit Grafik in LaTeX mit R
+* ! Write thesis text
+    * Hardwaredaten der VM notieren
+    * Counting transition from leecher to seeder (~98%)
+* ! Note used torrents with time frame and send to RRZE
 * Save statistics about peer communication failures
 * Save statistics about work load of active evaluation threads
-* Tool organization in analyis modules
-* (Note used torrents with time frame and send to RRZE)
-* (Check name collisions of torrent files and magnet links)
-* (Tidy readme: Requirements, installation, usage, thanks)
-* Hardwaredaten der VM notieren
+* Tidy readme: Requirements, installation, usage, thanks
+* (Tool organization in analyis modules)
 
 ### Code quality
 * Review logging messages
 * Review doxygen comments
 * Review documentation references
 * Compact some statements
-* Implement unit tests?
+* Implement unit tests? How about no.
 
 ### Optional steps
-* Ergebinsse auf Plausibilität prüfen, Warum keine vollständigen Downloads beobachtet? --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left) --> Dokumentieren
-* Revisit incoming peers?
-* Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions))
-* Tracker exchange message support (BEP 28)
-* ? Support encrypted peer connections
-* ? Pause evaluation on network outage
+* Ergebinsse auf Plausibilität prüfen
+    * Warum keine vollständigen Downloads beobachtet?
+    * --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left)
+    * --> Dokumentieren
+* Revisit incoming peers? No.
+* Peer exchange message support ([AZMP, LTEP](https://wiki.theory.org/BitTorrentPeerExchangeConventions)) No.
+* Tracker exchange message support (BEP 28) No.
+* Support encrypted peer connections. No.
+* Pause evaluation on network outage. No.
 
 ## Features
-* Import torrent from file (BEP 3) or fetch metadata (BEP 9, BEP 10) via magnet link (BEP 9) using libtorrent
+* Import torrents from `.torrent` files (BEP 3)
+* Import torrents form magnet links by fetching metadata via the *ut_metadata* extension (BEP 9) using the Extension Protocol (BEP 10)
 * Continuously get IPv4 peers from the tracker using HTTP (BEP 3) and UDP announce requests (BEP 15)
 * Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
 * Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the *pymdht* project using local telnet
@@ -72,7 +76,6 @@ This is work in progress.
 * [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
 * Database
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
-* libtorrent
 
 #### Mainline DHT node
 * [pymdht](https://github.com/rauljim/pymdht) with patches
@@ -83,9 +86,9 @@ This is work in progress.
 ### Steps
 These are the standard installation steps on a Debian based system.
 
-1. `sudo apt-get install python3 python3-pip python3-libtorrent`
+1. `sudo apt-get install python3 python3-pip`
 2. `sudo pip3 install virtualenv`
-3. `virtualenv --python=/usr/bin/python3 --system-site-packages env-main`
+3. `virtualenv --python=/usr/bin/python3 env-main`
 4. `source env-main/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`
