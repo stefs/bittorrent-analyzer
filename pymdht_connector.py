@@ -75,5 +75,5 @@ class DHT:
 				logging.warning('Failed to send {} command: {}'.format(cmd, err))
 			else:
 				logging.info('Sent {} command to DHT node'.format(cmd))
-			#self.dht.close() # TODO necessary? # debug
+			self.dht.close()
 

@@ -225,7 +225,23 @@ def pack_message(message_id, payload=b''):
 		data = struct.pack(format_string, 1 + len(payload), message_id, payload)
 	return data
 
-## Gives string representation of a message for user output, for logging purposes
+## Get payload of an message with one byte prefix
+#  @param data Input
+#  @return Tuple of prefix and payload
+def unpack_message(data):
+	format_string = '!B{}s'.format(len(data)-1)
+	return struct.unpack(format_string, data)
+
+## Generate a random peer id without client software information
+#  @return A random peer id as a string
+def generate_peer_id():
+	possible_chars = string.ascii_letters + string.digits
+	peer_id_list = random.sample(possible_chars, 20)
+	peer_id = ''.join(peer_id_list)
+	logging.info('Generated peer id is ' + peer_id)
+	return peer_id
+
+## Gives string representation of a BitTorrent Protocol message for logging purposes
 #  @param message The message
 #  @return Printable string with type string
 def message_to_string(message):
@@ -296,37 +312,6 @@ def bitfield_from_messages(messages, pieces_number):
 	logging.info('Received ' + str(bitfield_count) + ' bitfield, ' + str(have_count) + ' have and ' + str(other_count) + ' other messages')
 	return bitfield
 
-## Sets a bit at a given index in a given bitfield on true
-#  @param bitfield The bitfield to be altered as a bytearray
-#  @param index The position to be changed, 0 refers to highest bit of first byte
-#  @warn The bitfield parameter must be a bytearray, not of the bytes type, not of type string
-def set_bit_at_index(bitfield, index):
-	# Devide index in byte index (0123...) and bit index (76543210)
-	byte_index = int(index / 8)
-	bit_index = 8 - index % 8
-
-	# Alter affected byte
-	byte_before = bitfield[byte_index]
-	byte_after = byte_before | bit_index
-
-	# Write back
-	bitfield[byte_index] = byte_after
-	return bitfield
-
-## Returns the numbers of bits set in an bitfield
-#  @param bitfield An arbitrary bitfield
-#  @return Number of one bits
-def count_bits(bitfield):
-	count = 0
-	for byte in bitfield:
-		mask = 1
-		for i in range(0,8):
-			masked_byte = byte & mask
-			if masked_byte > 0:
-				count += 1
-			mask *= 2
-	return count
-
 ## Determine the threshold in pieces where a download is considered complete
 #  @param total_pieces Number of total pieces
 #  @return True false answer
@@ -336,34 +321,30 @@ def get_complete_threshold(total_pieces):
 ## Evaluate a peer by receiving and parsing all messages; send a dht PORT message
 #  @param sock Connection socket
 #  @param own_peer_id Own peer id
-#  @param dht_port DHT node port to be announced, None for no announce
+#  @param dht_enabled Should DHT node port be announced
 #  @param info_hash Info hash for outgoing evaluations, None for incoming connections
 #  @exception PeerError
-def evaluate_peer(sock, own_peer_id, dht_port=None, info_hash=None):
+def evaluate_peer(sock, own_peer_id, dht_enabled, info_hash=None):
 	# Establish session
 	session = PeerSession(sock, own_peer_id)
 
 	# Incoming connection
 	if info_hash is None:
 		rec_peer_id, reserved, rec_info_hash = session.receive_handshake() # PeerError
-		session.send_handshake(rec_info_hash, dht_port is not None) # PeerError
+		session.send_handshake(rec_info_hash, dht_enabled) # PeerError
 
 	# Outgoning connection
 	else:
-		session.send_handshake(info_hash, dht_port is not None) # PeerError
+		session.send_handshake(info_hash, dht_enabled) # PeerError
 		rec_peer_id, reserved, rec_info_hash = session.receive_handshake(info_hash) # PeerError
 
 	# Receive messages
 	messages = session.receive_all_messages()
 
 	# Send own DHT node UDP port to peer if supported
-	if dht_port is None:
-		logging.info('No DHT port specified')
-	elif reserved[7] & 0x01 == 0:
-		logging.info('DHT not supported by remote peer')
-	else:
+	if dht_enabled and reserved[7] & 0x01 != 0:
 		try:
-			session.send_port(dht_port) # PeerError
+			session.send_port(config.dht_node_port) # PeerError
 		except PeerError as err:
 			logging.warning('Could not send PORT message: {}'.format(err))
 
@@ -496,20 +477,4 @@ def get_ut_metadata(info_hash, peer, own_peer_id):
 	# Return info dict
 	logging.info('Successfully fetched metadata from peer')
 	return metadata
-
-## Get payload of an message with one byte prefix
-#  @param data Input
-#  @return Tuple of prefix and payload
-def unpack_message(data):
-	format_string = '!B{}s'.format(len(data)-1)
-	return struct.unpack(format_string, data)
-
-## Generate a random peer id without client software information
-#  @return A random peer id as a string
-def generate_peer_id():
-	possible_chars = string.ascii_letters + string.digits
-	peer_id_list = random.sample(possible_chars, 20)
-	peer_id = ''.join(peer_id_list)
-	logging.info('Generated peer id is ' + peer_id)
-	return peer_id
 

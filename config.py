@@ -2,7 +2,7 @@
 torrent_complete_threshold = 0.98
 
 # Timeout for network connections in seconds
-network_timeout = 5 # 10 # debug
+network_timeout = 10
 
 # Integrate an already running DHT node with this UDP port
 dht_node_port = 17000

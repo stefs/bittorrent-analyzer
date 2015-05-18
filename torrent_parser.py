@@ -13,7 +13,7 @@ from util import *
 import bencodepy
 
 ## Providing methods for analysis of torrent files
-class TorrentParser:
+class TorrentFile:
 	## Reads and decodes a torrent file from the file system
 	#  @param path File path
 	#  @exception FileError
@@ -49,57 +49,68 @@ class TorrentParser:
 			raise FileError('File did not contain a announce URL: ' + str(err))
 		return announce_url_bytes.decode()
 
-	## Extract info hash
-	#  @return The info hash as a string
+	## Extract info dict
+	#  @return Bencoded info dict
 	#  @exception FileError
-	def get_info_hash(self):
+	def get_info_dict(self):
 		try:
 			info_dict = self.torrent_file[b'info']
 		except KeyError as err:
 			raise FileError('File did not contain the info dictionary: ' + str(err))
 		try:
-			info_dict_bencoded = bencodepy.encode(info_dict)
+			return bencodepy.encode(info_dict)
 		except bencodepy.exceptions.EncodingError as err:
 			raise FileError('Bencoding failed: ' + str(err))
-		sha1_hasher = hashlib.sha1(info_dict_bencoded)
-		hash_bytes = sha1_hasher.digest()
-		return bytes_to_hex(hash_bytes)
 
-	## Extract the number of pieces
-	#  @return Pieces number
+## Providing methods for analysis of a bencoded info dict
+class InfoDict:
+	## Decode a info dict
+	#  @param info_dict Bencoded info dict
 	#  @exception FileError
-	def get_pieces_number(self):
+	def __init__(self, info_dict):
+		self.info_dict_bencoded = info_dict
 		try:
-			info_dict = self.torrent_file[b'info']
-			pieces = info_dict[b'pieces']
-		except KeyError as err:
-			raise FileError('File did not contain the info dictionary or pieces list: ' + str(err))
-		number = int(len(pieces) / 20)
-		if number == 0:
-			raise FileError('Torrent containes no pieces')
-		return number
+			self.info_dict = bencodepy.decode(info_dict)
+		except bencodepy.exceptions.EncodingError as err:
+			raise FileError('Bencoding failed: ' + str(err))
+
+	## Calculate the info hash
+	#  @return The info hash
+	def get_info_hash(self):
+		return hashlib.sha1(self.info_dict_bencoded).digest()
 
 	## Extract the size of the pieces
 	#  @return Size in Bytes
 	#  @exception FileError
-	def get_piece_size(self):
+	def get_piece_length(self):
 		try:
-			info_dict = self.torrent_file[b'info']
-			size = info_dict[b'piece length']
+			size = self.info_dict[b'piece length']
 		except KeyError as err:
 			raise FileError('File did not contain the length of pieces: ' + str(err))
 		if size == 0:
 			raise FileError('Piece size is zero')
 		return size
 
+	## Extract the number of pieces
+	#  @return Pieces number
+	#  @exception FileError
+	def get_pieces_count(self):
+		try:
+			pieces = self.info_dict[b'pieces']
+		except KeyError as err:
+			raise FileError('File did not contain the pieces list: ' + str(err))
+		number = int(len(pieces) / 20)
+		if number == 0:
+			raise FileError('Torrent containes no pieces')
+		return number
+
 	## Extract the name
 	#  @return The name or None
 	def get_name(self):
 		try:
-			info_dict = self.torrent_file[b'info']
-			return info_dict[b'name'].decode()
+			return self.info_dict[b'name'].decode()
 		except KeyError as err:
-			logging.warning('File did not contain the info dictionary or a name tag: {}'.format(err))
+			logging.warning('File did not contain a name tag: {}'.format(err))
 
 ## Extract the info hash according to BEP 9
 #  @return Info hash as hex string

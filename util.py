@@ -113,3 +113,34 @@ def bytes_to_bitmap(data):
 		bitmap_parts.append(format(byte, '008b'))
 	return '|'.join(bitmap_parts)
 
+## Sets a bit at a given index in a given bitfield on true
+#  @param bitfield The bitfield to be altered as a bytearray
+#  @param index The position to be changed, 0 refers to highest bit of first byte
+#  @warn The bitfield parameter must be a bytearray, not of the bytes type, not of type string
+def set_bit_at_index(bitfield, index):
+	# Devide index in byte index (0123...) and bit index (76543210)
+	byte_index = int(index / 8)
+	bit_index = 8 - index % 8
+
+	# Alter affected byte
+	byte_before = bitfield[byte_index]
+	byte_after = byte_before | bit_index
+
+	# Write back
+	bitfield[byte_index] = byte_after
+	return bitfield
+
+## Returns the numbers of bits set in an bitfield
+#  @param bitfield An arbitrary bitfield
+#  @return Number of one bits
+def count_bits(bitfield):
+	count = 0
+	for byte in bitfield:
+		mask = 1
+		for i in range(0,8):
+			masked_byte = byte & mask
+			if masked_byte > 0:
+				count += 1
+			mask *= 2
+	return count
+

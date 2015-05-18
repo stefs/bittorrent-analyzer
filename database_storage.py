@@ -13,7 +13,6 @@ import maxminddb.errors
 import traceback
 
 # Project modules
-import peer_wire_protocol
 import config
 from util import *
 

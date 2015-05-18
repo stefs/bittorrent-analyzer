@@ -13,7 +13,7 @@ import telnetlib
 import tracker_request
 import peer_wire_protocol
 import database_storage
-import torrent_file
+import torrent_parser
 import pymdht_connector
 import config
 from util import *
@@ -21,13 +21,14 @@ from util import *
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
 	## Initializes analyzer for peers of one torrent
+	#  @param output Output directory
 	#  @param debug Log to stdout and include debug messages
 	#  @exception AnalyzerError
-	def __init__(self, debug):
+	def __init__(self, output, debug):
 		# Set output path
-		if not os.path.exists(config.output_path):
-			os.makedirs(config.output_path)
-		self.output = '{}{}_{}'.format(config.output_path, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
+		if not os.path.exists(output):
+			os.makedirs(output)
+		outfile = '{}{}_{}'.format(output, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
 
 		# Configure logging
 		logging_config = {'format': '[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', 'datefmt': '%Hh%Mm%Ss'}
@@ -35,7 +36,7 @@ class SwarmAnalyzer:
 			logging_config['level'] = logging.DEBUG
 		else:
 			logging_config['level'] = logging.INFO
-			logfile = '{}.log'.format(self.output)
+			logfile = '{}.log'.format(outfile)
 			print('Log is written to {}'.format(logfile))
 			logging_config['filename'] = logfile
 		logging.basicConfig(**logging_config)
@@ -72,7 +73,7 @@ class SwarmAnalyzer:
 		self.dht_started = False
 
 		# Create database
-		self.database = database_storage.Database(self.output)
+		self.database = database_storage.Database(outfile)
 
 	## Resouces are allocated in starter methods
 	def __enter__(self):
@@ -81,13 +82,9 @@ class SwarmAnalyzer:
 	## Reads all torrent files from input directory
 	#  @param directory Input directory to search for torrent files
 	def import_torrents(self, directory):
-		logging.critical('here')
-		raise AnalyzerError('debug') # debug
 		# Import all files
-		try:
-			walk = os.walk(directory)
-		except OSError as err:
-			raise AnalyzerError('Could not read from input directory: {}'.format(err))
+		walk = os.walk(directory)
+		success = 0
 		for dirname, dirnames, filenames in walk:
 			for filename in filenames:
 				# Sort out non torrents
@@ -96,27 +93,26 @@ class SwarmAnalyzer:
 
 				# Read torrent file
 				path = os.path.join(dirname, filename)
-				try:
-					parser = torrent_file.TorrentParser(path)
-					announce_url = parser.get_announce_url()
-					info_hash = parser.get_info_hash()
-					pieces_number = parser.get_pieces_number()
-					piece_size = parser.get_piece_size()
-					name = parser.get_name()
-				except FileError as err:
-					logging.error('Could not import torrent {}: {}'.format(filename, err))
-					continue
+				torrent_file = torrent_parser.TorrentFile(path)
+				announce_url = torrent_file.get_announce_url()
+				info_dict_bencoded = torrent_file.get_info_dict()
+				info_dict = torrent_parser.InfoDict(info_dict_bencoded)
+				info_hash = info_dict.get_info_hash()
+				piece_size = info_dict.get_piece_length()
+				pieces_count = info_dict.get_pieces_count()
+				name = info_dict.get_name()
 
 				# Store in database and dictionary
-				bytes_hash = bytes.fromhex(info_hash)
-				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
-				torrent = Torrent(announce_url, bytes_hash, info_hash, pieces_number, piece_size, complete_threshold)
+				info_hash_hex = bytes_to_hex(info_hash)
+				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_count)
+				torrent = Torrent(announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, path, name)
 				self.torrents[key] = torrent
+				success += 1
 
 		# Check result
-		if len(self.torrents) > 0:
-			logging.info('Imported {} torrent files'.format(len(self.torrents)))
+		if success > 0:
+			logging.info('Imported {} torrent files'.format(success))
 		else:
 			raise AnalyzerError('No valid torrent files found')
 
@@ -136,7 +132,7 @@ class SwarmAnalyzer:
 					continue
 
 				# Get peers for metadata aquisition
-				info_hash = torrent_file.hash_from_magnet(magnet)
+				info_hash = torrent_parser.hash_from_magnet(magnet)
 				dht = pymdht_connector.DHT()
 				metadata_peers = dht.get_peers(info_hash)
 				dht.close()
@@ -153,18 +149,20 @@ class SwarmAnalyzer:
 						break
 				else:
 					raise AnalyzerError('Could not fetch metadata from any peer')
-				# TODO decode info dict
-				print(info_dict_bencoded) # debug
-				raise SystemExit('breakpoint') # debug
-				name, announce_url, piece_size, pieces_number = peer_wire_protocol.fetch_magnet(info_hash, metadata_peers) # PeerError
-				success += 1
+
+				# Decode info dict
+				info_dict = torrent_parser.InfoDict(info_dict_bencoded)
+				info_hash_hex = bytes_to_hex(info_hash)
+				pieces_count = info_dict.get_pieces_count()
+				piece_size = info_dict.get_piece_length()
+				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_count)
+				name = info_dict.get_name()
 
 				# Store in database and dictionary
-				hex_hash = bytes_to_hex(info_hash)
-				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_number)
-				torrent = Torrent(announce_url, info_hash, hex_hash, pieces_number, piece_size, complete_threshold)
+				torrent = Torrent(None, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
 				key = self.database.store_torrent(torrent, filename, name)
 				self.torrents[key] = torrent
+				success += 1
 
 		# Check result
 		if success > 0:
@@ -211,6 +209,7 @@ class SwarmAnalyzer:
 				continue
 
 			# Establish connection
+			# TODO use util.TCPConnection
 			if peer.key is None:
 				logging.info('################ Connecting to new peer ... ################')
 			else:
@@ -229,7 +228,7 @@ class SwarmAnalyzer:
 			# Contact peer
 			dht_port = config.dht_node_port if self.dht_started else None
 			try:
-				result = peer_wire_protocol.evaluate_peer(sock, self.own_peer_id, dht_port, self.torrents[peer.torrent].info_hash)
+				result = peer_wire_protocol.evaluate_peer(sock, self.own_peer_id, self.dht_started, self.torrents[peer.torrent].info_hash)
 
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
@@ -276,7 +275,7 @@ class SwarmAnalyzer:
 
 		# Create tracker request threads
 		for torrent in torrents_with_tracker:
-			thread = threading.Thread(target=self._tracker_requestor, args=(torrent))
+			thread = threading.Thread(target=self._tracker_requestor, args=(torrent,))
 			thread.daemon = True
 			thread.start()
 
@@ -336,17 +335,14 @@ class SwarmAnalyzer:
 		# Create the server, binding to outside address on custom port
 		assert 0 <= config.bittorrent_listen_port <= 65535
 		address = ('0.0.0.0', config.bittorrent_listen_port)
-		try:
-			self.server = PeerEvaluationServer(address, PeerHandler,
-					own_peer_id=self.own_peer_id,
-					torrents=self.torrents,
-					visited_peers=self.visited_peers,
-					sock_timeout=self.timeout,
-					success=self.passive_success,
-					error=self.passive_error,
-					dht_port=self.dht_port)
-		except PermissionError as err:
-			raise AnalyzerError('Could not start server on port {}: {}'.format(config.bittorrent_listen_port, err))
+		self.server = PeerEvaluationServer(address, PeerHandler,
+				own_peer_id=self.own_peer_id,
+				torrents=self.torrents,
+				visited_peers=self.visited_peers,
+				sock_timeout=self.timeout,
+				success=self.passive_success,
+				error=self.passive_error,
+				dht_enabled=self.dht_started)
 		logging.info('Started passive evaluation server on host {}, port {}'.format(address[0], address[1]))
 
 		# Activate the server in it's own thread
@@ -390,7 +386,6 @@ class SwarmAnalyzer:
 
 			# Retrieve key for reoccurred incoming peers
 			key = peer.key
-			assert (peer.source is Source.incoming) == (peer.source == Source.incoming), 'problem with enum comparison' # debug
 			if peer.source is Source.incoming:
 				equality = (peer.ip_address, peer.torrent) # Port differs every time
 				try:
@@ -460,7 +455,7 @@ class SwarmAnalyzer:
 				start = time.perf_counter()
 				dht_peers = list()
 				try:
-					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex)
+					dht_peers = self.dht.get_peers(self.torrents[key].info_hash)
 				except pymdht_connector.DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
 				except Exception as err:
@@ -516,7 +511,6 @@ class SwarmAnalyzer:
 	def wait_for_sigint(self):
 		try:
 			logging.info('End with "kill -SIGINT {}"'.format(os.getpid()))
-			print('End with Ctrl+C')
 			while True:
 				time.sleep(1024)
 		except KeyboardInterrupt:
@@ -533,7 +527,6 @@ class SwarmAnalyzer:
 		self.shutdown_request.set()
 
 		# Wait for termination
-		print('Please wait for termination ...')
 		if self.dht_started:
 			logging.info('Waiting for DHT requests to finish ...')
 			self.dht_shutdown_done.wait()
@@ -557,10 +550,7 @@ class SwarmAnalyzer:
 			self.log_statistics()
 		except Exception as err:
 			logging.critical('Failed to log final statistic: {}'.format(err))
-
-		# Print finished indicators
 		logging.info('Finished')
-		print('Finished')
 
 		# Do not reraise any exceptions, as it is already logged above
 		return True
@@ -631,7 +621,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			return
 		logging.info('################ Evaluating an incoming peer ################')
 		try:
-			result = peer_wire_protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_port)
+			result = peer_wire_protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
 		except peer_wire_protocol.PeerError as err:
 			logging.warning('Could not evaluate incoming peer: {}'.format(err))
 			self.server.error.increment()

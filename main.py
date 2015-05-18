@@ -10,6 +10,7 @@ import peer_analyzer
 parser = argparse.ArgumentParser(description='BitTorrent Download Analyzer', epilog='Stefan Schindler, 2015')
 parser.add_argument('-t', '--torrent', help='Read torrent files from the specified directory', metavar='<directory>')
 parser.add_argument('-m', '--magnet', help='Read one magnet link per line from file instead torrent files', metavar='<filename>')
+parser.add_argument('-o', '--output', default='output/', help='Output directory for log and database, default is "output/"', metavar='<directory>')
 parser.add_argument('-a', '--active', type=int, help='Active peer evaluation using the specified number of threads', metavar='<threads>')
 parser.add_argument('-p', '--passive', action='store_true', help='Passive peer evaluation by listening for incoming connections')
 parser.add_argument('-d', '--dht', action='store_true', help='Integrate an already running DHT node')
@@ -25,7 +26,10 @@ if args.magnet is not None and not args.dht:
 	parser.error('Cannot use magnet links without DHT')
 
 # Analysis routine
-with peer_analyzer.SwarmAnalyzer(args.debug) as analyzer:
+with peer_analyzer.SwarmAnalyzer(args.output, args.debug) as analyzer:
+	# Indicate initialization process
+	print('Initialize evaluation process ...')
+
 	# Import torrents
 	if args.magnet is not None:
 		analyzer.import_magnets(args.magnet)
@@ -51,5 +55,7 @@ with peer_analyzer.SwarmAnalyzer(args.debug) as analyzer:
 	analyzer.start_peer_handler()
 
 	# Wait for termination
+	print('Evaluation running, end with Ctrl+C')
 	analyzer.wait_for_sigint()
+	print('Please wait for termination ...')
 
