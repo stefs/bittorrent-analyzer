@@ -21,16 +21,13 @@ class DHT:
 
 	## Issue lookup for given info hash
 	#  @param info_hash The info hash to get peers for
-	#  @param bt_port Own BitTorrent listening port to be announced to nodes
 	#  @return List of ip port tuples of peers
 	#  @exception DHTError
-	def get_peers(self, info_hash, bt_port=None):
+	def get_peers(self, info_hash):
 		# Receive peers
-		if bt_port is None:
-			bt_port = 0
 		dht_response = list()
 		info_hash_hex = bytes_to_hex(info_hash)
-		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex.upper(), bt_port) # TODO use existing channel?
+		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex.upper(), config.bittorrent_listen_port) # TODO use existing channel?
 		logging.info('DHT lookup request: {}'.format(request_line.rstrip('\n')))
 		with self.lock:
 			try:

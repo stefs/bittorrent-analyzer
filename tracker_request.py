@@ -20,19 +20,12 @@ class TrackerCommunicator:
 	## Initialize a tracker
 	#  @param peer_id Own peer id
 	#  @param announce_url The announce URL representing the tracker
-	#  @param timeout Timeout for network operations in seconds
-	#  @param port Port number to be announced to trackers or None
 	#  @param total_pieces Number of total pieces of the torrent
-	def __init__(self, peer_id, announce_url, timeout, port, total_pieces):
+	def __init__(self, peer_id, announce_url, total_pieces):
 		self.peer_id = peer_id
 		self.announce_url = announce_url
-		self.timeout = timeout
-		self.port = 0 if port is None else port
-		if self.port == 0:
-			logging.warning('Port 0 will be announced')
-		else:
-			logging.info('Port {} will be announced'.format(self.port))
 		self.first_announce = True
+		logging.info('Port {} will be announced'.format(config.bittorrent_listen_port))
 
 		# Faked transmission statistics as factors
 		# TODO This are in-code configuration parameters
@@ -66,7 +59,7 @@ class TrackerCommunicator:
 	#  @exception TrackerError
 	def _http_request(self, info_hash):
 		# Assemble tracker request
-		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': self.port,
+		request_parameters = {'info_hash': info_hash, 'peer_id': self.peer_id, 'port': config.bittorrent_listen_port,
 				'uploaded': str(self.uploaded), 'downloaded': str(self.downloaded), 'left': str(self.left)}
 		request_parameters['compact'] = '1'
 		if self.first_announce:
@@ -78,7 +71,7 @@ class TrackerCommunicator:
 
 		# Issue GET request
 		try:
-			with urllib.request.urlopen(request_url, timeout=self.timeout) as http_response:
+			with urllib.request.urlopen(request_url, timeout=config.network_timeout) as http_response:
 				if http_response.status == http.client.OK:
 					logging.info('HTTP response status code is OK')
 					response_bencoded = http_response.read()
@@ -120,7 +113,7 @@ class TrackerCommunicator:
 	def _udp_request(self, info_hash):
 		# Establish connection
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		sock.settimeout(self.timeout)
+		sock.settimeout(config.network_timeout)
 		parsed_tracker = urllib.parse.urlparse(self.announce_url)
 		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
 
@@ -150,11 +143,10 @@ class TrackerCommunicator:
 
 		# Send announce request
 		transaction_id = udp_transaction_id()
-		port = 0 if self.port is None else self.port
 		event = 2 if self.first_announce else 0
 		req = struct.pack('!qii20s20sqqqiiiih', connection_id, 0x1, transaction_id, info_hash, self.peer_id.encode(),
 				self.downloaded, self.left, self.uploaded,
-				event, 0x0, 0x0, -1, port)
+				event, 0x0, 0x0, -1, config.bittorrent_listen_port)
 		logging.debug('Announce request is {}'.format(req))
 		sock.sendto(req, conn)
 

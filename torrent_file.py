@@ -101,7 +101,7 @@ class TorrentParser:
 		except KeyError as err:
 			logging.warning('File did not contain the info dictionary or a name tag: {}'.format(err))
 
-## Extract the info hash
+## Extract the info hash according to BEP 9
 #  @return Info hash as hex string
 #  @exception FileError
 def hash_from_magnet(magnet):

@@ -82,7 +82,7 @@ class TCPConnection:
 	def __enter__(self):
 		return self.sock
 
-	def __exit__(self, exception_type, exception_value, traceback):
+	def __exit__(self, exc_type, exc_value, tb):
 		try:
 			self.sock.close()
 		except OSError as err:

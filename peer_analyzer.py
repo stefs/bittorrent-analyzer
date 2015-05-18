@@ -21,10 +21,25 @@ from util import *
 ## Requests peers from tracker and initiates peer connections
 class SwarmAnalyzer:
 	## Initializes analyzer for peers of one torrent
-	#  @param delay Minimal timedelta between contacting the same peer in minutes
-	#  @param output Path for database output without file extension
+	#  @param debug Log to stdout and include debug messages
 	#  @exception AnalyzerError
-	def __init__(self, delay, output):
+	def __init__(self, debug):
+		# Set output path
+		if not os.path.exists(config.output_path):
+			os.makedirs(config.output_path)
+		self.output = '{}{}_{}'.format(config.output_path, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
+
+		# Configure logging
+		logging_config = {'format': '[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', 'datefmt': '%Hh%Mm%Ss'}
+		if debug:
+			logging_config['level'] = logging.DEBUG
+		else:
+			logging_config['level'] = logging.INFO
+			logfile = '{}.log'.format(self.output)
+			print('Log is written to {}'.format(logfile))
+			logging_config['filename'] = logfile
+		logging.basicConfig(**logging_config)
+
 		# Smart queue for peer management
 		self.peers = PeerQueue()
 		self.visited_peers = queue.Queue()
@@ -37,10 +52,7 @@ class SwarmAnalyzer:
 		self.own_peer_id = peer_wire_protocol.generate_peer_id()
 
 		# Network parameters
-		self.delay = delay * 60
 		self.timeout = config.network_timeout
-		self.listen_port = None
-		self.dht_port = None
 
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
@@ -60,17 +72,20 @@ class SwarmAnalyzer:
 		self.dht_started = False
 
 		# Create database
-		self.database = database_storage.Database(output)
+		self.database = database_storage.Database(self.output)
 
 	## Resouces are allocated in starter methods
 	def __enter__(self):
 		return self
 
 	## Reads all torrent files from input directory
-	def import_torrents(self):
+	#  @param directory Input directory to search for torrent files
+	def import_torrents(self, directory):
+		logging.critical('here')
+		raise AnalyzerError('debug') # debug
 		# Import all files
 		try:
-			walk = os.walk('input/')
+			walk = os.walk(directory)
 		except OSError as err:
 			raise AnalyzerError('Could not read from input directory: {}'.format(err))
 		for dirname, dirnames, filenames in walk:
@@ -122,12 +137,14 @@ class SwarmAnalyzer:
 
 				# Get peers for metadata aquisition
 				info_hash = torrent_file.hash_from_magnet(magnet)
-				metadata_peers = self.dht.get_peers(info_hash, self.listen_port)
+				dht = pymdht_connector.DHT()
+				metadata_peers = dht.get_peers(info_hash)
+				dht.close()
 
 				# Fetch metadata from a peer
 				own_peer_id = peer_wire_protocol.generate_peer_id()
 				for peer in metadata_peers:
-					logging.info('Trying to fetching metadata from peer ...')
+					logging.info('Trying to fetch metadata from peer ...')
 					try:
 						info_dict_bencoded = peer_wire_protocol.get_ut_metadata(info_hash, peer, own_peer_id)
 					except PeerError as err:
@@ -136,6 +153,7 @@ class SwarmAnalyzer:
 						break
 				else:
 					raise AnalyzerError('Could not fetch metadata from any peer')
+				# TODO decode info dict
 				print(info_dict_bencoded) # debug
 				raise SystemExit('breakpoint') # debug
 				name, announce_url, piece_size, pieces_number = peer_wire_protocol.fetch_magnet(info_hash, metadata_peers) # PeerError
@@ -209,8 +227,9 @@ class SwarmAnalyzer:
 			logging.info('Connection established')
 
 			# Contact peer
+			dht_port = config.dht_node_port if self.dht_started else None
 			try:
-				result = peer_wire_protocol.evaluate_peer(sock, self.own_peer_id, self.dht_port, self.torrents[peer.torrent].info_hash)
+				result = peer_wire_protocol.evaluate_peer(sock, self.own_peer_id, dht_port, self.torrents[peer.torrent].info_hash)
 
 			# Handle bad peers
 			except peer_wire_protocol.PeerError as err:
@@ -244,9 +263,8 @@ class SwarmAnalyzer:
 		self.active_shutdown_done.wait()
 
 	## Continuously asks the tracker server for new peers
-	#  @param interval Timer interval between tracker requests are issued in minutes
 	#  @note Start passive evaluation first to ensure port propagation
-	def start_tracker_requests(self, interval):
+	def start_tracker_requests(self):
 		# Extract torrents with tracker
 		torrents_with_tracker = list()
 		for torrent in self.torrents:
@@ -257,9 +275,8 @@ class SwarmAnalyzer:
 		self.tracker_shutdown_done = threading.Barrier(len(torrents_with_tracker) + 1)
 
 		# Create tracker request threads
-		interval_seconds = interval * 60
 		for torrent in torrents_with_tracker:
-			thread = threading.Thread(target=self._tracker_requestor, args=(torrent, interval_seconds))
+			thread = threading.Thread(target=self._tracker_requestor, args=(torrent))
 			thread.daemon = True
 			thread.start()
 
@@ -268,11 +285,10 @@ class SwarmAnalyzer:
 
 	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
 	#  @param torrent_key Torrent key specifying the target torrent and tracker
-	#  @param interval Time delay between contacting the tracker in seconds
 	#  @note This is a worker method to be started as a thread
-	def _tracker_requestor(self, torrent_key, interval):
+	def _tracker_requestor(self, torrent_key):
 		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url,
-				self.timeout, self.listen_port, self.torrents[torrent_key].pieces_count)
+				self.torrents[torrent_key].pieces_count)
 
 		while not self.shutdown_request.is_set():
 			# Ask tracker
@@ -285,8 +301,8 @@ class SwarmAnalyzer:
 				logging.error('Could not receive peers from tracker: {}'.format(err))
 			else:
 				# Log recommended interval
-				if interval > tracker_interval:
-					logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60, interval/60))
+				if config.tracker_request_interval > tracker_interval:
+					logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60, config.tracker_request_interval/60))
 				else:
 					logging.info('Tracker recommended interval of {} minutes'.format(tracker_interval/60))
 
@@ -308,33 +324,29 @@ class SwarmAnalyzer:
 			self.log_statistics()
 
 			# Wait interval
-			logging.info('Waiting {} minutes until next tracker request ...'.format(interval/60))
-			self.shutdown_request.wait(interval)
+			logging.info('Waiting {} minutes until next tracker request ...'.format(config.tracker_request_interval/60))
+			self.shutdown_request.wait(config.tracker_request_interval)
 
 		# Propagate thread termination
 		self.tracker_shutdown_done.wait()
 
 	## Starts a multithreaded TCP server to analyze incoming peers
-	#  @param port Extern listen port number
 	#  @exception AnalyzerError
-	def start_passive_evaluation(self, port):
+	def start_passive_evaluation(self):
 		# Create the server, binding to outside address on custom port
-		if not 0 <= port <= 65535:
-			raise AnalyzerError('Invalid port number: {}'.format(port))
-		address = ('0.0.0.0', port)
+		assert 0 <= config.bittorrent_listen_port <= 65535
+		address = ('0.0.0.0', config.bittorrent_listen_port)
 		try:
 			self.server = PeerEvaluationServer(address, PeerHandler,
 					own_peer_id=self.own_peer_id,
 					torrents=self.torrents,
 					visited_peers=self.visited_peers,
-					delay=self.delay,
 					sock_timeout=self.timeout,
 					success=self.passive_success,
 					error=self.passive_error,
 					dht_port=self.dht_port)
 		except PermissionError as err:
-			raise AnalyzerError('Could not start server on port {}: {}'.format(port, err))
-		self.listen_port = port
+			raise AnalyzerError('Could not start server on port {}: {}'.format(config.bittorrent_listen_port, err))
 		logging.info('Started passive evaluation server on host {}, port {}'.format(address[0], address[1]))
 
 		# Activate the server in it's own thread
@@ -344,7 +356,7 @@ class SwarmAnalyzer:
 
 		# Remember activation to enable shutdown
 		self.passive_evaluation = True
-		logging.info('Listening on port {} for incomming peer connections'.format(port))
+		logging.info('Listening on port {} for incomming peer connections'.format(config.bittorrent_listen_port))
 
 	## Comsumes peers from database queue and put back in main queue
 	def start_peer_handler(self):
@@ -422,16 +434,13 @@ class SwarmAnalyzer:
 			# Allow waiting for all peers to be stored at shutdown
 			self.visited_peers.task_done()
 
-	## Contact an already running DHT node
-	#  @exception AnalyzerError
-	def start_dht_connection(self):
-		self.dht = pymdht_connector.DHT()
-		self.dht_port = config.dht_node_port
-
 	## Extract new peers from DHT
 	#  @exception AnalyzerError
 	#  @note Call start_dht_connection first
 	def start_dht_requests(self):
+		# Contact an already running DHT node
+		self.dht = pymdht_connector.DHT()
+
 		# Concurrency management
 		self.dht_shutdown_done = threading.Event()
 
@@ -451,7 +460,7 @@ class SwarmAnalyzer:
 				start = time.perf_counter()
 				dht_peers = list()
 				try:
-					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex, self.listen_port)
+					dht_peers = self.dht.get_peers(self.torrents[key].info_hash_hex)
 				except pymdht_connector.DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
 				except Exception as err:
@@ -503,12 +512,28 @@ class SwarmAnalyzer:
 		# Database access
 		logging.info('Peer database access: {} stored, {} updated'.format(self.database_new_peer.get(), self.database_peer_update.get()))
 
+	## Wait for termination, return after SIGINT is received
+	def wait_for_sigint(self):
+		try:
+			logging.info('End with "kill -SIGINT {}"'.format(os.getpid()))
+			print('End with Ctrl+C')
+			while True:
+				time.sleep(1024)
+		except KeyboardInterrupt:
+			logging.info('Received interrupt signal')
+
 	## Shutdown all worker threads if started
-	def __exit__(self, exception_type, exception_value, traceback):
+	def __exit__(self, exc_type, exc_value, tb):
+		# Log exception when exiting after error
+		if exc_type is not None:
+			tb_lines = traceback.format_tb(tb)
+			logging.critical('{}: {}\n{}'.format(exc_type.__name__, exc_value, ''.join(tb_lines)))
+
 		# Propagate shutdown request
 		self.shutdown_request.set()
 
 		# Wait for termination
+		print('Please wait for termination ...')
 		if self.dht_started:
 			logging.info('Waiting for DHT requests to finish ...')
 			self.dht_shutdown_done.wait()
@@ -526,6 +551,19 @@ class SwarmAnalyzer:
 			logging.info('Waiting for peers to be written to database ...')
 			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
 		self.database.close()
+
+		# Log final statistic
+		try:
+			self.log_statistics()
+		except Exception as err:
+			logging.critical('Failed to log final statistic: {}'.format(err))
+
+		# Print finished indicators
+		logging.info('Finished')
+		print('Finished')
+
+		# Do not reraise any exceptions, as it is already logged above
+		return True
 
 ## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
 #  according to http://stackoverflow.com/a/1581937 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l197
@@ -611,7 +649,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 
 			# Queue for peer handler
 			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, Source.incoming, torrent, None)
-			revisit_time = time.perf_counter() + self.server.delay
+			revisit_time = time.perf_counter() + config.peer_revisit_delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()
 
