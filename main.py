@@ -4,7 +4,7 @@
 import argparse
 
 # Project modules
-import peer_analyzer
+import analyzer
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='BitTorrent Download Analyzer', epilog='Stefan Schindler, 2015')
@@ -19,33 +19,33 @@ if args.active is None and not args.passive:
 	parser.error('Please enable active and/or passive peer evaluation')
 
 # Analysis routine
-with peer_analyzer.SwarmAnalyzer(args.debug) as analyzer:
+with analyzer.SwarmAnalyzer(args.debug) as app:
 	# Indicate initialization process
 	print('Initialize evaluation process ...')
 
 	# Import torrents
-	analyzer.import_magnets()
-	analyzer.import_torrents()
+	app.import_magnets()
+	app.import_torrents()
 
 	# Requesting peers from tracker
-	analyzer.start_tracker_requests()
+	app.start_tracker_requests()
 
 	# Requesting peers from DHT
 	if args.dht:
-		analyzer.start_dht_requests()
+		app.start_dht_requests()
 
 	# Actively contact and evaluate peers
 	if args.active is not None:
-		analyzer.start_active_evaluation(args.active)
+		app.start_active_evaluation(args.active)
 
 	# Evaluate incoming peers
 	if args.passive:
-		analyzer.start_passive_evaluation()
+		app.start_passive_evaluation()
 
 	# Store evaluated peers in database
-	analyzer.start_peer_handler()
+	app.start_peer_handler()
 
 	# Wait for termination
 	print('Evaluation running, end with Ctrl+C')
-	analyzer.wait_for_sigint()
+	app.wait_for_sigint()
 	print('Please wait for termination ...')

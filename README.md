@@ -7,7 +7,6 @@ This is work in progress.
 
 ## Todo
 ### Questions
-* Minimal libtorrent usage for magent link metadata fetching OK? No, try to alter libtorrent code.
 * Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
 * Compare results with tracker scrape requests? - optional
 
@@ -27,7 +26,6 @@ This is work in progress.
 * Review logging messages
 * Review doxygen comments
 * Review documentation references
-* Compact some statements
 * Implement unit tests? How about no.
 
 ### Optional steps

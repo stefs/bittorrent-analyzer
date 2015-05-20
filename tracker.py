@@ -28,10 +28,9 @@ class TrackerCommunicator:
 		logging.info('Port {} will be announced'.format(config.bittorrent_listen_port))
 
 		# Faked transmission statistics as factors
-		# TODO This are in-code configuration parameters
-		self.downloaded = int(1.0 * total_pieces)
-		self.left = int(0.0 * total_pieces)
-		self.uploaded = int(0.42 * total_pieces)
+		self.downloaded = int(config.fake_downloaded_stat * total_pieces)
+		self.left = int(config.fake_left_stat * total_pieces)
+		self.uploaded = int(config.fake_uploaded_stat * total_pieces)
 		logging.info('Will announce {} downloaded, {} left, {} uploaded'.format(self.downloaded, self.left, self.uploaded))
 
 	## Issue a request for peers to the tracker

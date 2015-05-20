@@ -10,11 +10,11 @@ import os
 import telnetlib
 
 # Project modules
-import tracker_request
-import peer_wire_protocol
-import database_storage
-import torrent_parser
-import pymdht_connector
+import tracker
+import protocol
+import storage
+import torrent
+import dht
 import config
 from util import *
 
@@ -49,7 +49,7 @@ class SwarmAnalyzer:
 		self.torrents = dict()
 
 		# Generate peer id
-		self.own_peer_id = peer_wire_protocol.generate_peer_id()
+		self.own_peer_id = protocol.generate_peer_id()
 
 		# Network parameters
 		self.timeout = config.network_timeout
@@ -72,7 +72,7 @@ class SwarmAnalyzer:
 		self.dht_started = False
 
 		# Create database
-		self.database = database_storage.Database(outfile)
+		self.database = storage.Database(outfile)
 
 	## Resouces are allocated in starter methods
 	def __enter__(self):
@@ -93,10 +93,10 @@ class SwarmAnalyzer:
 
 				# Read torrent file
 				path = os.path.join(dirname, filename)
-				torrent_file = torrent_parser.TorrentFile(path)
+				torrent_file = torrent.TorrentFile(path)
 				announce_url = torrent_file.get_announce_url()
 				info_dict_bencoded = torrent_file.get_info_dict()
-				info_dict = torrent_parser.InfoDict(info_dict_bencoded)
+				info_dict = torrent.InfoDict(info_dict_bencoded)
 				info_hash = info_dict.get_info_hash()
 				piece_size = info_dict.get_piece_length()
 				pieces_count = info_dict.get_pieces_count()
@@ -104,10 +104,10 @@ class SwarmAnalyzer:
 
 				# Store in database and dictionary
 				info_hash_hex = bytes_to_hex(info_hash)
-				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_count)
-				torrent = Torrent(announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
-				key = self.database.store_torrent(torrent, path, name)
-				self.torrents[key] = torrent
+				complete_threshold = protocol.get_complete_threshold(pieces_count)
+				new_torrent = Torrent(announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
+				key = self.database.store_torrent(new_torrent, path, name)
+				self.torrents[key] = new_torrent
 
 	## Read magnet links from file
 	#  @note Call start_dht_connection first
@@ -127,17 +127,17 @@ class SwarmAnalyzer:
 					continue
 
 				# Get peers for metadata aquisition
-				info_hash = torrent_parser.hash_from_magnet(magnet)
-				dht = pymdht_connector.DHT()
-				metadata_peers = dht.get_peers(info_hash)
-				dht.close()
+				info_hash = torrent.hash_from_magnet(magnet)
+				dht_conn = dht.DHT()
+				metadata_peers = dht_conn.get_peers(info_hash)
+				dht_conn.close()
 
 				# Fetch metadata from a peer
-				own_peer_id = peer_wire_protocol.generate_peer_id()
+				own_peer_id = protocol.generate_peer_id()
 				for peer in metadata_peers:
 					logging.info('Trying to fetch metadata from peer ...')
 					try:
-						info_dict_bencoded = peer_wire_protocol.get_ut_metadata(info_hash, peer, own_peer_id)
+						info_dict_bencoded = protocol.get_ut_metadata(info_hash, peer, own_peer_id)
 					except PeerError as err:
 						logging.warning('Failed to fetch metadata: {}'.format(err))
 					else:
@@ -146,17 +146,17 @@ class SwarmAnalyzer:
 					raise AnalyzerError('Could not fetch metadata from any peer')
 
 				# Decode info dict
-				info_dict = torrent_parser.InfoDict(info_dict_bencoded)
+				info_dict = torrent.InfoDict(info_dict_bencoded)
 				info_hash_hex = bytes_to_hex(info_hash)
 				pieces_count = info_dict.get_pieces_count()
 				piece_size = info_dict.get_piece_length()
-				complete_threshold = peer_wire_protocol.get_complete_threshold(pieces_count)
+				complete_threshold = protocol.get_complete_threshold(pieces_count)
 				name = info_dict.get_name()
 
 				# Store in database and dictionary
-				torrent = Torrent(None, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
-				key = self.database.store_torrent(torrent, filename, name)
-				self.torrents[key] = torrent
+				new_torrent = Torrent(None, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
+				key = self.database.store_torrent(new_torrent, filename, name)
+				self.torrents[key] = new_torrent
 
 	## Evaluates all peers in the queue
 	#  @param jobs Number of parallel thread to use
@@ -216,10 +216,10 @@ class SwarmAnalyzer:
 			# Contact peer
 			dht_port = config.dht_node_port if self.dht_started else None
 			try:
-				result = peer_wire_protocol.evaluate_peer(sock, self.own_peer_id, self.dht_started, self.torrents[peer.torrent].info_hash)
+				result = protocol.evaluate_peer(sock, self.own_peer_id, self.dht_started, self.torrents[peer.torrent].info_hash)
 
 			# Handle bad peers
-			except peer_wire_protocol.PeerError as err:
+			except PeerError as err:
 				if peer.key is None:
 					self.first_evaluation_error.increment()
 				else:
@@ -254,16 +254,16 @@ class SwarmAnalyzer:
 	def start_tracker_requests(self):
 		# Extract torrents with tracker
 		torrents_with_tracker = list()
-		for torrent in self.torrents:
-			if self.torrents[torrent].announce_url is not None:
-				torrents_with_tracker.append(torrent)
+		for torrent_id in self.torrents:
+			if self.torrents[torrent_id].announce_url is not None:
+				torrents_with_tracker.append(torrent_id)
 
 		# Concurrency management
 		self.tracker_shutdown_done = threading.Barrier(len(torrents_with_tracker) + 1)
 
 		# Create tracker request threads
-		for torrent in torrents_with_tracker:
-			thread = threading.Thread(target=self._tracker_requestor, args=(torrent,))
+		for torrent_id in torrents_with_tracker:
+			thread = threading.Thread(target=self._tracker_requestor, args=(torrent_id,))
 			thread.daemon = True
 			thread.start()
 
@@ -274,7 +274,7 @@ class SwarmAnalyzer:
 	#  @param torrent_key Torrent key specifying the target torrent and tracker
 	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, torrent_key):
-		tracker = tracker_request.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url,
+		tracker_conn = tracker.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url,
 				self.torrents[torrent_key].pieces_count)
 
 		while not self.shutdown_request.is_set():
@@ -282,9 +282,9 @@ class SwarmAnalyzer:
 			logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
 			try:
 				start = time.perf_counter()
-				tracker_interval, peer_ips = tracker.announce_request(self.torrents[torrent_key].info_hash)
+				tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
 				end = time.perf_counter()
-			except tracker_request.TrackerError as err:
+			except TrackerError as err:
 				logging.error('Could not receive peers from tracker: {}'.format(err))
 			else:
 				# Log recommended interval
@@ -364,10 +364,10 @@ class SwarmAnalyzer:
 			rec_peer_id, rec_info_hash, messages = result
 
 			# Evaluate messages
-			bitfield = peer_wire_protocol.bitfield_from_messages(messages, self.torrents[peer.torrent].pieces_count)
+			bitfield = protocol.bitfield_from_messages(messages, self.torrents[peer.torrent].pieces_count)
 
 			# Evaluate bitfield
-			downloaded_pieces = peer_wire_protocol.count_bits(bitfield)
+			downloaded_pieces = protocol.count_bits(bitfield)
 			percentage = int(downloaded_pieces * 100 / self.torrents[peer.torrent].pieces_count)
 			remaining = self.torrents[peer.torrent].pieces_count - downloaded_pieces
 			logging.info('Peer reports to have {} pieces, {} remaining, equals {}%'.format(downloaded_pieces, remaining, percentage))
@@ -422,7 +422,7 @@ class SwarmAnalyzer:
 	#  @note Call start_dht_connection first
 	def start_dht_requests(self):
 		# Contact an already running DHT node
-		self.dht = pymdht_connector.DHT()
+		self.dht_conn = dht.DHT()
 
 		# Concurrency management
 		self.dht_shutdown_done = threading.Event()
@@ -443,8 +443,8 @@ class SwarmAnalyzer:
 				start = time.perf_counter()
 				dht_peers = list()
 				try:
-					dht_peers = self.dht.get_peers(self.torrents[key].info_hash)
-				except pymdht_connector.DHTError as err:
+					dht_peers = self.dht_conn.get_peers(self.torrents[key].info_hash)
+				except DHTError as err:
 					logging.error('Could not receive DHT peers: {}'.format(err))
 				except Exception as err:
 					tb = traceback.format_tb(err.__traceback__)
@@ -467,7 +467,7 @@ class SwarmAnalyzer:
 
 			# Print stats at DHT node # TODO receive instead of print
 			try:
-				self.dht.print_stats()
+				self.dht_conn.print_stats()
 			except Exception as err:
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('{} during DHT stats printing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
@@ -522,7 +522,7 @@ class SwarmAnalyzer:
 			if self.dht_started:
 				logging.info('Waiting for DHT requests to finish ...')
 				self.dht_shutdown_done.wait()
-				self.dht.close()
+				self.dht_conn.close()
 			if self.active_evaluation:
 				logging.info('Waiting for current evaluations to finish ...')
 				self.active_shutdown_done.wait()
@@ -614,24 +614,24 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			return
 		logging.info('################ Evaluating an incoming peer ################')
 		try:
-			result = peer_wire_protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
-		except peer_wire_protocol.PeerError as err:
+			result = protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
+		except PeerError as err:
 			logging.warning('Could not evaluate incoming peer: {}'.format(err))
 			self.server.error.increment()
 		else:
 			# Search received info hash in torrents dict
-			torrent = None
+			torrent_id = None
 			for key in self.server.torrents:
 				if result[1] == self.server.torrents[key].info_hash:
-					torrent = key
-			if torrent is None:
+					torrent_id = key
+			if torrent_id is None:
 				logging.warning('Ignoring incoming peer with unknown info hash')
 				return
 			else:
-				logging.info('Storing incoming peer for torrent {}'.format(torrent))
+				logging.info('Storing incoming peer for torrent {}'.format(torrent_id))
 
 			# Queue for peer handler
-			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, Source.incoming, torrent, None)
+			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, Source.incoming, torrent_id, None)
 			revisit_time = time.perf_counter() + config.peer_revisit_delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()

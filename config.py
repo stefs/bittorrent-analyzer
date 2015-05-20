@@ -1,3 +1,12 @@
+# Amount of downloaded pieces reported to the tracker
+fake_downloaded_stat = 1.0
+
+# Amount of left pieces reported to the tracker
+fake_left_stat = 0.0
+
+# Amount of uploaded pieces reported to the tracker
+fake_uploaded_stat = 0.42
+
 # Consider peers to have completely downloaded the torrent at this pieces amount
 torrent_complete_threshold = 0.98
 
