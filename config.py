@@ -48,3 +48,6 @@ input_path = 'input/'
 
 # Filename for magnet files, relative to input_path, one magnet link per line
 magnet_file = 'magnet.txt'
+
+# Time delay between logging peer statistics to database
+statistic_interval = 5 * 60

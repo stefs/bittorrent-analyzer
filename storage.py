@@ -54,7 +54,7 @@ class Torrent(Base):
 	filepath = sqlalchemy.Column(sqlalchemy.types.String)
 	display_name = sqlalchemy.Column(sqlalchemy.types.String)
 
-## Declarative class for requests table
+## Declarative class for request table
 class Request(Base):
 	__tablename__ = 'request'
 
@@ -64,6 +64,19 @@ class Request(Base):
 	duplicate_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	duration_sec = sqlalchemy.Column(sqlalchemy.types.Float)
+
+## Declarative class for statistic table
+class Statistic(Base):
+	__tablename__ = 'statistic'
+
+	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
+	peer_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
+	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
+	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
+	failed_active_first = sqlalchemy.Column(sqlalchemy.types.Integer)
+	failed_active_later = sqlalchemy.Column(sqlalchemy.types.Integer)
+	success_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
+	failed_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
 
 ## Handling database access with SQLAlchemy
 class Database:
@@ -231,6 +244,36 @@ class Database:
 			tb = traceback.format_tb(err.__traceback__)
 			raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		logging.info('Stored {} request: {} peers received, {} duplicates, took {} seconds'.format(source.name, received_peers, duplicate_peers, duration))
+
+	## Store statistics about peers
+	#  @param peer_queue Currently number of peers in queue
+	#  @param unique_incoming Seen unique incoming peers
+	#  @param success_active Active evaluations successful
+	#  @param failed_active_first Active evaluations failed on first contact
+	#  @param failed_active_later Active evaluations failed on later contact
+	#  @param success_passive Passive evaluations successful
+	#  @param failed_passive Passive evaluations failed
+	#  @exception DatabaseError
+	def store_statistic(self, peer_queue, unique_incoming, success_active, failed_active_first, failed_active_later, success_passive, failed_passive):
+		# Get thread-local session
+		session = self.Session()
+
+		# Write to database
+		new_statistic = Statistic(peer_queue=peer_queue,
+				unique_incoming=unique_incoming,
+				success_active=success_active,
+				failed_active_first=failed_active_first,
+				failed_active_later=failed_active_later,
+				success_passive=success_passive,
+				failed_passive=failed_passive)
+		try:
+			session.add(new_statistic)
+			session.commit()
+		except Exception as err:
+			session.rollback()
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during statistic storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+		logging.info('Stored peer statistic')
 
 	## Relase resources
 	def close(self):

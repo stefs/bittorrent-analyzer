@@ -57,8 +57,6 @@ class SwarmAnalyzer:
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
 		self.late_evaluation_error = SharedCounter()
-		self.database_peer_update = SharedCounter()
-		self.database_new_peer = SharedCounter()
 		self.active_success = SharedCounter()
 		self.passive_success = SharedCounter()
 		self.passive_error = SharedCounter()
@@ -70,6 +68,7 @@ class SwarmAnalyzer:
 		self.passive_evaluation = False
 		self.peer_handler = False
 		self.dht_started = False
+		self.statistic_started = False
 
 		# Create database
 		self.database = storage.Database(outfile)
@@ -308,9 +307,6 @@ class SwarmAnalyzer:
 				except DatabaseError as err:
 					logging.critical(err)
 
-			# Log queue stats
-			self.log_statistics()
-
 			# Wait interval
 			logging.info('Waiting {} minutes until next tracker request ...'.format(config.tracker_request_interval/60))
 			self.shutdown_request.wait(config.tracker_request_interval)
@@ -394,12 +390,6 @@ class SwarmAnalyzer:
 				logging.critical(err)
 				continue
 
-			# Update statistical counters
-			if peer_key is None:
-				self.database_peer_update.increment()
-			else:
-				self.database_new_peer.increment()
-
 			# Remember equality information of new incoming peers and discard all incoming
 			if peer.source is Source.incoming:
 				if peer_key is not None:
@@ -479,21 +469,35 @@ class SwarmAnalyzer:
 		# Propagate thread termination
 		self.dht_shutdown_done.set()
 
-	## Print evaluation statistics
-	def log_statistics(self):
-		# Peer queue, inaccurate due to consumer threads
-		logging.info('Currently are about {} peers in queue left'.format(self.peers.qsize()))
+	## Write connection statistics to database
+	def log_connection_stats(self):
+		# Concurrency management
+		self.statistic_shutdown = threading.Event()
 
-		# Unique incoming peers
-		logging.info('Seen {} unique incoming peers'.format(len(self.all_incoming_peers)))
+		# Start requestor thread
+		thread = threading.Thread(target=self._statistic_logger)
+		thread.daemon = True
+		thread.start()
 
-		# Evaluation errors
-		logging.info('Active evaluations: {} successful, {} failed on first contact, {} failed on later contact'.format(
-				self.active_success.get(), self.first_evaluation_error.get(), self.late_evaluation_error.get()))
-		logging.info('Passive evaluations: {} successful, {} failed'.format(self.passive_success.get(), self.passive_error.get()))
+		# Remember activation to enable shutdown
+		self.statistic_started = True
 
-		# Database access
-		logging.info('Peer database access: {} stored, {} updated'.format(self.database_new_peer.get(), self.database_peer_update.get()))
+	## Store connection statistics to database
+	def _statistic_logger(self):
+		while not self.shutdown_request.is_set():
+			self.shutdown_request.wait(config.statistic_interval)
+			logging.info('Logging analysis statistics to database ...')
+			self.database.store_statistic(
+					peer_queue=self.peers.qsize(),
+					unique_incoming=len(self.all_incoming_peers),
+					success_active=self.active_success.get(),
+					failed_active_first=self.first_evaluation_error.get(),
+					failed_active_later=self.late_evaluation_error.get(),
+					success_passive=self.passive_success.get(),
+					failed_passive=self.passive_error.get())
+
+		# Propagate thread termination
+		self.statistic_shutdown.set()
 
 	## Wait for termination, return after SIGINT is received
 	def wait_for_sigint(self):
@@ -518,31 +522,26 @@ class SwarmAnalyzer:
 		self.shutdown_request.set()
 
 		# Wait for termination
-		try:
-			if self.dht_started:
-				logging.info('Waiting for DHT requests to finish ...')
-				self.dht_shutdown_done.wait()
-				self.dht_conn.close()
-			if self.active_evaluation:
-				logging.info('Waiting for current evaluations to finish ...')
-				self.active_shutdown_done.wait()
-			if self.tracker_requests:
-				logging.info('Waiting for current tracker requests to finish ...')
-				self.tracker_shutdown_done.wait()
-			if self.passive_evaluation:
-				logging.info('Shutdown peer evaluation server ...')
-				self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
-			if self.peer_handler:
-				logging.info('Waiting for peers to be written to database ...')
-				self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
-			self.database.close()
-
-		# Log final statistic
-		finally:
-			try:
-				self.log_statistics()
-			except Exception as err:
-				logging.critical('Failed to log final statistic: {}'.format(err))
+		if self.dht_started:
+			logging.info('Waiting for DHT requests to finish ...')
+			self.dht_shutdown_done.wait()
+			self.dht_conn.close()
+		if self.active_evaluation:
+			logging.info('Waiting for current evaluations to finish ...')
+			self.active_shutdown_done.wait()
+		if self.tracker_requests:
+			logging.info('Waiting for current tracker requests to finish ...')
+			self.tracker_shutdown_done.wait()
+		if self.passive_evaluation:
+			logging.info('Shutdown peer evaluation server ...')
+			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
+		if self.peer_handler:
+			logging.info('Waiting for peers to be written to database ...')
+			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
+		if self.statistic_started:
+			logging.info('Waiting for analysis statistics to be written to database ...')
+			self.statistic_shutdown.wait()
+		self.database.close()
 
 		# Do not reraise incoming exceptions, as it is already logged above
 		logging.info('Finished')

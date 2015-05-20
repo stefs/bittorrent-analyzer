@@ -45,6 +45,9 @@ with analyzer.SwarmAnalyzer(args.debug) as app:
 	# Store evaluated peers in database
 	app.start_peer_handler()
 
+	# Store connection statistics in database
+	app.log_connection_stats()
+
 	# Wait for termination
 	print('Evaluation running, end with Ctrl+C')
 	app.wait_for_sigint()
