@@ -44,10 +44,9 @@ class TorrentFile:
 	#  @exception FileError
 	def get_announce_url(self):
 		try:
-			announce_url_bytes = self.torrent_file[b'announce']
+			return self.torrent_file[b'announce'].decode()
 		except KeyError as err:
 			raise FileError('File did not contain a announce URL: ' + str(err))
-		return announce_url_bytes.decode()
 
 	## Extract info dict
 	#  @return Bencoded info dict
@@ -72,7 +71,7 @@ class InfoDict:
 		try:
 			self.info_dict = bencodepy.decode(info_dict)
 		except bencodepy.exceptions.EncodingError as err:
-			raise FileError('Bencoding failed: ' + str(err))
+			raise FileError('Bencoding failed: {}'.format(err))
 
 	## Calculate the info hash
 	#  @return The info hash
@@ -86,7 +85,7 @@ class InfoDict:
 		try:
 			size = self.info_dict[b'piece length']
 		except KeyError as err:
-			raise FileError('File did not contain the length of pieces: ' + str(err))
+			raise FileError('File did not contain the length of pieces: {}'.format(err))
 		if size == 0:
 			raise FileError('Piece size is zero')
 		return size
@@ -98,7 +97,7 @@ class InfoDict:
 		try:
 			pieces = self.info_dict[b'pieces']
 		except KeyError as err:
-			raise FileError('File did not contain the pieces list: ' + str(err))
+			raise FileError('File did not contain the pieces list: {}'.format(err))
 		number = int(len(pieces) / 20)
 		if number == 0:
 			raise FileError('Torrent containes no pieces')
@@ -130,4 +129,3 @@ def hash_from_magnet(magnet):
 	elif len(splitted[2]) == 32:
 		raise FileError('Base32 hashes not supported')
 	raise FileError('Bad info hash length')
-

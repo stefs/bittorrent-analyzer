@@ -76,7 +76,7 @@ class TrackerCommunicator:
 					logging.info('HTTP response status code is OK')
 					response_bencoded = http_response.read()
 				else:
-					raise TrackerError('HTTP response status code is ' + str(http_response.status))
+					raise TrackerError('HTTP response status code is {}'.format(http_response.status))
 		except (urllib.error.URLError, http.client.HTTPException) as err:
 			raise TrackerError('Get request failed: ' + str(err))
 
@@ -84,11 +84,10 @@ class TrackerCommunicator:
 		try:
 			response = bencodepy.decode(response_bencoded)
 		except bencodepy.exceptions.DecodingError as err:
-			raise TrackerError('Unable to decode response: ' + str(err))
+			raise TrackerError('Unable to decode response: {}'.format(err))
 		if b'failure reason' in response:
-			failure_reason_bytes = response[b'failure reason']
-			failure_reason = failure_reason_bytes.decode()
-			raise TrackerError('Tracker responded with failure reason: ' + str(failure_reason))
+			failure_reason = response[b'failure reason'].decode()
+			raise TrackerError('Tracker responded with failure reason: {}'.format(failure_reason))
 
 		# Extract request interval
 		try:
@@ -102,7 +101,7 @@ class TrackerCommunicator:
 		try:
 			ip_bytes = response[b'peers']
 		except KeyError as err:
-			raise TrackerError('Tracker did not send any peers: ' + str(err))
+			raise TrackerError('Tracker did not send any peers: {}'.format(err))
 		return interval, ip_bytes
 
 	## Issue announce request according to according to http://www.bittorrent.org/beps/bep_0015.html
@@ -187,9 +186,8 @@ def parse_ips(ip_bytes):
 		try:
 			peer_ip = str(ipaddress.ip_address(ip_bytes[offset:offset+4]))
 		except ValueError as err:
-			logging.warning('Tracker sent invalid ip address: ' + str(err))
+			logging.warning('Tracker sent invalid ip address: {}'.format(err))
 			continue
 		peer_port = struct.unpack("!H", ip_bytes[offset+4:offset+6])[0]
 		ips.append((peer_ip, peer_port))
 	return ips
-

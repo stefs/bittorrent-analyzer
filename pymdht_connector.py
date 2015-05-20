@@ -76,4 +76,3 @@ class DHT:
 			else:
 				logging.info('Sent {} command to DHT node'.format(cmd))
 			self.dht.close()
-

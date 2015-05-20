@@ -39,4 +39,3 @@ input_path = 'input/'
 
 # Filename for magnet files, relative to input_path, one magnet link per line
 magnet_file = 'magnet.txt'
-

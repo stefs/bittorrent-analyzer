@@ -635,4 +635,3 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			revisit_time = time.perf_counter() + config.peer_revisit_delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()
-

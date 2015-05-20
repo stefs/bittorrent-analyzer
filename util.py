@@ -143,4 +143,3 @@ def count_bits(bitfield):
 				count += 1
 			mask *= 2
 	return count
-

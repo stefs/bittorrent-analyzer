@@ -49,4 +49,3 @@ with peer_analyzer.SwarmAnalyzer(args.debug) as analyzer:
 	print('Evaluation running, end with Ctrl+C')
 	analyzer.wait_for_sigint()
 	print('Please wait for termination ...')
-

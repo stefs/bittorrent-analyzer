@@ -37,7 +37,7 @@ class PeerSession:
 			try:
 				sent_count = self.sock.send(data[total_sent_count:])
 			except OSError as err:
-				raise PeerError('Sending data failed: ' + str(err))
+				raise PeerError('Sending data failed: {}'.format(err))
 			if sent_count == 0:
 			        raise PeerError('Socket connection broken')
 			total_sent_count += sent_count
@@ -56,7 +56,7 @@ class PeerSession:
 				try:
 					buffer = self.sock.recv(1024)
 				except OSError as err:
-					raise PeerError('Receiving data failed: ' + str(err))
+					raise PeerError('Receiving data failed: {}'.format(err))
 				if buffer == b'':
 			                raise PeerError('Socket connection broken')
 				data_parts.append(buffer)
@@ -80,13 +80,13 @@ class PeerSession:
 
 		# Receive rest of the handshake
 		handshake_bytes = self.receive_bytes(pstrlen + 8 + 20 + 20) # PeerError
-		format_string = '>' + str(pstrlen) + 's8s20s20s'
+		format_string = '>{}s8s20s20s'.format(pstrlen)
 		handshake_tuple = struct.unpack(format_string, handshake_bytes)
 
 		# Parse protocol string
 		pstr = handshake_tuple[0]
 		if pstr != b'BitTorrent protocol':
-			raise PeerError('Peer speaks unknown protocol: ' + str(pstr))
+			raise PeerError('Peer speaks unknown protocol: {}'.format(pstr))
 
 		# Parse reserved bytes for protocol extensions according to https://wiki.theory.org/BitTorrentSpecification#Reserved_Bytes
 		reserved = handshake_tuple[1]
@@ -96,7 +96,7 @@ class PeerSession:
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
 		if not expected_hash is None and received_info_hash != expected_hash:
-			raise PeerError('Mismatch on received info hash: ' + str(received_info_hash))
+			raise PeerError('Mismatch on received info hash: {}'.format(received_info_hash))
 
 		# Parse peer id
 		received_peer_id = handshake_tuple[3]
@@ -113,7 +113,6 @@ class PeerSession:
 	def send_handshake(self, info_hash, dht_enabled=False, extension_enabled=False):
 		# Pack handshake string
 		pstr = b'BitTorrent protocol'
-		peer_id_bytes = self.peer_id.encode()
 		reserved = bytearray(8)
 		if dht_enabled:
 			reserved[7] |= 0x01
@@ -121,8 +120,8 @@ class PeerSession:
 			reserved[5] |= 0x10
 		reserved_bitmap = bytes_to_bitmap(reserved)
 		logging.info('Reserved bytes in sent handshake: {}'.format(reserved_bitmap))
-		format_string = '>B' + str(len(pstr)) + 's8s20s20s'
-		handshake = struct.pack(format_string, len(pstr), pstr, reserved, info_hash, peer_id_bytes)
+		format_string = '>B{}s8s20s20s'.format(len(pstr))
+		handshake = struct.pack(format_string, len(pstr), pstr, reserved, info_hash, self.peer_id.encode())
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'
 
 		# Send and receive handshake
@@ -165,7 +164,7 @@ class PeerSession:
 			try:
 				message = self.receive_message()
 			except PeerError as err:
-				logging.info('No more messages: ' + str(err))
+				logging.info('No more messages: {}'.format(err))
 				break
 			else:
 				messages.append(message)
@@ -221,7 +220,7 @@ def pack_message(message_id, payload=b''):
 	if message_id == -1:
 		data = struct.pack('>I', 0)
 	else:
-		format_string = '>IB' + str(len(payload)) + 's'
+		format_string = '>IB{}s'.format(len(payload))
 		data = struct.pack(format_string, 1 + len(payload), message_id, payload)
 	return data
 
@@ -238,7 +237,7 @@ def generate_peer_id():
 	possible_chars = string.ascii_letters + string.digits
 	peer_id_list = random.sample(possible_chars, 20)
 	peer_id = ''.join(peer_id_list)
-	logging.info('Generated peer id is ' + peer_id)
+	logging.info('Generated peer id is {}'.format(peer_id))
 	return peer_id
 
 ## Gives string representation of a BitTorrent Protocol message for logging purposes
@@ -275,28 +274,28 @@ def bitfield_from_messages(messages, pieces_number):
 	bitfield_count = have_count = other_count = 0
 	for message in messages:
 		# Store bitfields
-		if message[0] == 5:
+		if message.type == 5:
 			# Check for correct length of bytes
 			needed_bytes = math.ceil(pieces_number / 8)
-			if len(message[1]) != needed_bytes:
-				logging.warning('Peer sent invalid bitfield of length ' + str(len(message[1])) + ', expected was ' + str(needed_bytes))
+			if len(message.payload) != needed_bytes:
+				logging.warning('Peer sent invalid bitfield of length {} expected was {}'.format(len(message.payload), str(needed_bytes)))
 				continue
 
 			# Check for correct sparse zero bits in last byte
 			zeros_count = needed_bytes * 8 - pieces_number
 			zeros_mask = 2 ** zeros_count - 1
-			masked_padding = message[1][-1] & zeros_mask
+			masked_padding = message.payload[-1] & zeros_mask
 			if masked_padding != 0:
-				logging.warning('Peer sent invalid bitfield with padding bits ' + str(masked_padding) + ' instead of zeros')
+				logging.warning('Peer sent invalid bitfield with padding bits {} instead of zeros'.format(masked_padding))
 				continue
 
 			# Assign new bitfield
-			bitfield = bytearray(message[1])
+			bitfield = bytearray(message.payload)
 			bitfield_count += 1
 
 		# Note have messages in local bitfield
-		elif message[0] == 4:
-			piece_index_tuple = struct.unpack('>I', message[1])
+		elif message.type == 4:
+			piece_index_tuple = struct.unpack('>I', message.payload)
 			piece_index = piece_index_tuple[0]
 			if piece_index <= pieces_number:
 				set_bit_at_index(bitfield, piece_index)
@@ -309,7 +308,7 @@ def bitfield_from_messages(messages, pieces_number):
 			other_count += 1
 
 	# Return peer_id and bitfield
-	logging.info('Received ' + str(bitfield_count) + ' bitfield, ' + str(have_count) + ' have and ' + str(other_count) + ' other messages')
+	logging.info('Received {} bitfield, {} have and {} other messages'.format(bitfield_count, have_count, other_count))
 	return bitfield
 
 ## Determine the threshold in pieces where a download is considered complete
@@ -477,4 +476,3 @@ def get_ut_metadata(info_hash, peer, own_peer_id):
 	# Return info dict
 	logging.info('Successfully fetched metadata from peer')
 	return metadata
-

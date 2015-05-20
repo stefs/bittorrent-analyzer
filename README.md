@@ -88,7 +88,7 @@ These are the standard installation steps on a Debian based system.
 
 1. `sudo apt-get install python3 python3-pip`
 2. `sudo pip3 install virtualenv`
-3. `virtualenv --python=/usr/bin/python3 env-main`
+3. `virtualenv --python=python3 env-main`
 4. `source env-main/bin/activate`
 5. `pip install bencodepy sqlalchemy geoip2`
 6. `deactivate`

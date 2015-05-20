@@ -271,4 +271,3 @@ def anonymize_ip(ip_address):
 		network = ip_address + '/48'
 		net = ipaddress.IPv6Network(network, strict=False)
 	return str(net.network_address)
-	
