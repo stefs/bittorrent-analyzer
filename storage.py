@@ -77,6 +77,7 @@ class Statistic(Base):
 	failed_active_later = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
 	failed_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
+	thread_workload = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Handling database access with SQLAlchemy
 class Database:
@@ -253,8 +254,9 @@ class Database:
 	#  @param failed_active_later Active evaluations failed on later contact
 	#  @param success_passive Passive evaluations successful
 	#  @param failed_passive Passive evaluations failed
+	#  @param thread_workload Percentage of active time between 0 and 1
 	#  @exception DatabaseError
-	def store_statistic(self, peer_queue, unique_incoming, success_active, failed_active_first, failed_active_later, success_passive, failed_passive):
+	def store_statistic(self, peer_queue, unique_incoming, success_active, failed_active_first, failed_active_later, success_passive, failed_passive, thread_workload):
 		# Get thread-local session
 		session = self.Session()
 
@@ -265,7 +267,8 @@ class Database:
 				failed_active_first=failed_active_first,
 				failed_active_later=failed_active_later,
 				success_passive=success_passive,
-				failed_passive=failed_passive)
+				failed_passive=failed_passive,
+				thread_workload=thread_workload)
 		try:
 			session.add(new_statistic)
 			session.commit()

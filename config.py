@@ -51,3 +51,6 @@ magnet_file = 'magnet.txt'
 
 # Time delay between logging peer statistics to database
 statistic_interval = 5 * 60
+
+# Evaluator reaction time on empty queue and delayed peers
+evaluator_reaction = 40

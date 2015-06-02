@@ -11,14 +11,11 @@ This is work in progress.
 * Compare results with tracker scrape requests? - optional
 
 ### Next steps
-* ! Check name collisions of torrent files and magnet links
 * ! Statistik mit Grafik in LaTeX mit R
 * ! Write thesis text
     * Hardwaredaten der VM notieren
     * Counting transition from leecher to seeder (~98%)
 * ! Note used torrents with time frame and send to RRZE
-* Save statistics about peer communication failures
-* Save statistics about work load of active evaluation threads
 * Tidy readme: Requirements, installation, usage, thanks
 * (Tool organization in analyis modules)
 
@@ -54,6 +51,8 @@ This is work in progress.
 * Synchronized analysis shutdown process
 * Produce extensive log output
 * Save duplicate and timing statistics about peers received via DHT and tracker
+* Save statistics about failed and succeeded peer connections
+* Save workload statistics of active peer evaluation threads
 
 ### Restrictions
 * No support for IPv6 on HTTP, UDP or DHT requests

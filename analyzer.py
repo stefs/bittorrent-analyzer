@@ -73,6 +73,9 @@ class SwarmAnalyzer:
 		# Create database
 		self.database = storage.Database(outfile)
 
+		# Create thread activity timer
+		self.timer = ActivityTimer()
+
 	## Resouces are allocated in starter methods
 	def __enter__(self):
 		return self
@@ -179,19 +182,28 @@ class SwarmAnalyzer:
 	## Evaluate peers from main queue
 	#  @note This is a worker method to be started as a thread
 	def _evaluator(self):
+		# Register timer
+		thread = threading.current_thread().name
+		self.timer.register(thread)
+
+		# Start main loop
 		while not self.shutdown_request.is_set():
 			# Get new peer with timeout to react to shutdown request
 			try:
-				peer = self.peers.get(timeout=10)
+				self.timer.inactive(thread)
+				peer = self.peers.get(timeout=config.evaluator_reaction)
 			except queue.Empty:
 				continue
+			finally:
+				self.timer.active(thread)
 
 			# Delay evaluation
 			delay = peer.revisit - time.perf_counter()
-			better_peer_reaction = 60
 			if delay > 0:
-				logging.info('Delaying peer evaluation for {} seconds, target is {} minutes ...'.format(better_peer_reaction, delay/60))
-				self.shutdown_request.wait(better_peer_reaction)
+				logging.info('Delaying peer evaluation for {} seconds, target is {} minutes ...'.format(config.evaluator_reaction, delay/60))
+				self.timer.inactive(thread)
+				self.shutdown_request.wait(config.evaluator_reaction)
+				self.timer.active(thread)
 				self.peers.put((peer, None))
 				continue
 
@@ -494,7 +506,8 @@ class SwarmAnalyzer:
 					failed_active_first=self.first_evaluation_error.get(),
 					failed_active_later=self.late_evaluation_error.get(),
 					success_passive=self.passive_success.get(),
-					failed_passive=self.passive_error.get())
+					failed_passive=self.passive_error.get(),
+					thread_workload=self.timer.read())
 
 		# Propagate thread termination
 		self.statistic_shutdown.set()

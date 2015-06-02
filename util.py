@@ -6,6 +6,7 @@ import logging
 import socket
 import binascii
 import struct
+import time
 
 ### CONSTANTS ###
 
@@ -39,6 +40,9 @@ class DatabaseError(AnalyzerError):
 	pass
 
 class PeerError(AnalyzerError):
+	pass
+
+class UtilError(AnalyzerError):
 	pass
 
 class Source(enum.Enum):
@@ -76,7 +80,7 @@ class TCPConnection:
 		try:
 			self.sock = socket.create_connection((ip, port), timeout)
 		except OSError as err:
-			raise PeerError('Connection establishment failed: {}'.format(err))
+			raise UtilError('Connection establishment failed: {}'.format(err))
 		logging.info('Connection established')
 
 	def __enter__(self):
@@ -89,6 +93,125 @@ class TCPConnection:
 			logging.warning('Closing of connectioin failed: {}'.format(err))
 		else:
 			logging.info('Connection closed')
+
+### Activity timer
+#class ActivityTimer:
+#	## Initialize an activity timer
+#	def __init__(self):
+#		self.timer = dict()
+#		self.lock = threading.RLock()
+
+#	## Register a thread to be timed
+#	def register(self):
+#		thread = threading.get_ident()
+#		with self.lock:
+#			self.timer[thread] = (
+#					0,
+#					0,
+#					time.process_time(),
+#					time.perf_counter())
+#		logging.debug('Registered timer for thread {}'.format(thread))
+
+#	## Add time since last update
+#	def update(self):
+#		thread = threading.get_ident()
+#		process_time = time.process_time()
+#		perf_counter = time.perf_counter()
+#		with self.lock:
+#			self.timer[thread] = (
+#					self.timer[thread][0] + process_time - self.timer[thread][2],
+#					self.timer[thread][1] + perf_counter - self.timer[thread][3],
+#					process_time,
+#					perf_counter)
+#		logging.debug('Updated timer for thread {}: {}'.format(thread, self.timer[thread]))
+
+#	## Extract active seconds exactly and reset active threads
+#	#  @return Overview of thread runtimes
+#	def read(self):
+#		workload = dict()
+#		with self.lock:
+#			for thread in self.timer:
+#				logging.debug('Process time is {}, perf counter is {}'.format(self.timer[thread][0], self.timer[thread][1]))
+#				workload[thread] = self.timer[thread][0] / self.timer[thread][1]
+#				self.timer[thread] = (
+#						0,
+#						0,
+#						self.timer[thread][2],
+#						self.timer[thread][3])
+#				logging.info('Workload of thread {} is {}'.format(thread, workload[thread]))
+#		try:
+#			workload = sum(workload) / len(workload)
+#		except ZeroDivisionError:
+#			workload = 0
+#		logging.info('Overall thread workload is {}'.format(workload))
+#		return workload
+
+## Activity timer
+class ActivityTimer:
+	## Initialize an activity timer
+	def __init__(self):
+		self.read_timestamp = time.perf_counter()
+		self.timer = dict()
+		self.lock = threading.RLock()
+
+	## Register a thread to be timed
+	#  @param thread Identifier
+	#  @param active Register thread as active or inactive
+	def register(self, thread, active=True):
+		with self.lock:
+			self.timer[thread] = (
+					active, # is active
+					0, # timer seconds
+					time.perf_counter()) # unpaused timestamp
+
+	## Mark a thread as inactive and add active seconds
+	#  @param thread Identifier
+	def inactive(self, thread):
+		with self.lock:
+			if self.timer[thread][0]:
+				self.timer[thread] = (
+						False,
+						self.timer[thread][1] + time.perf_counter() - self.timer[thread][2],
+						None)
+			else:
+				raise UtilError('Timer for thread {} is already inactive'.format(thread))
+
+	## Mark a thread as active and log timestamp
+	#  @param thread Identifier
+	def active(self, thread):
+		with self.lock:
+			if not self.timer[thread][0]:
+				self.timer[thread] = (
+						True,
+						self.timer[thread][1],
+						time.perf_counter())
+			else:
+				raise UtilError('Timer for thread {} is already inactive'.format(thread))
+
+	## Extract active seconds exactly and reset active threads
+	#  @return Average thread workload between 0 and 1
+	def read(self):
+		# Calculate total time delta
+		perf_counter = time.perf_counter()
+		total_delta = perf_counter - self.read_timestamp
+		self.read_timestamp = perf_counter
+
+		# Calculate workload
+		workload = list()
+		with self.lock:
+			for thread in self.timer:
+				active = self.timer[thread][0]
+				if active:
+					self.inactive(thread)
+				workload.append(self.timer[thread][1] / total_delta)
+				logging.info('Workload of thread {} is {} / {} = {}'.format(thread, round(self.timer[thread][1]), round(total_delta), workload[-1]))
+				self.register(thread, active)
+		try:
+			workload = sum(workload) / len(workload)
+		except ZeroDivisionError:
+			workload = 0
+		logging.info('Overall thread workload is {}'.format(workload))
+		return workload
 
 ### METHODS ###
 
