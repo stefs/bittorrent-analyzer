@@ -581,9 +581,16 @@ class PeerQueue(queue.PriorityQueue):
 	def _put(self, peer):
 		# Unpack duplicate indicator
 		peer, is_duplicate = peer
-		if not type(peer[0]) in (int, float): # debug
-			logging.critical('Put bad peer in peer queue') # debug
-			return # debug
+
+		# FIXME: Analysis of peer parameter for debugging, found instance where peer was of type util.Source
+		if not type(peer) is Peer:
+			logging.critical('Bad object in peer queue: type is {}, object is {}, stacktrace is\n{}\n'.format(
+					type(peer), peer, traceback.format_stack()))
+			return
+		if not type(peer[0]) in (int, float):
+			logging.critical('Bad revisit attribute in peer: type is {}, object is {}, stacktrace is\n{}\n'.format(
+					type(peer[0]), peer[0], traceback.format_stack()))
+			return
 
 		# Create copy peer data for equality check
 		peer_equality = (peer.ip_address, peer.port, peer.torrent)
