@@ -94,58 +94,6 @@ class TCPConnection:
 		else:
 			logging.info('Connection closed')
 
-### Activity timer
-#class ActivityTimer:
-#	## Initialize an activity timer
-#	def __init__(self):
-#		self.timer = dict()
-#		self.lock = threading.RLock()
-
-#	## Register a thread to be timed
-#	def register(self):
-#		thread = threading.get_ident()
-#		with self.lock:
-#			self.timer[thread] = (
-#					0,
-#					0,
-#					time.process_time(),
-#					time.perf_counter())
-#		logging.debug('Registered timer for thread {}'.format(thread))
-
-#	## Add time since last update
-#	def update(self):
-#		thread = threading.get_ident()
-#		process_time = time.process_time()
-#		perf_counter = time.perf_counter()
-#		with self.lock:
-#			self.timer[thread] = (
-#					self.timer[thread][0] + process_time - self.timer[thread][2],
-#					self.timer[thread][1] + perf_counter - self.timer[thread][3],
-#					process_time,
-#					perf_counter)
-#		logging.debug('Updated timer for thread {}: {}'.format(thread, self.timer[thread]))
-
-#	## Extract active seconds exactly and reset active threads
-#	#  @return Overview of thread runtimes
-#	def read(self):
-#		workload = dict()
-#		with self.lock:
-#			for thread in self.timer:
-#				logging.debug('Process time is {}, perf counter is {}'.format(self.timer[thread][0], self.timer[thread][1]))
-#				workload[thread] = self.timer[thread][0] / self.timer[thread][1]
-#				self.timer[thread] = (
-#						0,
-#						0,
-#						self.timer[thread][2],
-#						self.timer[thread][3])
-#				logging.info('Workload of thread {} is {}'.format(thread, workload[thread]))
-#		try:
-#			workload = sum(workload) / len(workload)
-#		except ZeroDivisionError:
-#			workload = 0
-#		logging.info('Overall thread workload is {}'.format(workload))
-#		return workload
-
 ## Activity timer
 class ActivityTimer:
 	## Initialize an activity timer
@@ -204,7 +152,7 @@ class ActivityTimer:
 				if active:
 					self.inactive(thread)
 				workload.append(self.timer[thread][1] / total_delta)
-				logging.info('Workload of thread {} is {} / {} = {}'.format(thread, round(self.timer[thread][1]), round(total_delta), workload[-1]))
+				logging.info('Workload of thread {} is {}s / {}s = {}'.format(thread, round(self.timer[thread][1]), round(total_delta), workload[-1]))
 				self.register(thread, active)
 		try:
 			workload = sum(workload) / len(workload)

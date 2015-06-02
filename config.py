@@ -29,7 +29,7 @@ tracker_request_interval = 15 * 60
 peer_revisit_delay = 15 * 60
 
 # When collecting all messages from a peer, cancel after this amount
-receive_message_max = 100
+receive_message_max = 128
 
 # Truncate raw BitTorrent Protocol messages in logs to length
 bittorrent_message_log_length = 80

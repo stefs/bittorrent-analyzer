@@ -169,7 +169,7 @@ class PeerSession:
 			else:
 				messages.append(message)
 		else:
-			logging.error('Reached message limit')
+			logging.warning('Reached message limit')
 		return messages
 
 	## Sends a BitTorrent Protocol message
@@ -385,7 +385,7 @@ def get_ut_metadata(info_hash, peer, own_peer_id):
 				break
 			msg_count += 1
 		else:
-			raise PeerError('Reached message limit')
+			raise PeerError('No extension handshake until message limit')
 
 		# Check for ut_metadata support
 		logging.info('Check handshake for ut_metadata support ...')

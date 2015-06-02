@@ -30,7 +30,7 @@ class SwarmAnalyzer:
 		outfile = '{}{}_{}'.format(config.output_path, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
 
 		# Configure logging
-		logging_config = {'format': '[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', 'datefmt': '%Hh%Mm%Ss'}
+		logging_config = {'format': '[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', 'datefmt': '%dd%Hh%Mm%Ss'}
 		if debug:
 			logging_config['level'] = logging.DEBUG
 		else:
@@ -581,6 +581,9 @@ class PeerQueue(queue.PriorityQueue):
 	def _put(self, peer):
 		# Unpack duplicate indicator
 		peer, is_duplicate = peer
+		if not type(peer[0]) in (int, float): # debug
+			logging.critical('Put bad peer in peer queue') # debug
+			return # debug
 
 		# Create copy peer data for equality check
 		peer_equality = (peer.ip_address, peer.port, peer.torrent)
