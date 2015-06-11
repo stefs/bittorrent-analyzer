@@ -11,7 +11,7 @@ fake_uploaded_stat = 0.42
 torrent_complete_threshold = 0.98
 
 # Timeout for network connections in seconds
-network_timeout = 10
+network_timeout = 5
 
 # Integrate an already running DHT node with this UDP port
 dht_node_port = 17000
@@ -26,7 +26,7 @@ dht_request_interval = 15 * 60
 tracker_request_interval = 15 * 60
 
 # Time delay for revisiting unfinished peers in seconds
-peer_revisit_delay = 15 * 60
+peer_revisit_delay = 13 * 60
 
 # When collecting all messages from a peer, cancel after this amount
 receive_message_max = 128

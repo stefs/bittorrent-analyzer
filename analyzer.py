@@ -315,7 +315,7 @@ class SwarmAnalyzer:
 					if is_duplicate[0]:
 						duplicate_counter += 1
 				try:
-					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter, end-start)
+					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter, end-start, torrent_key)
 				except DatabaseError as err:
 					logging.critical(err)
 
@@ -463,7 +463,7 @@ class SwarmAnalyzer:
 					if is_duplicate[0]:
 						duplicate_counter += 1
 				try:
-					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter, end-start)
+					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter, end-start, key)
 				except DatabaseError as err:
 					logging.critical(err)
 

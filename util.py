@@ -152,12 +152,12 @@ class ActivityTimer:
 				if active:
 					self.inactive(thread)
 				workload.append(self.timer[thread][1] / total_delta)
-				logging.info('Workload of thread {} is {}s / {}s = {}'.format(thread, round(self.timer[thread][1]), round(total_delta), workload[-1]))
+				logging.info('Workload of thread {} is {}s/{}s = {}'.format(thread, round(self.timer[thread][1]), round(total_delta), workload[-1]))
 				self.register(thread, active)
 		try:
 			workload = sum(workload) / len(workload)
 		except ZeroDivisionError:
-			workload = 0
+			workload = None
 		logging.info('Overall thread workload is {}'.format(workload))
 		return workload
 

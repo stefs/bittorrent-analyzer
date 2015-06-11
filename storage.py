@@ -59,17 +59,19 @@ class Request(Base):
 	__tablename__ = 'request'
 
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
+	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht'))
 	received_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	duplicate_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
-	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	duration_sec = sqlalchemy.Column(sqlalchemy.types.Float)
+	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
 
 ## Declarative class for statistic table
 class Statistic(Base):
 	__tablename__ = 'statistic'
 
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
+	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	peer_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
 	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
@@ -226,17 +228,19 @@ class Database:
 	#  @param received_peers Number of received peers
 	#  @param duplicate_peers Number of duplicate peers
 	#  @param duration Duration in seconds
+	#  @param torrent Corresponding torrent ID
 	#  @exception DatabaseError
-	def store_request(self, source, received_peers, duplicate_peers, duration):
+	def store_request(self, source, received_peers, duplicate_peers, duration, torrent):
 		# Get thread-local session
 		session = self.Session()
 
 		# Write to database
-		new_request = Request(source=source.name,
+		new_request = Request(timestamp=datetime.datetime.utcnow(),
+				source=source.name,
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
-				timestamp=datetime.datetime.utcnow(),
-				duration_sec=duration)
+				duration_sec=duration,
+				torrent=torrent)
 		try:
 			session.add(new_request)
 			session.commit()
@@ -261,7 +265,8 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_statistic = Statistic(peer_queue=peer_queue,
+		new_statistic = Statistic(timestamp=datetime.datetime.utcnow(),
+				peer_queue=peer_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,
 				failed_active_first=failed_active_first,

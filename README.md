@@ -6,6 +6,8 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 This is work in progress.
 
 ## Todo
+- Network timeout double of successful peer eval --> mention in thesis
+
 ### Questions
 * Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
 * Compare results with tracker scrape requests? - optional
@@ -15,6 +17,8 @@ This is work in progress.
 * ! Write thesis text
     * Hardwaredaten der VM notieren
     * Counting transition from leecher to seeder (~98%)
+    * Justify config values
+* ! **FIXME:** last_seen is only year in R, database is locked error ([see](output/2015-05-13_16-03-21_faui1-246_crit.log)), bad peer objects in queue ([see](output/2015-05-13_16-03-21_faui1-246.log))
 * ! Note used torrents with time frame and send to RRZE
 * Tidy readme: Requirements, installation, usage, thanks
 * (Tool organization in analyis modules)
@@ -42,7 +46,7 @@ This is work in progress.
 * Continuously get IPv4 peers from the tracker using HTTP (BEP 3) and UDP announce requests (BEP 15)
 * Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
 * Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the *pymdht* project using local telnet
-* Actively contact collected peers and calculate minimum number of downloaded pieces by receiving alle *have* and *bitfield* messages until a timeout
+* Actively contact collected peers and calculate minimum number of downloaded pieces by receiving all *have* and *bitfield* messages until a timeout
 * Passively listen for incoming peer connections and calculate minimum number of downloaded pieces analog
 * Save number of downloaded pieces from first and last visit and maximum download speed per peer in a SQLite database
 * Save city, country and continent via IP address geolocation
