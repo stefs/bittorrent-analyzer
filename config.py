@@ -20,10 +20,10 @@ dht_node_port = 17000
 dht_control_port = 17001
 
 # Time delay between asking DHT for new peers in seconds
-dht_request_interval = 15 * 60
+dht_request_interval = 5 * 60
 
 # Time delay between asking the tracker for new peers in seconds
-tracker_request_interval = 15 * 60
+tracker_request_interval = 13 * 60
 
 # Time delay for revisiting unfinished peers in seconds
 peer_revisit_delay = 13 * 60

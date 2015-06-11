@@ -593,7 +593,7 @@ class PeerQueue(queue.PriorityQueue):
 			logging.critical('Bad object in peer queue: type is {}, object is {}, stacktrace is\n{}\n'.format(
 					type(peer), peer, ''.join(traceback.format_stack())))
 			return
-		if not type(peer[0]) in (int, float):
+		if not type(peer[0]) in [int, float]:
 			logging.critical('Bad revisit attribute in peer: type is {}, object is {}, stacktrace is\n{}\n'.format(
 					type(peer[0]), peer[0], ''.join(traceback.format_stack())))
 			return

@@ -5,9 +5,6 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 
 This is work in progress.
 
-## Todo
-- Network timeout double of successful peer eval --> mention in thesis
-
 ### Questions
 * Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
 * Compare results with tracker scrape requests? - optional
