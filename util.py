@@ -161,6 +161,28 @@ class ActivityTimer:
 		logging.info('Overall thread workload is {}'.format(workload))
 		return workload
 
+## A thread-safe list with mean calculation
+class MeanList:
+	## Initialize an empty
+	def __init__(self):
+		self.values = list()
+		self.lock = threading.Lock()
+
+	## Add a new value
+	#  @param value The new value
+	def append(self, value):
+		with self.lock:
+			self.values.append(value)
+
+	## Calculate mean and empty list
+	#  @return The mean value
+	def mean(self):
+		with self.lock:
+			if self.values:
+				mean = sum(self.values) / len(self.values)
+				self.values = list()
+				return mean
+
 ### METHODS ###
 
 ## Convert bytes to hex string

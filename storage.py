@@ -80,6 +80,7 @@ class Statistic(Base):
 	success_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
 	failed_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
 	thread_workload = sqlalchemy.Column(sqlalchemy.types.Float)
+	mean_eval_time = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Handling database access with SQLAlchemy
 class Database:
@@ -259,8 +260,9 @@ class Database:
 	#  @param success_passive Passive evaluations successful
 	#  @param failed_passive Passive evaluations failed
 	#  @param thread_workload Percentage of active time between 0 and 1
+	#  @param mean_eval_time Averige time for receiving all messages without final timeout
 	#  @exception DatabaseError
-	def store_statistic(self, peer_queue, unique_incoming, success_active, failed_active_first, failed_active_later, success_passive, failed_passive, thread_workload):
+	def store_statistic(self, peer_queue, unique_incoming, success_active, failed_active_first, failed_active_later, success_passive, failed_passive, thread_workload, mean_eval_time):
 		# Get thread-local session
 		session = self.Session()
 
@@ -273,7 +275,8 @@ class Database:
 				failed_active_later=failed_active_later,
 				success_passive=success_passive,
 				failed_passive=failed_passive,
-				thread_workload=thread_workload)
+				thread_workload=thread_workload,
+				mean_eval_time=mean_eval_time)
 		try:
 			session.add(new_statistic)
 			session.commit()

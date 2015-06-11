@@ -60,6 +60,7 @@ class SwarmAnalyzer:
 		self.active_success = SharedCounter()
 		self.passive_success = SharedCounter()
 		self.passive_error = SharedCounter()
+		self.eval_timer = MeanList()
 
 		# Analysis parts, activated via starter methods
 		self.shutdown_request = threading.Event()
@@ -369,7 +370,11 @@ class SwarmAnalyzer:
 		while True:
 			# Get new peer to store
 			peer, result, revisit = self.visited_peers.get()
-			rec_peer_id, rec_info_hash, messages = result
+			rec_peer_id, rec_info_hash, messages, duration = result
+
+			# Store duration
+			if duration != 0:
+				self.eval_timer.append(duration)
 
 			# Evaluate messages
 			bitfield = protocol.bitfield_from_messages(messages, self.torrents[peer.torrent].pieces_count)
@@ -507,7 +512,8 @@ class SwarmAnalyzer:
 					failed_active_later=self.late_evaluation_error.get(),
 					success_passive=self.passive_success.get(),
 					failed_passive=self.passive_error.get(),
-					thread_workload=self.timer.read())
+					thread_workload=self.timer.read(),
+					mean_eval_time=self.eval_timer.mean())
 
 		# Propagate thread termination
 		self.statistic_shutdown.set()

@@ -157,9 +157,10 @@ class PeerSession:
 		return message
 
 	## Collect all messages from the peer until timeout or error
-	#  @return List of tuples of message id and payload
+	#  @return List of tuples of message id and payload and duration without last timeout
 	def receive_all_messages(self):
 		messages = list()
+		start = end = time.perf_counter()
 		while len(messages) < config.receive_message_max:
 			try:
 				message = self.receive_message()
@@ -167,10 +168,11 @@ class PeerSession:
 				logging.info('No more messages: {}'.format(err))
 				break
 			else:
+				end = time.perf_counter()
 				messages.append(message)
 		else:
 			logging.warning('Reached message limit')
-		return messages
+		return messages, end - start
 
 	## Sends a BitTorrent Protocol message
 	#  @param message The message
@@ -322,6 +324,7 @@ def get_complete_threshold(total_pieces):
 #  @param own_peer_id Own peer id
 #  @param dht_enabled Should DHT node port be announced
 #  @param info_hash Info hash for outgoing evaluations, None for incoming connections
+#  @return Evaluation results
 #  @exception PeerError
 def evaluate_peer(sock, own_peer_id, dht_enabled, info_hash=None):
 	# Establish session
@@ -338,7 +341,7 @@ def evaluate_peer(sock, own_peer_id, dht_enabled, info_hash=None):
 		rec_peer_id, reserved, rec_info_hash = session.receive_handshake(info_hash) # PeerError
 
 	# Receive messages
-	messages = session.receive_all_messages()
+	messages, duration = session.receive_all_messages()
 
 	# Send own DHT node UDP port to peer if supported
 	if dht_enabled and reserved[7] & 0x01 != 0:
@@ -348,7 +351,7 @@ def evaluate_peer(sock, own_peer_id, dht_enabled, info_hash=None):
 			logging.warning('Could not send PORT message: {}'.format(err))
 
 	# Return results
-	return rec_peer_id, rec_info_hash, messages
+	return rec_peer_id, rec_info_hash, messages, duration
 
 ## Get pieces count and pieces size of an info hash form peer using BEP 9 and BEP 10
 #  @param info_hash Info hash of desired torrent
@@ -419,7 +422,7 @@ def get_ut_metadata(info_hash, peer, own_peer_id):
 
 		# Receive data
 		logging.info('Receiving all messages ...')
-		messages = session.receive_all_messages()
+		messages = session.receive_all_messages()[0]
 
 	# Parse response
 	metadata_pieces = dict()
