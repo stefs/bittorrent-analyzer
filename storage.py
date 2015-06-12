@@ -32,7 +32,7 @@ class Peer(Base):
 	country = sqlalchemy.Column(sqlalchemy.types.String)
 	continent = sqlalchemy.Column(sqlalchemy.types.String)
 	first_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
-	last_pieces =  sqlalchemy.Column(sqlalchemy.types.Integer)
+	last_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
 	first_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
 	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)

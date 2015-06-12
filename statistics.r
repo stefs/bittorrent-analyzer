@@ -7,6 +7,15 @@ read_db <- function(path){
 	con <- dbConnect(RSQLite::SQLite(), path)
 	# Disable auto commit
 	dbBegin(con)
+
+	# DEBUG: imports only year of last_seen, first_seen is fine
+	sql <- "SELECT first_seen, last_seen FROM peer LIMIT 100"
+	peers <- dbGetQuery(con, sql)
+	print(peers)
+	print(typeof(peers$first_seen))
+	print(typeof(peers$last_seen))
+	stop("breakpoint")
+
 	# Read peer table
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
