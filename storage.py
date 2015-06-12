@@ -88,6 +88,9 @@ class Database:
 	#  @param output Output path with filename without file extension
 	#  @exception DatabaseError
 	def __init__(self, output):
+		# Log SQLAlchemy version
+		logging.info('SQLAlchemy is version {}'.format(sqlalchemy.__version__))
+
 		# Create engine, usable with SQLAlchemy Expression Language, used via SQLAlchemy Object Relational Mapper
 		self.database_path = 'sqlite:///{}.sqlite'.format(output)
 		self.engine = sqlalchemy.create_engine(self.database_path, echo=False) # echo enables debug output

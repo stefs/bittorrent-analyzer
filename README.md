@@ -71,8 +71,8 @@ This is work in progress.
 * [pip](https://pip.pypa.io/) 1.5+
 * [virtualenv](https://virtualenv.pypa.io/) 1.11+
 * [BencodePy](https://github.com/eweast/BencodePy) 0.9+
-* [SQLAlchemy](http://www.sqlalchemy.org/) 0.9+
-* Database
+* [SQLAlchemy](http://www.sqlalchemy.org/) 1.0+
+* Database SQLite
 * [GeoIP2 API](https://pypi.python.org/pypi/geoip2) 2.1+
 
 #### Mainline DHT node
