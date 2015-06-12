@@ -51,9 +51,6 @@ class SwarmAnalyzer:
 		# Generate peer id
 		self.own_peer_id = protocol.generate_peer_id()
 
-		# Network parameters
-		self.timeout = config.network_timeout
-
 		# Statistical counters
 		self.first_evaluation_error = SharedCounter()
 		self.late_evaluation_error = SharedCounter()
@@ -215,7 +212,7 @@ class SwarmAnalyzer:
 			else:
 				logging.info('################ Reconnecting to peer {} ... ################'.format(peer.key))
 			try:
-				sock = socket.create_connection((peer.ip_address, peer.port), self.timeout)
+				sock = socket.create_connection((peer.ip_address, peer.port), config.network_timeout)
 			except OSError as err:
 				if peer.key is None:
 					self.first_evaluation_error.increment()
@@ -337,7 +334,6 @@ class SwarmAnalyzer:
 				own_peer_id=self.own_peer_id,
 				torrents=self.torrents,
 				visited_peers=self.visited_peers,
-				sock_timeout=self.timeout,
 				success=self.passive_success,
 				error=self.passive_error,
 				dht_enabled=self.dht_started)
@@ -636,7 +632,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		# self.request is incoming connection socket
 		# self.server is own server instance
 		try:
-			self.request.settimeout(self.server.sock_timeout)
+			self.request.settimeout(config.network_timeout)
 		except OSError as err:
 			logging.warning('Could not set timeout on incoming connection')
 			return

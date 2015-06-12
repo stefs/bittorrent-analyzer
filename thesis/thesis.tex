@@ -1,0 +1,234 @@
+%\documentclass[12pt, a4paper, parskip=half, headings=small, draft=true]{scrartcl} % [10pt, twocolumn] (Schnellübersicht goo.gl/AS72B)
+\documentclass[10pt, a4paper]{scrartcl} % Std 11pt % 10 pt!!!
+\usepackage[T1]{fontenc} % Umlaute
+\usepackage[utf8]{inputenc} % Textcodierung
+\usepackage[english]{babel} % Silbentrennung
+%\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
+\usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
+\usepackage[in]{fullpage} % Ränder [in|cm]
+%\usepackage{graphicx, listings} % Grafiken, Quelltext
+\usepackage[hidelinks]{hyperref} % Hyperlinks
+%\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
+%\usepackage[charter]{mathdesign} % Schriftart B. Charter
+%\usepackage{mathptmx} % Schriftart Times
+
+% \glqq \EUR \grqq ``quotation marks''
+
+\usepackage[firstpage]{draftwatermark} % [final]
+\SetWatermarkLightness{0.9}
+
+\usepackage{csquotes} % Recommended addition for biblatex
+\usepackage[style=numeric,backend=biber]{biblatex}
+\addbibresource{thesis.bib}
+
+\begin{document}
+\begin{titlepage}
+\noindent
+\begin{center}
+\large{Lehrstuhl für IT-Sicherheitsinfrastrukturen, Informatik 1\\
+Friedrich-Alexander-Universität Erlangen-Nürnberg}
+
+\vspace{2cm}
+\textbf{\Large{Bachelor Thesis}}
+
+\vspace{1cm}
+\textbf{\textsf{\huge{Analysis of BitTorrent Trackers and Peers}}}
+
+\vspace{0.4cm}
+\textbf{\textsf{\LARGE{Counting Confirmed Downloads in BitTorrent}}}
+
+\vspace{1cm}
+\Large{Stefan Schindler\footnote{Email: stefan@kaloix.de, Student number: 21676746}}
+
+\vspace{1cm}
+\Large{Erlangen, \today}
+
+\vspace{6cm}
+\large{Examiner: Prof. Dr.-Ing. Felix Freiling\\
+Advisor: Philipp Klein, M. Sc.}
+
+\vspace{2cm}
+\large{This work is licensed under the\\
+Creative Commons Attribution-ShareAlike 4.0 International License.\\
+To view a copy of this license, visit\\
+\url{http://creativecommons.org/licenses/by-sa/4.0/}.}
+\end{center}
+\end{titlepage}
+
+\section*{Todo}
+\begin{itemize}
+  \item Program tool
+  \item Program evaluation and diagram output
+  \item Perform main analysis
+  \item Write thesis
+  \item Grafik, Listings, Tabellen-Verzeichnis
+  \item pymdht thesis; http://people.kth.se/~rauljc/p2p11/
+\end{itemize}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+[Some general information on the context and setting]
+
+\begin{itemize}
+  \item BitTorrent by Bram Cohen 2008, a decentral network
+  \item BitTorrent traffic statistics
+  \item Other file sharing technologies
+\end{itemize}
+
+\subsection{Motivation}
+[Specific motivation for the problem at hand]
+
+\begin{itemize}
+  \item General statistics about illegal usage of BitTorrent
+  \item Unique peers vs observed downloads as lower bound
+  \item Gather statistics without up- or downloading content
+\end{itemize}
+
+\subsection{Task}
+[Concrete task to be solved]
+
+\begin{itemize}
+  \item Tool: Evaluate one or multiple given torrents
+  \item Tool: Count observed downloads per hour
+  \item Tool: Determine download speeds of peers
+  \item Tool: Group them after geographical territories using IP address geolocation
+  \item Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol
+  \item Drawback: There is no complete overview about all running torrents, we need to choose a subset
+  \item Evaluation: Choose interesting torrents for analysis from different content categories
+  \item Evaluation: Run analysis tool for several days or weeks
+\end{itemize}
+
+\subsection{Related Work}
+[Other relevant academic work and how it differs from this work]
+
+\begin{itemize}
+  \item \cite{watters2011much}
+  \item \cite{drachen2011distribution}
+  \item \dots
+\end{itemize}
+
+\subsection{Results}
+[What has been achieved in this work?]
+
+\dots
+
+\subsection{Outline}
+[How is the thesis structured and why?]
+
+\dots
+
+\subsection{Acknowledgments}
+[A big thank you for the support to ...]
+
+\dots
+
+\section{Background}
+\subsection{The BitTorrent Protocol}
+\begin{itemize}
+  \item How does BitTorrent work (BEP 3)
+  \item How does DHT work (BEP 5)
+  \item Basic legal details of uploading and downloading via BitTorrent
+  \item Basic legal classification about the analysis tool of this thesis
+\end{itemize}
+
+\section{Implementation}
+\subsection{Usage}
+In order to study the download behaviour of BitTorrent peers, a tool named \emph{BitTorrent Download Analyzer} was written in Python 3. It is structured in the main script, an application module, five helper modules and an utility module, which will be described in detail. The behaviour of the program can be altered using the dedicated configuration file named \texttt{config.py}, which contains several variables. For simplification these variables will be referred to with the prefix \texttt{config.} in the following, for example \texttt{config.parameter\_one} translates to variable \texttt{parameter\_one} in the configuration file. The main script, named \texttt{main.py} can be controlled by using the following command line options.
+
+\begin{description}
+  \item[\texttt{-{}-active <threads>}] Actively contact and evaluate peers using the specified number of threads.
+  \item[\texttt{-{}-passive}] Listen on the port specified in the configuration file for incoming connections and evaluate these peers.
+  \item[\texttt{-{}-dht}] Integrate and control an already running \emph{pymdht} \cite{pymdht} DHT node using Telnet. The UDP port on which the node is running and the Telnet port on \texttt{localhost} where \emph{pymdht} can be controlled are given via \texttt{config.dht\_node\_port} and \texttt{config.dht\_control\_port} respectively.
+  \item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages.
+  \item[\texttt{-{}-help}] Show a help message and exit.
+\end{description}
+
+Beforehand the torrents to be analyzed must be prepared. Since magnet links\footnote{} and torrent files\footnote{} are supported there are two major ways to do this. All torrent files must be placed in a common directory, specified by \texttt{config.input\_path}. They are detected by their \texttt{.torrent} file name extension. All magnet links to be considered must be placed in a file defined by \texttt{config.magnet\_file}, one per line.
+
+\subsection{Dependencies}
+There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} \cite{bencodepy} project by \textsc{Eric Weast} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} \cite{sqlite} database format. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-city-database}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}.
+
+In order to run a dedicated DHT node, the tool \emph{pymdht} \cite{pymdht} by \textsc{Raul Jimenez} is used. It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results. 
+
+\subsection{Architecture}
+ They have the following roles:
+
+\begin{description}
+  \item[\texttt{main.py}] This is the main script to be invoked when performing the analysis.
+  \item[\texttt{analyzer.py}]
+  \item[\texttt{torrent.py}]
+  \item[\texttt{tracker.py}]
+  \item[\texttt{dht.py}]
+  \item[\texttt{protocol.py}]
+  \item[\texttt{storage.py}]
+  \item[\texttt{util.py}]
+  \item[\texttt{config.py}]
+\end{description}
+
+\subsection{Functionality}
+
+Beforehand the torrents to be analyzed must be prepared. 
+
+\dots
+
+Explain implementation of the features:
+
+\begin{itemize}
+\item Import torrents from \texttt{.torrent} files (BEP 3)
+\item Import torrents form magnet links by fetching metadata via the \emph{ut\_metadata} extension (BEP 9) using the Extension Protocol (BEP 10)
+\item Continuously get IPv4 peers from the tracker using HTTP (BEP 3) and UDP announce requests (BEP 15)
+\item Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
+\item Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the \emph{pymdht} project using local telnet
+\item Actively contact collected peers and calculate minimum number of downloaded pieces by receiving all \emph{have} and \emph{bitfield} messages until a timeout
+\item Passively listen for incoming peer connections and calculate minimum number of downloaded pieces analog
+\item Save number of downloaded pieces from first and last visit and maximum download speed per peer in a SQLite database
+\item Save city, country and continent via IP address geolocation
+\item Save ISP by hostname and anonymized IP address
+\item Analyze multiple torrents at once
+\item Synchronized analysis shutdown process
+\item Produce extensive log output
+\item Save duplicate and timing statistics about peers received via DHT and tracker
+\item Save statistics about failed and succeeded peer connections
+\item Save workload statistics of active peer evaluation threads
+\end{itemize}
+
+\subsection{Restrictions}
+
+Restrictions and why this does not invalidate the results (hopefully, TBD):
+
+\begin{itemize}
+  \item No support for IPv6 on HTTP, UDP or DHT requests
+  \item No support for the Micro Transport Protocol ($\mu$TP)
+  \item No support for Peer exchange (PeX)
+  \item No support for the Tracker exchange extension (BEP 28)
+  \item No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
+\end{itemize}
+
+\subsection{Justification of Configuration Values}
+\paragraph{\texttt{config.network\_timeout}}
+The timeout for network operations is five seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical as a failure is visible in the log files and did not happen during this research. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. The message collection is considered complete after the timeout finished without receiving a message.
+
+To assess a reasonable timeout, the maximum used time between messages was recorded for every peer session. An average of these values was calculated and stored every five minutes, according to \texttt{config.statistic\_interval}. Only for this timeout estimation run \texttt{config.network\_timeout} was set to 30 seconds to achive most unbiased results. As can be seen in \cite{timeout-test}, five seconds are \_ times above the total average of \_ seconds.
+
+INSERT MAXIMUM MESSAGE TIMEOUT AVERAGES HERE
+
+\section{Evaluation}
+Present and discuss:
+
+\begin{itemize}
+  \item Diagram: Timeline of confirmed downloads in 1 hour steps
+  \item Diagram: Timeline of new vs. duplicate received peers in 1 hour steps (TODO)
+  \item Map: Distribution of downloads (TODO)
+  \item Map: Distribution of download speeds (TODO)
+  \item Table: Examine hostnames by ISP or seedbox provicers (TODO)
+\end{itemize}
+
+\section{Conclusion and Future Work}
+\dots
+
+\newpage
+
+\printbibliography[heading=bibintoc]
+\end{document}
