@@ -5,14 +5,14 @@
 \usepackage[english]{babel} % Silbentrennung
 %\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
-\usepackage[in]{fullpage} % Ränder [in|cm]
+%\usepackage[in]{fullpage} % Ränder [in|cm]
 %\usepackage{graphicx, listings} % Grafiken, Quelltext
 \usepackage[hidelinks]{hyperref} % Hyperlinks
 %\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
 
-% \glqq \EUR \grqq ``quotation marks''
+% ``quotation marks''
 
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
@@ -20,6 +20,10 @@
 \usepackage{csquotes} % Recommended addition for biblatex
 \usepackage[style=numeric,backend=biber]{biblatex}
 \addbibresource{thesis.bib}
+
+\let\origunderscore\_
+\renewcommand{\_}{\origunderscore\allowbreak}
+\newcommand{\config}[1]{\texttt{config.\allowbreak #1}}
 
 \begin{document}
 \begin{titlepage}
@@ -134,42 +138,26 @@ To view a copy of this license, visit\\
 \end{itemize}
 
 \section{Implementation}
-\subsection{Usage}
-In order to study the download behaviour of BitTorrent peers, a tool named \emph{BitTorrent Download Analyzer} was written in Python 3. It is structured in the main script, an application module, five helper modules and an utility module, which will be described in detail. The behaviour of the program can be altered using the dedicated configuration file named \texttt{config.py}, which contains several variables. For simplification these variables will be referred to with the prefix \texttt{config.} in the following, for example \texttt{config.parameter\_one} translates to variable \texttt{parameter\_one} in the configuration file. The main script, named \texttt{main.py} can be controlled by using the following command line options.
-
-\begin{description}
-  \item[\texttt{-{}-active <threads>}] Actively contact and evaluate peers using the specified number of threads.
-  \item[\texttt{-{}-passive}] Listen on the port specified in the configuration file for incoming connections and evaluate these peers.
-  \item[\texttt{-{}-dht}] Integrate and control an already running \emph{pymdht} \cite{pymdht} DHT node using Telnet. The UDP port on which the node is running and the Telnet port on \texttt{localhost} where \emph{pymdht} can be controlled are given via \texttt{config.dht\_node\_port} and \texttt{config.dht\_control\_port} respectively.
-  \item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages.
-  \item[\texttt{-{}-help}] Show a help message and exit.
-\end{description}
-
-Beforehand the torrents to be analyzed must be prepared. Since magnet links\footnote{} and torrent files\footnote{} are supported there are two major ways to do this. All torrent files must be placed in a common directory, specified by \texttt{config.input\_path}. They are detected by their \texttt{.torrent} file name extension. All magnet links to be considered must be placed in a file defined by \texttt{config.magnet\_file}, one per line.
-
-\subsection{Dependencies}
-There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} \cite{bencodepy} project by \textsc{Eric Weast} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} \cite{sqlite} database format. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-city-database}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}.
-
-In order to run a dedicated DHT node, the tool \emph{pymdht} \cite{pymdht} by \textsc{Raul Jimenez} is used. It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results. 
-
-\subsection{Architecture}
- They have the following roles:
-
-\begin{description}
-  \item[\texttt{main.py}] This is the main script to be invoked when performing the analysis.
-  \item[\texttt{analyzer.py}]
-  \item[\texttt{torrent.py}]
-  \item[\texttt{tracker.py}]
-  \item[\texttt{dht.py}]
-  \item[\texttt{protocol.py}]
-  \item[\texttt{storage.py}]
-  \item[\texttt{util.py}]
-  \item[\texttt{config.py}]
-\end{description}
-
 \subsection{Functionality}
+The \emph{BitTorrent Download Analyzer} was written in Python 3 for this research project. It counts \emph{confirmed downloads} by peers of one or multiple given torrents over a time periode. Torrents and all configuration parameters have to be provided at start as they can not be changed later. The program stores results in a SQLite database and runs until manual termination.
 
-Beforehand the torrents to be analyzed must be prepared. 
+The behaviour of the program can be altered using a dedicated configuration file named \texttt{config.py}, which contains several variables. For simplification these variables will be referred to with the prefix ``\config{}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file. 
+
+The main task is to count \emph{confirmed downloads} by peers of a given torrent. A download is considered as confirmed, when a peer crosses the threshold of 98\,\% downloaded pieces. Thus there must be contact with a peer at least twice -- with the amount of downloaded pieces once below and once equal or above the threshold -- in order to be counted. To determine the download progress of as many peers as possible, two tasks have to be done: First, establish contact to peers from every possible source. Second, receive reliable information about the download progress of the peer.
+
+\paragraph{Contact peers}
+Sources for peer's IP addresses and port numbers include announce requests to the tracker server as well as lookups in the BitTorrent DHT network. Both are done periodically as defined by \config{tracker\_request\_interval} and \config{dht\_request\_interval}. The received peer addresses are filtered for duplicates and placed in a common queue.
+
+Additionally, incoming connections from peers trying to download pieces are used to gather their download status. 
+
+\paragraph{Evaluate Download Progress}
+\dots
+
+All this can be handled by the \emph{BitTorrent Download Analyzer} which was written in Python 3 for this research project.
+
+\dots
+
+It is structured in the main script, an application module, five helper modules and an utility module, which will be described in detail.
 
 \dots
 
@@ -194,6 +182,39 @@ Explain implementation of the features:
 \item Save workload statistics of active peer evaluation threads
 \end{itemize}
 
+\subsection{Usage}
+The main script, named \texttt{btda.py} can be controlled by using the following command line options.
+
+\begin{description}
+  \item[\texttt{-{}-active <threads>}] Actively contact and evaluate peers using the specified number of threads.
+  \item[\texttt{-{}-passive}] Listen on the port specified in the configuration file for incoming connections and evaluate these peers.
+  \item[\texttt{-{}-dht}] Integrate and control an already running \emph{pymdht} \cite{pymdht} DHT node using Telnet. The UDP port on which the node is running and the localhost Telnet port where \emph{pymdht} can be controlled are given via \config{dht\_node\_port} and \config{dht\_control\_port} respectively.
+  \item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages.
+  \item[\texttt{-{}-help}] Show a help message and exit.
+\end{description}
+
+Beforehand the torrents to be analyzed must be prepared. Since both magnet links and torrent files are supported, there are two major ways to do this: All torrent files must be placed in a common directory, specified by \config{input\_path}. They are detected by their \texttt{.torrent} file name extension. All magnet links to be considered must be placed in a file defined by \config{magnet\_file}, one per line.
+
+\subsection{Dependencies}
+There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} project by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}.
+
+In order to run a dedicated DHT node, the tool \emph{pymdht} by \textsc{Raul Jimenez} \cite{pymdht} is used. It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results. 
+
+\subsection{Architecture}
+ They have the following roles:
+
+\begin{description}
+  \item[\texttt{main.py}] This is the main script to be invoked when performing the analysis.
+  \item[\texttt{analyzer.py}]
+  \item[\texttt{torrent.py}]
+  \item[\texttt{tracker.py}]
+  \item[\texttt{dht.py}]
+  \item[\texttt{protocol.py}]
+  \item[\texttt{storage.py}]
+  \item[\texttt{util.py}]
+  \item[\texttt{config.py}]
+\end{description}
+
 \subsection{Restrictions}
 
 Restrictions and why this does not invalidate the results (hopefully, TBD):
@@ -204,13 +225,14 @@ Restrictions and why this does not invalidate the results (hopefully, TBD):
   \item No support for Peer exchange (PeX)
   \item No support for the Tracker exchange extension (BEP 28)
   \item No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
+  \item No BitTrorrent Protocol support for getting download progress info
 \end{itemize}
 
 \subsection{Justification of Configuration Values}
-\paragraph{\texttt{config.network\_timeout}}
+\paragraph{\config{network\_timeout}}
 The timeout for network operations is five seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical as a failure is visible in the log files and did not happen during this research. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. The message collection is considered complete after the timeout finished without receiving a message.
 
-To assess a reasonable timeout, the maximum used time between messages was recorded for every peer session. An average of these values was calculated and stored every five minutes, according to \texttt{config.statistic\_interval}. Only for this timeout estimation run \texttt{config.network\_timeout} was set to 30 seconds to achive most unbiased results. As can be seen in \cite{timeout-test}, five seconds are \_ times above the total average of \_ seconds.
+To assess a reasonable timeout, the maximum used time between messages was recorded for every peer session. An average of these values was calculated and stored every five minutes, according to \config{statistic\_interval}. Only for this timeout estimation run \config{network\_timeout} was set to 30 seconds to achive most unbiased results. As can be seen in \cite{timeout-test}, five seconds are \_ times above the total average of \_ seconds.
 
 INSERT MAXIMUM MESSAGE TIMEOUT AVERAGES HERE
 
