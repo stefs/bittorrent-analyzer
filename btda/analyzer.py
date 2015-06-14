@@ -159,14 +159,13 @@ class SwarmAnalyzer:
 				self.torrents[key] = new_torrent
 
 	## Evaluates all peers in the queue
-	#  @param jobs Number of parallel thread to use
-	def start_active_evaluation(self, jobs):
+	def start_active_evaluation(self):
 		# Concurrency management
-		self.active_shutdown_done = threading.Barrier(jobs + 1)
+		self.active_shutdown_done = threading.Barrier(config.peer_evaluation_threads + 1)
 
 		# Create thread pool
-		logging.info('Connecting to peers in {} threads'.format(jobs))
-		for i in range(jobs):
+		logging.info('Connecting to peers in {} threads'.format(config.peer_evaluation_threads))
+		for i in range(config.peer_evaluation_threads):
 			# Create a thread with worker callable
 			thread = threading.Thread(target=self._evaluator)
 			# Thread dies when main thread exits
