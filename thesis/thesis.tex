@@ -11,6 +11,7 @@
 %\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
+\usepackage{booktabs}
 
 % ``quotation marks''
 
@@ -133,7 +134,76 @@ To view a copy of this license, visit\\
 \dots
 
 \section{Background}
+This chapter explaines technologies and specifications utilized during this research project.
+
 \subsection{BitTorrent Protocol}
+Besides several extensions, BitTorrent still works as designed by \textsc{Bram Cohen} in January 10, 2008, in the \emph{BitTorrent Enhancement Proposal} number 3, shortened BEP 3 \cite{bep3}. It establishes a method to distribute a predefined set of files amoung an arbitrary number of recipients without overwhelming load on a central entity. This is achived by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process: The BitTorrent file format containing identifying metadata about the file set, the communication procedure with a tracker server where peers can learn internet protocol addresses of other peers, and the peer wire protocol spoken between peers.
+
+\subsubsection{Bencoding}
+In order to store common data structures as well as transmit them over TCP, encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported datatypes are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
+
+\subsubsection{Metainfo File}
+Metadata about a downloadable file set is stored bencoded in a metainfo file, which uses the \texttt{.torrent} file name extension. The purposis is to locate the tracker server and describe all content pieces with cryptographic hashes. Data is arranged in dictionaries of the following structure:
+
+\begin{description}
+  \item[announce] Uniform resource locator of the tracker server, usually of the form \nolinkurl{http://<host>:<port>/announce}.
+  \item[info] The info dictionary describing the torrent's pieces
+  \begin{description}
+    \item[name] Optional file or directory name
+    \item[piece length] Number of bytes in each piece
+    \item[pieces] Concatenation of raw SHA-1 hash values for all pieces
+    \item[length] Only present if the torrent is a single file; file size in bytes; not used in this project at all
+    \item[files] Only present if the torrent containes multiple files; list of dictionaries, one per file; not used in this project at all
+    \begin{description}
+      \item[length] File size in bytes
+      \item[path] List of subdirectory names and filename representing a path
+    \end{description}
+  \end{description}
+\end{description}
+
+The number of pieces can be derived from the \texttt{pieces} key of the \texttt{info} dictionary by dividing it's length by 20, since a SHA-1 hash is 20 bytes.
+
+\subsubsection{Tracker Server}
+Traditional communication with the tracker server is done via the GET request method of the Hypertext Transfer Protocol. The request is sent with the following parameters, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}.
+
+\begin{description}
+  \item[info\_hash] SHA-1 hash of the bencoded info dictionary from the metainfo file
+  \item[peer\_id] String of 20 bytes self choosen by each peer; contains client software information by convention
+  \item[ip] Optional parameter with the peer's own IP address
+  \item[port] Port number this peer is listening on for connections from other peers; recommended ports are 6881 to 6889
+  \item[uploaded] Amount of uploaded pieces so far
+  \item[downloaded] Amount of downloaded pieces so far
+  \item[left] Amount of pices left to download
+  \item[event] Optional key about the circumstances of this request; is \texttt{started}, \texttt{completed} or \texttt{stopped}
+  \item[compact] To save bandwidth, a compact list of peers can be requested according to BEP 23 \cite{bep23}; is \texttt{0} or \texttt{1}
+\end{description}
+
+The tracker's response message should contain a bencoded dictionary in the message body. Following keys are defined:
+
+\begin{description}
+  \item[failure reason] In case of failure, human-readable error message explaing why the request could not be fulfilled
+  \item[interval] Suggested interval in seconds the client should wait between tracker requests
+  \item[peers] List of dictionaries, one per peer
+  \begin{description}
+    \item[peer id] Self-selected ID
+    \item[ip] IP address
+    \item[port] Port number
+  \end{description}
+
+  In case of a compact peer list, this is a single byte string instead of a list of dictionaries. 6 bytes per peer are used containing 4 bytes for the IP address and 2 byte representing the port number.
+\end{description}
+
+Tracker servers are the only centralized infrastructure required by traditional BitTorrent. Hence it is advisable to reduce bandwith during tracker requests as much as possible. As BEP 23 demonstrates, using a custom protocol over UDP instead of HTTP over TCP can reduce traffic by 50\,\% \cite{bep15}.
+
+\dots
+
+\subsubsection{Peer Wire Protocol}
+\dots
+
+\subsection{DHT}
+
+\noindent\hrulefill
+
 \begin{itemize}
   \item How does BitTorrent work (BEP 3)
   \item How does DHT work (BEP 5)
@@ -168,7 +238,7 @@ Once a connection is established with a peer, it's download progress must be det
 Now the only possible approach to aquire the download progress is to compile a combined bitfield from these messages and count the present pieces. The number of total torrent pices from in the info dictionary helps validating the results.
 
 \paragraph{Peer Database}
-With reference to the peer's database identifier, the IP address and port number are saved in the internal memory in order to update an already stored peer entry in the database at later contact. Time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed downlaod's threshold. Additionally the download speed is calculated between each two consecutive contacts, whereby only an overall maximum is kept. 
+With reference to the peer's database identifier, the IP address and port number are saved in the internal memory in order to update an already stored peer entry in the database at later contact. Time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed downlaod's threshold. Additionally the download speed is calculated between each two consecutive contacts, whereby only an overall maximum is kept.
 
 Other information about peers stored in the database include an anonymized IP address, the BitTorrent Protocol peer ID, top and second level domain of the hostname, IP geolocation with city, country and continent as determined by the \emph{GeoIP2 API} \cite{geoip2-api}, number of contacts and the original source of the peer's IP address. Afterwards the peer's queue timestamp is updated with the current time plus \config{peer\_revisit\_delay} and it is returned to the queue if \config{torrent\_complete\_threshold} is not reached.
 
@@ -247,7 +317,7 @@ Restrictions and why this does not invalidate the results (hopefully, TBD):
 \end{itemize}
 
 \subsection{Usage}
-pymdht: It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results. 
+pymdht: It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results.
 
 The main script, named \texttt{btda.py} can be controlled by using the following command line options.
 
