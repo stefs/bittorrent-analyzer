@@ -1,6 +1,7 @@
 [TOC]
 
 * Measure timeout on connection establishment
+* use sendall instead of send loop
 
 # BitTorrent Download Analyzer
 This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.

@@ -1,4 +1,7 @@
 # Analysis of BitTorrent Trackers and Peers
+## TODO
+* initial upload
+
 ## Resourcces
 * http://www.bittorrent.org/beps/bep_0000.html
 * https://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_States
