@@ -136,7 +136,7 @@ To view a copy of this license, visit\\
 This chapter explaines technologies and specifications utilized during this research project.
 
 \subsection{BitTorrent Protocol}
-Besides several extensions, BitTorrent still works as designed by \textsc{Bram Cohen} in January 10, 2008, in the \emph{BitTorrent Enhancement Proposal} number 3, shortened BEP 3 \cite{bep3}. It establishes a method to distribute a predefined set of files amoung an arbitrary number of recipients without overwhelming load on a central entity. This is achived by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process: The BitTorrent file format containing identifying metadata about the file set, the communication procedure with a tracker server where peers can learn internet protocol addresses of other peers, and the peer wire protocol spoken between peers.
+Besides several extensions, BitTorrent still works as designed by \textsc{Bram Cohen} in January 10, 2008, in the \emph{BitTorrent Enhancement Proposal} number 3 \cite{bep3}. It establishes a method to distribute a predefined set of files amoung an arbitrary number of recipients without overwhelming load on a central entity. This is achived by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process: The BitTorrent file format containing identifying metadata about the file set, the communication procedure with a tracker server where peers can learn internet protocol addresses of other peers, and the peer wire protocol spoken between peers.
 
 \subsubsection{Bencoding}
 In order to store common data structures as well as transmit them over TCP, encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported datatypes are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
@@ -163,7 +163,7 @@ Metadata about a downloadable file set is stored bencoded in a metainfo file, wh
 The number of pieces can be derived from the \texttt{pieces} key of the \texttt{info} dictionary by dividing it's length by 20, since a SHA-1 hash is 20 bytes. The torrent identifying \emph{info hash} is calculated as the SHA-1 hash of the bencoded info dictionary.
 
 \subsubsection{Tracker Server}
-Traditional communication with the tracker server is done via the GET request method of the Hypertext Transfer Protocol. The request is sent with the following parameters, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}. TODO announce
+The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of the Hypertext Transfer Protocol. The request is sent with the following parameters, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}.
 
 \begin{description}
   \item[info\_hash] SHA-1 hash of the bencoded info dictionary from the metainfo file
@@ -174,7 +174,7 @@ Traditional communication with the tracker server is done via the GET request me
   \item[downloaded] Amount of downloaded pieces so far
   \item[left] Amount of pices left to download
   \item[event] Optional key about the circumstances of this request; is \texttt{started}, \texttt{completed} or \texttt{stopped}
-  \item[compact] To save bandwidth, a compact list of peers can be requested according to BEP 23 \cite{bep23}; is \texttt{0} or \texttt{1}
+  \item[compact] To save bandwidth, a compact list of peers can be requested \cite{bep23}; is \texttt{0} or \texttt{1}
 \end{description}
 
 The tracker's response message should contain a bencoded dictionary in the message body. Following keys are defined:
@@ -192,7 +192,7 @@ The tracker's response message should contain a bencoded dictionary in the messa
   In case of a compact peer list, this is a single byte string instead of a list of dictionaries. 6 bytes per peer are used containing 4 bytes for the IPv4 address and 2 byte representing the port number.
 \end{description}
 
-\subsubsection{UDP tracker protocol}
+\subsubsection{UDP Tracker Protocol}
 Tracker servers are the only centralized infrastructure required by traditional BitTorrent. Hence it is advisable to reduce bandwith during tracker requests as much as possible. As BEP 23 demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by 50\,\% \cite{bep15}. Since UDP datagrams may arrive out of order, the client sends a randomly choosen transaction ID with every request to identify the matching server response afterwards.
 
 \paragraph{connect}
@@ -228,22 +228,23 @@ The presence of DHT support is advertised in the standard BitTorrent handshake o
 The concept of a \emph{magnet link} described in BEP 9 \cite{bep9} is used to create a uniform resource identifier for torrents of minimal size, in comparision to the metainfo file format. It's only mandatory component is the info hash, the SHA-1 value of the info dictionary. The link uses the \texttt{magnet:} URI scheme and stores info hash, a display name and tracker announce URLs in the query string. The emerging problem is the loss of the info dictionary's content. Since a tracker URL is optional, the metadata must be obtained from other peers.
 
 \subsubsection{Extension Protocol}
-To expand the funcionallity of the BitTorrent Protocol, the \emph{Extension Protocol} is defined in BEP 10 \cite{bep10}. It introduces the generic \texttt{extended} message to the Peer Wire Protocol, which itself can have various subtypes depending on which extensions are actually used. Extension Protocol support is indicated in the standard Peer Wire Protocol handshake by setting the 20th bit from the right of the eight reserved bytes.
+To expand the funcionallity of the BitTorrent Protocol, the \emph{Extension Protocol} was defined \cite{bep10}. It introduces the generic \texttt{extended} message to the Peer Wire Protocol, which itself can have various subtypes depending on which extensions are actually used. Extension Protocol support is indicated in the standard Peer Wire Protocol handshake by setting the 20th bit from the right of the eight reserved bytes.
 
 When both peers ascertain support for the Extension Protocol, extended messages containing a second handshake are exchanged. The handshakes contain a dictionary with one or multiple keys: First, a bencoded dictionary \texttt{m} with names of supported extensions together with randomly assigned extension IDs and secondly, additional keys depending on the used extensions. This setup allows for an arbitrary number of extensions with dynamic IDs, without the need for a global registry of extensions. Further extended messages contain the extension ID and payload as defined by the respective extension.
 
 \subsubsection{Extension for Peers to Send Metadata Files}
-BEP 9 with identifyer \texttt{ut\_metadata} \cite{bep9} is the first and only extension described here to make use of the Extension Protocol. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containng the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is devided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
+The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} with identifier \texttt{ut\_metadata} is the first and only extension described here to make use of the Extension Protocol. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containng the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is devided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
 
 To gather initial contact information of peers to be asked for metadata, the DHT protocol may be used. Then every piece must be requested seperately from these peers, using a \texttt{request} message. These are answered by the same number of \texttt{data} or \texttt{reject} messages, depending on whether the opposing client is able to deliver the piece. When all pieces are present, they can be composed and checked against the info hash value.
 
 \subsection{BitTorrent and German Law}
-TODO
+\subsubsection{Illegal Content}
+While there are no legal restrictions on using BitTorrent in general, the download of content without permission of the author or rightholder is considered an illegitimate reproduction according to the German Copyright Act \cite[art.~15\,(1),~16]{urhg}. The common exception of private copying \cite[art.~53]{urhg} is not applicable here, since the source is obviously illegitimate.
 
-\begin{itemize}
-  \item Basic legal details of uploading and downloading via BitTorrent
-  \item Basic legal classification about the analysis tool of this thesis
-\end{itemize}
+Even more serious is the upload process always involved in BitTorrent. Illegitimate distribution of proprietary content may be sentenced with imprisonment or a fine \cite[art.~106]{urhg}. More common and often abused \cite{abmahnung} is the system of special notifications \cite[art.~97a]{urhg}, sent from rightholders to assumed copyright infringers. These warning letters are supposed to settle the controversy extrajudicial in exchange of a fee. Entitlement of the rightholder to indemnity and expense allowance exists \cite[art.~97]{urhg}.
+
+\subsubsection{Collecting Statistics}
+Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes data that can be related to an individual with additional and accessible sources \cite{}. The connection between IP addresses and individuals can be provided by the \emph{right of information} as admitted in the Copyright Act \cite[art.~101]{urhg}. If IP addresses are within the definition of personal data regarding this law is disputed \cite{}. Anonymizing IP addresses by dropping higher bits is advised \cite{} and used in this thesis' software tool.
 
 \section{Implementation}
 The software tool written for this thesis was developed using the version control system Git \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code was published under the GNU General Public License version 3 \cite{btda}.
