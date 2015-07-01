@@ -207,6 +207,7 @@ class PeerSession:
 	## Sends extended handshake of the BEP 10 Extension Protocol
 	#  @param supported_extensions Dict of supported extensions
 	#  @param items Other items to include in the handshake
+	#  @exception PeerError
 	def send_extended_handshake(self, supported_extensions, items):
 		handshake = dict()
 		handshake[b'm'] = supported_extensions
