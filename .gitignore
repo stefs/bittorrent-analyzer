@@ -52,3 +52,21 @@ env-*
 test/
 
 Rplots.pdf
+
+# thesis
+thesis/*.aux
+thesis/*.bbl
+thesis/*.bcf
+thesis/*.blg
+thesis/*.fdb_latexmk
+thesis/*.fls
+thesis/*.log
+thesis/*.out
+thesis/*.run.xml
+thesis/*.synctex.gz
+thesis/*.toc
+
+# doxygen
+html/
+latex/
+
