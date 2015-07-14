@@ -32,15 +32,10 @@ class PeerSession:
 	#  @param data Bytes data to be sent
 	#  @exception PeerError
 	def send_bytes(self, data):
-		total_sent_count = 0
-		while total_sent_count < len(data):
-			try:
-				sent_count = self.sock.send(data[total_sent_count:])
-			except OSError as err:
-				raise PeerError('Sending data failed: {}'.format(err))
-			if sent_count == 0:
-			        raise PeerError('Socket connection broken')
-			total_sent_count += sent_count
+		try:
+			self.sock.sendall(data)
+		except OSError as err:
+			raise PeerError('Sending data failed: {}'.format(err))
 
 	## Receives bytes blocking according to https://stackoverflow.com/a/17508900
 	#  @param required_bytes Nuber of bytes to be returned
