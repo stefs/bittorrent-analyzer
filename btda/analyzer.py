@@ -286,6 +286,12 @@ class SwarmAnalyzer:
 				self.torrents[torrent_key].pieces_count)
 
 		while not self.shutdown_request.is_set():
+			# Try scrape request
+			try:
+				seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
+			except TrackerError:
+				seeders = completed = leechers = None
+
 			# Ask tracker
 			logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
 			try:
@@ -312,7 +318,8 @@ class SwarmAnalyzer:
 					if is_duplicate[0]:
 						duplicate_counter += 1
 				try:
-					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter, end-start, torrent_key)
+					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter,
+							seeders, completed, leechers, end-start, torrent_key)
 				except DatabaseError as err:
 					logging.critical(err)
 

@@ -74,6 +74,10 @@ To view a copy of this license, visit\\
 \end{itemize}
 
 \tableofcontents
+
+\listoffigures
+
+\listoftables
 \newpage
 
 \section{Introduction}
@@ -366,6 +370,44 @@ The main script, named \texttt{btda.py} can be controlled by using the following
 
 \section{Evaluation}
 \subsection{Choosing Torrents}
+To determine most popular torrent directory sites, global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites looked up at Alexa were collected through manual investigation using web search engines, relevant news sites and cross references between sites, because there is no complete list of torrent sites. Table~\ref{torrentsites} shows sites found having an Alexa rank below 10,000.
+
+\begin{table}
+\centering
+\begin{tabular}{rllr}
+\toprule
+Rank & Site name & Domain name & Alexa Rank \\
+\midrule
+1 & Kickass Torrents & \texttt{kat.cr} & 116 \\
+2 & ExtraTorrent.cc & \texttt{extratorrent.cc} & 335 \\
+3 & Nyaa Torrents & \texttt{www.nyaa.se} & 399 \\
+4 & Torrentz Search Engine & \texttt{torrentz.eu} & 464 \\
+5 & The Pirate Bay & \texttt{thepiratebay.se} & 507 \\
+6 & YTS & \texttt{yts.to} & 669 \\
+7 & Rarbg & \texttt{rarbg.to} & 1,150 \\
+8 & 1337x & \texttt{1337x.to} & 1,661 \\
+9 & EZTV & \texttt{eztv.ch} & 1,831 \\
+10 & torrentHound.com & \texttt{www.torrenthound.com} & 2,188 \\
+11 & IPTorrents & \texttt{iptorrents.com} & 3,256 \\
+12 & isoHunt & \texttt{isohunt.to} & 3,816 \\
+13 & Bitsnoop P2P Search & \texttt{bitsnoop.com} & 4,293 \\
+14 & Torrent Downloads & \texttt{www.torrentdownloads.me} & 4,315 \\
+15 & LimeTorrents.cc & \texttt{www.limetorrents.cc} & 4,552 \\
+16 & TamilRockers.net & \texttt{tamilrockers.com} & 4,586 \\
+17 & Monova Torrent Search & \texttt{www.monova.org} & 4,843 \\
+18 & Torrent Reactor & \texttt{torrentreactor.com} & 5,362 \\
+19 & YourBittorrent & \texttt{yourbittorrent.com} & 5,952 \\
+20 & TorrentProject & \texttt{torrentproject.se} & 6,670 \\
+21 & TorrentFunk & \texttt{www.torrentfunk.com} & 7,682 \\
+22 & demonoid.pw & \texttt{www.demonoid.pw} & 7,947 \\
+23 & TorrentLeech.org & \texttt{torrentleech.org} & 9,749 \\
+\bottomrule
+\end{tabular}
+\caption{Popularity of torrent directory sites according to Alexa's global traffic ranking}
+\label{torrentsites}
+\end{table}
+
+\dots
 
 \subsection{Confirmed Downloads}
 Diagram: Timeline of confirmed downloads in 1 hour steps
@@ -381,7 +423,6 @@ Table: Examine hostnames by ISP or seedbox provicers (TODO)
 
 \section{Conclusion and Future Work}
 \dots
-
 \newpage
 
 \printbibliography[heading=bibintoc]

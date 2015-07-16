@@ -103,7 +103,7 @@ class TrackerCommunicator:
 			raise TrackerError('Tracker did not send any peers: {}'.format(err))
 		return interval, ip_bytes
 
-	## Issue announce request according to according to http://www.bittorrent.org/beps/bep_0015.html
+	## Issue announce request according to http://www.bittorrent.org/beps/bep_0015.html
 	#  and https://github.com/erindru/m2t/blob/75b457e65d71b0c42afdc924750448c4aaeefa0b/m2t/scraper.py
 	#  @param info_hash Info hash for the desired torrent
 	#  @exception OSError, TrackerError
@@ -168,6 +168,142 @@ class TrackerCommunicator:
 		interval = struct.unpack_from('!i', buf, 8)[0]
 		ip_bytes = buf[20:]
 		return interval, ip_bytes
+
+	## Issue a request for download statistics to the tracker
+	#  @param info_hash Info hash for the desired torrent
+	#  @return seeders, completed, leechers
+	#  @exception TrackerError
+	def scrape_request(self, info_hash):
+		# Assemble scrape URL
+		scrape_url = self.announce_url.replace('announce', 'scrape')
+		if 'scrape' not in scrape_url:
+			raise TrackerError('Unable to assemble scrape URL')
+		parsed = urllib.parse.urlparse(scrape_url)
+
+		# Split on scheme
+		if parsed.scheme in ["http", "https"]:
+			return self._http_scrape(scrape_url, info_hash)
+		elif parsed.scheme == "udp":
+			try:
+				return self._udp_scrape(scrape_url, info_hash)
+			except (OSError, TrackerError) as err:
+				raise TrackerError('UDP tracker request failed: {}'.format(err))
+		else:
+			raise TrackerError('Unsupported protocol: {}'.format(parsed.scheme))
+
+	## Issue a HTTP GET request on the scrape URL
+	#  @param info_hash Info hash for the desired torrent
+	#  @return seeders, completed, leechers
+	#  @exception TrackerError
+	def _http_scrape(self, scrape_url, info_hash):
+		# Assemble tracker request
+		request_parameters = {'info_hash': info_hash}
+		request_parameters_encoded = urllib.parse.urlencode(request_parameters)
+		request_url = scrape_url + '?' + request_parameters_encoded
+		logging.debug('Scrape URL is ' + request_url)
+
+		# Issue GET request
+		try:
+			with urllib.request.urlopen(request_url, timeout=config.network_timeout) as http_response:
+				if http_response.status == http.client.OK:
+					logging.info('HTTP response status code is OK')
+					response_bencoded = http_response.read()
+				else:
+					raise TrackerError('HTTP response status code is {}'.format(http_response.status))
+		except (urllib.error.URLError, http.client.HTTPException) as err:
+			raise TrackerError('Get request failed: ' + str(err))
+
+		# Decode response
+		try:
+			response = bencodepy.decode(response_bencoded)
+		except bencodepy.exceptions.DecodingError as err:
+			raise TrackerError('Unable to decode response: {}'.format(err))
+		logging.debug('Tracker response: {}'.format(response))
+		if b'failure reason' in response:
+			failure_reason = response[b'failure reason'].decode()
+			raise TrackerError('Tracker responded with failure reason: {}'.format(failure_reason))
+
+		# Extract file item
+		try:
+			item = response[b'files'][info_hash]
+		except KeyError as err:
+			raise TrackerError('Info hash not found')
+
+		# Extract attributes
+		try:
+			seeders = response[b'complete']
+		except KeyError as err:
+			raise TrackerError('Complete value not found')
+		try:
+			completed = response[b'downloaded']
+		except KeyError as err:
+			raise TrackerError('Downloaded value not found')
+		try:
+			leechers = response[b'incomplete']
+		except KeyError as err:
+			raise TrackerError('Incomplete value not found')
+		return seeders, completed, leechers
+
+	## Issue scrape request
+	#  @param info_hash Info hash for the desired torrent
+	#  @return Request interval, ip-port bytes block
+	#  @exception OSError, TrackerError
+	def _udp_scrape(self, scrape_url, info_hash):
+		# Establish connection
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		sock.settimeout(config.network_timeout)
+		parsed_tracker = urllib.parse.urlparse(scrape_url)
+		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
+
+		# Send connect request
+		connection_id = 0x41727101980
+		action = 0x0
+		transaction_id = udp_transaction_id()
+		req = struct.pack('!qii', connection_id, action, transaction_id)
+		sock.sendto(req, conn)
+
+		# Parse connection id from connect response
+		buf = sock.recvfrom(2048)[0]
+		if len(buf) < 16:
+			raise TrackerError('Wrong length connect response: {}'.format(len(buf)))
+		action = struct.unpack_from('!i', buf)[0]
+		res_transaction_id = struct.unpack_from('!i', buf, 4)[0]
+		if res_transaction_id != transaction_id:
+			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {}, got {}'.format(
+					transaction_id, res_transaction_id))
+		if action == 0x0:
+			connection_id = struct.unpack_from('!q', buf, 8)[0]
+		elif action == 0x3:
+			error = struct.unpack_from('!s', buf, 8)
+			raise TrackerError('Error while trying to get a connection response: {}'.format(error))
+		else:
+			logging.warning('Bad UDP tracker connect response')
+
+		# Send scrape request
+		transaction_id = udp_transaction_id()
+		req = struct.pack('!qii20s', connection_id, 0x2, transaction_id, info_hash)
+		logging.debug('Scrape request is {}'.format(req))
+		sock.sendto(req, conn)
+
+		# Parse scrape response
+		buf = sock.recvfrom(2048)[0]
+		if len(buf) < 8:
+			raise TrackerError('Wrong length scrape response: {}'.format(len(buf)))
+		action = struct.unpack_from('!i', buf)[0]
+		res_transaction_id = struct.unpack_from('!i', buf, 4)[0]
+		if res_transaction_id != transaction_id:
+			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {}, got {}'.format(
+					transaction_id, res_transaction_id))
+		if action == 0x3:
+			raise TrackerError('Error while trying to get a connection response: {}'.format(error))
+		elif action != 0x2:
+			raise TrackerError('Wrong action received after announce request: {}'.format(action))
+
+		# Extract desired information
+		seeders = struct.unpack_from('!i', buf, 8)[0]
+		completed = struct.unpack_from('!i', buf, 12)[0]
+		leechers = struct.unpack_from('!i', buf, 16)[0]
+		return seeders, completed, leechers
 
 ## Generate a transaction id for udp tracker protocol
 #  @return Transaction id

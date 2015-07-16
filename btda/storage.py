@@ -63,6 +63,9 @@ class Request(Base):
 	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht'))
 	received_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	duplicate_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
+	seeders = sqlalchemy.Column(sqlalchemy.types.Integer)
+	completed = sqlalchemy.Column(sqlalchemy.types.Integer)
+	leechers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	duration_sec = sqlalchemy.Column(sqlalchemy.types.Float)
 	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
 
@@ -234,7 +237,7 @@ class Database:
 	#  @param duration Duration in seconds
 	#  @param torrent Corresponding torrent ID
 	#  @exception DatabaseError
-	def store_request(self, source, received_peers, duplicate_peers, duration, torrent):
+	def store_request(self, source, received_peers, duplicate_peers, seeders, completed, leechers, duration, torrent):
 		# Get thread-local session
 		session = self.Session()
 
@@ -243,6 +246,9 @@ class Database:
 				source=source.name,
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
+				seeders=seeders,
+				completed=completed,
+				leechers=leechers,
 				duration_sec=duration,
 				torrent=torrent)
 		try:

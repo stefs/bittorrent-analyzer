@@ -1,6 +1,7 @@
 # Analysis of BitTorrent Trackers and Peers
 ## TODO
 * initial upload
+* scrape request
 
 ## Resourcces BitTorrent
 * http://www.bittorrent.org/beps/bep_0000.html
