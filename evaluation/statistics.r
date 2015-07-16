@@ -7,15 +7,6 @@ read_db <- function(path){
 	con <- dbConnect(RSQLite::SQLite(), path)
 	# Disable auto commit
 	dbBegin(con)
-
-	# DEBUG: imports only year of last_seen, first_seen is fine
-	sql <- "SELECT first_seen, last_seen FROM peer LIMIT 100"
-	peers <- dbGetQuery(con, sql)
-	print(peers)
-	print(typeof(peers$first_seen))
-	print(typeof(peers$last_seen))
-	stop("breakpoint")
-
 	# Read peer table
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
@@ -49,7 +40,7 @@ filter_peers <- function(peers){
 
 hour_timestamps <- function(timestamps){
 	# Parse timestamps
-	timestamps <- as.POSIXct(timestamps, tz="GMT")
+	timestamps <- as.POSIXct(timestamps, tz="GMT", origin="1960-01-01")
 	# Truncate to hours
 	timestamps <- trunc(timestamps, units="hours")
 	# Revert to strings
