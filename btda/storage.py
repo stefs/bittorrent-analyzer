@@ -33,8 +33,8 @@ class Peer(Base):
 	continent = sqlalchemy.Column(sqlalchemy.types.String)
 	first_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
 	last_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
-	first_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
-	last_seen = sqlalchemy.Column(sqlalchemy.types.DateTime)
+	first_seen = sqlalchemy.Column(sqlalchemy.types.Integer)
+	last_seen = sqlalchemy.Column(sqlalchemy.types.Integer)
 	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)
 	visits = sqlalchemy.Column(sqlalchemy.types.Integer)
 	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht')) # TODO database should have enum support
@@ -59,7 +59,7 @@ class Request(Base):
 	__tablename__ = 'request'
 
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
-	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
+	timestamp = sqlalchemy.Column(sqlalchemy.types.Integer)
 	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht'))
 	received_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	duplicate_peers = sqlalchemy.Column(sqlalchemy.types.Integer)
@@ -71,7 +71,7 @@ class Statistic(Base):
 	__tablename__ = 'statistic'
 
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
-	timestamp = sqlalchemy.Column(sqlalchemy.types.DateTime)
+	timestamp = sqlalchemy.Column(sqlalchemy.types.Integer)
 	peer_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
 	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
@@ -128,11 +128,11 @@ class Database:
 			location = self.get_place_by_ip(peer.ip_address)
 			host = get_short_hostname(peer.ip_address)
 			partial_ip = anonymize_ip(peer.ip_address)
-			timestamp = datetime.datetime.utcnow()
+			timestamp = datetime.datetime.now()
 
 			# Write to database
 			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, city=location[0], country=location[1], continent=location[2],
-					first_pieces=peer.pieces, last_pieces=None, first_seen=timestamp, last_seen=None,
+					first_pieces=peer.pieces, last_pieces=None, first_seen=int(timestamp.timestamp()), last_seen=None,
 					max_speed=None, visits=1, source=peer.source.name, torrent=peer.torrent)
 			try:
 				session.add(new_peer)
@@ -159,8 +159,8 @@ class Database:
 				database_peer.last_seen = database_peer.first_seen
 
 			# Calculate max download speed
-			timestamp = datetime.datetime.utcnow()
-			time_delta = timestamp - database_peer.last_seen
+			timestamp = datetime.datetime.now()
+			time_delta = timestamp - datetime.datetime.fromtimestamp(database_peer.last_seen)
 			time_delta_seconds = time_delta.total_seconds()
 			pieces_delta = peer.pieces - database_peer.last_pieces
 			pieces_per_second = pieces_delta / time_delta_seconds
@@ -168,7 +168,7 @@ class Database:
 
 			# Update peer
 			database_peer.last_pieces = peer.pieces
-			database_peer.last_seen = timestamp
+			database_peer.last_seen = int(timestamp.timestamp())
 			database_peer.visits += 1
 			if database_peer.max_speed is None or pieces_per_second > database_peer.max_speed:
 				database_peer.max_speed = pieces_per_second
@@ -239,7 +239,7 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_request = Request(timestamp=datetime.datetime.utcnow(),
+		new_request = Request(timestamp=datetime.datetime.now().timestamp(),
 				source=source.name,
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
@@ -270,7 +270,7 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_statistic = Statistic(timestamp=datetime.datetime.utcnow(),
+		new_statistic = Statistic(timestamp=datetime.datetime.now().timestamp(),
 				peer_queue=peer_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,

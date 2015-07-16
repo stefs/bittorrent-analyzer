@@ -1,7 +1,6 @@
 [TOC]
 
 * Measure timeout on connection establishment
-* use sendall instead of send loop
 
 # BitTorrent Download Analyzer
 This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
@@ -18,7 +17,7 @@ This is work in progress.
     * Hardwaredaten der VM notieren
     * Counting transition from leecher to seeder (~98%)
     * Justify config values
-* ! **FIXME:** last_seen is only year in R, database is locked error ([see](output/2015-05-13_16-03-21_faui1-246_crit.log)), bad peer objects in queue ([see](output/2015-05-13_16-03-21_faui1-246.log))
+* ! **FIXME:** database is locked error ([see](output/2015-05-13_16-03-21_faui1-246_crit.log)), bad peer objects in queue ([see](output/2015-05-13_16-03-21_faui1-246.log))
 * ! Note used torrents with time frame and send to RRZE
 * Tidy readme: Requirements, installation, usage, thanks
 * (Tool organization in analyis modules)

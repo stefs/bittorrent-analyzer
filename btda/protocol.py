@@ -131,7 +131,7 @@ class PeerSession:
 		length_prefix_tuple = struct.unpack('>I', length_prefix_bytes)
 		length_prefix = length_prefix_tuple[0]
 		if length_prefix == 0:
-			return (-1, b'')
+			return Message(-1, b'')
 
 		# Receive message id and payload
 		message_id_bytes = self.receive_bytes(1) # PeerError
