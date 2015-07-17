@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(DBI)
+library(ggplot2)
 
 read_db <- function(path){
 	# Open raw_peersbase connection
@@ -11,12 +12,15 @@ read_db <- function(path){
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, complete_threshold FROM torrent"
+	sql <- "SELECT id, complete_threshold, display_name FROM torrent"
 	torrents <- dbGetQuery(con, sql)
+	# Read request table
+	sql <- "SELECT timestamp, completed, torrent FROM request"
+	requests <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
 	# Combine tables
-	ret <- list(peers, torrents)
+	ret <- list(peers, torrents, requests)
 	# Return result
 	return(ret)
 }
@@ -51,33 +55,56 @@ hour_timestamps <- function(timestamps){
 
 aggregate_time <- function(peers){
 	# Aggregate by torrent id and last seen
-	values_df <- data.frame(peer_count=peers$id)
-	groups <- list(group_torrent=peers$torrent, group_last_seen=peers$last_seen)
+	values_df <- data.frame(downloads=peers$id)
+	groups <- list(group_torrent=peers$torrent, group_hour=peers$last_seen)
 	ret <- aggregate(values_df, by=groups, FUN=length)
 	# Return result
 	return(ret)
 }
 
-plot_downloads <- function(downloads){
-	# For each torrent id
-	for (torrent in unique(downloads$group_torrent)) {
-		# Extract all rows with that id
-		values <- downloads[downloads$group_torrent==torrent,]
-		# Create barplot
-		values <- downloads$peer_count
-		names(values) <- downloads$group_last_seen
-		barplot(values)
-	}
+filter_download <- function(downloads, torrent){
+	# Extract all rows with that id
+	downloads <- downloads[downloads$group_torrent==torrent,]
+	# Drop torrend id
+	downloads$group_torrent <- NULL
+	# Return result
+	return(downloads)
 }
 
+filter_request <- function(requests, torrent){
+	# Delete rows without complete value
+	requests <- requests[complete.cases(requests$completed),]
+	# Extract all rows with that id
+	requests <- requests[requests$torrent==torrent,]
+	# Drop torrend id
+	requests$torrent <- NULL
+	# Return result
+	return(requests)
+}
+
+aggregate_complete <- function(requests) {
+	# Keep one value per hour
+	values_df <- data.frame(downloads=requests$completed)
+	groups <- list(group_hour=requests$timestamp)
+	requests <- aggregate(values_df, by=groups, FUN=min)
+	# Calculate change per hour
+	requests$downloads <- append(diff(requests$downloads), NA)
+	requests <- requests[complete.cases(requests$downloads),]
+	# Return result
+	return(requests)
+}
+
+# Read database
 args <- commandArgs(trailingOnly=TRUE)
-print("*** Read from database ***")
 ret <- read_db(args[1])
 peers <- ret[[1]]
 torrents <- ret[[2]]
-print(head(peers))
-print(torrents)
+requests <- ret[[3]]
+
+# Prepare data
 print("*** Join peers and torrents ***")
+print(head(peers))
+print(head(torrents))
 peers <- merge_with_torrents(peers, torrents)
 print(head(peers))
 print("*** Filter peers ***")
@@ -89,8 +116,48 @@ peers$last_seen <- hour_timestamps(peers$last_seen)
 print(head(peers))
 print("*** Aggregated downloads ***")
 downloads <- aggregate_time(peers)
-print(downloads)
-print("*** Plot downloads ***")
-plot_downloads(downloads)
-print("*** End ***")
+print(head(downloads))
+print("*** Parse request timestamps ***")
+print(head(requests))
+requests$timestamp <- hour_timestamps(requests$timestamp)
+print(head(requests))
 
+# Data per torrent
+pdf("plots.pdf", width=9, height=6)
+for (torrent in unique(downloads$group_torrent)) {
+	# Get torrent name
+	name <- torrents[torrents$id==torrent,]
+	name <- strtrim(name$display_name, 60)
+	name <- paste("Torrent ", torrent, ": ", name, sep="")
+	print(name)
+
+	# Scrape data
+	filtered <- filter_request(requests, torrent)
+	if (nrow(filtered) == 0) {
+		print("No scrape data")
+		scrape <- data.frame(group_hour=NA, downloads=NA)
+	} else {
+		scrape <- aggregate_complete(filtered)
+	}
+	print(scrape)
+
+	# Confirmed data
+	confirmed <- filter_download(downloads, torrent)
+	print(confirmed)
+
+	# Merge on timestamp
+	scrape$category <- "scrape"
+	confirmed$category <- "confirmed"
+	total <- rbind(scrape, confirmed)
+	total <- total[complete.cases(total$group_hour),]
+	print(total)
+
+	# Plot that shit
+	print(
+		ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
+		geom_bar(stat="identity", position="dodge") +
+		theme(axis.text.x=element_text(angle=90, hjust=1)) +
+		labs(title=name, x="Time UTC", y="Downloads")
+	)
+}
+print("*** End ***")
