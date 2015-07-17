@@ -242,7 +242,7 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_request = Request(timestamp=datetime.datetime.now().timestamp(),
+		new_request = Request(timestamp=int(datetime.datetime.now().timestamp()),
 				source=source.name,
 				received_peers=received_peers,
 				duplicate_peers=duplicate_peers,
@@ -276,7 +276,7 @@ class Database:
 		session = self.Session()
 
 		# Write to database
-		new_statistic = Statistic(timestamp=datetime.datetime.now().timestamp(),
+		new_statistic = Statistic(timestamp=int(datetime.datetime.now().timestamp()),
 				peer_queue=peer_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,

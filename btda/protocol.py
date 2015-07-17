@@ -86,7 +86,7 @@ class PeerSession:
 		# Parse reserved bytes for protocol extensions according to https://wiki.theory.org/BitTorrentSpecification#Reserved_Bytes
 		reserved = handshake_tuple[1]
 		reserved_bitmap = bytes_to_bitmap(reserved)
-		logging.info('Reserved bytes in received handshake: {}'.format(reserved_bitmap))
+		logging.debug('Reserved bytes in received handshake: {}'.format(reserved_bitmap))
 
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
@@ -95,7 +95,7 @@ class PeerSession:
 
 		# Parse peer id
 		received_peer_id = handshake_tuple[3]
-		logging.info('ID of connected peer is ' + str(received_peer_id))
+		logging.debug('ID of connected peer is ' + str(received_peer_id))
 
 		return received_peer_id, reserved, received_info_hash
 
@@ -114,7 +114,7 @@ class PeerSession:
 		if extension_enabled:
 			reserved[5] |= 0x10
 		reserved_bitmap = bytes_to_bitmap(reserved)
-		logging.info('Reserved bytes in sent handshake: {}'.format(reserved_bitmap))
+		logging.debug('Reserved bytes in sent handshake: {}'.format(reserved_bitmap))
 		format_string = '>B{}s8s20s20s'.format(len(pstr))
 		handshake = struct.pack(format_string, len(pstr), pstr, reserved, info_hash, self.peer_id.encode())
 		assert len(handshake) == 49 + len(pstr), 'handshake has the wrong length'

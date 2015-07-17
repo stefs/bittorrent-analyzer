@@ -219,7 +219,7 @@ class SwarmAnalyzer:
 					self.late_evaluation_error.increment()
 				logging.warning('Connection establishment failed: {}'.format(err))
 				continue
-			logging.info('Connection established')
+			logging.debug('Connection established')
 
 			# Contact peer
 			dht_port = config.dht_node_port if self.dht_started else None
@@ -247,7 +247,7 @@ class SwarmAnalyzer:
 			except OSError as err:
 				logging.warning('Closing of connectioin failed: {}'.format(err))
 			else:
-				logging.info('Connection closed')
+				logging.debug('Connection closed')
 
 			# Put in visited queue
 			revisit_time = time.perf_counter() + delay
@@ -289,7 +289,8 @@ class SwarmAnalyzer:
 			# Try scrape request
 			try:
 				seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
-			except TrackerError:
+			except TrackerError as err:
+				logging.warning('Scrape request failed on torrent {}: {}'.format(torrent_key, err))
 				seeders = completed = leechers = None
 
 			# Ask tracker
@@ -470,7 +471,8 @@ class SwarmAnalyzer:
 					if is_duplicate[0]:
 						duplicate_counter += 1
 				try:
-					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter, end-start, key)
+					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter,
+							None, None, None, end-start, key)
 				except DatabaseError as err:
 					logging.critical(err)
 
@@ -590,7 +592,7 @@ class PeerQueue(queue.PriorityQueue):
 		# Unpack duplicate indicator
 		peer, is_duplicate = peer
 
-		# FIXME: Analysis of peer parameter for debugging, found instance where peer was of type util.Source
+		# FIXME: Analysis of peer parameter for debugging, found instance where peer was of type util.Source, EDIT: still happens
 		if not type(peer) is Peer:
 			logging.critical('Bad object in peer queue: type is {}, object is {}, stacktrace is\n{}\n'.format(
 					type(peer), peer, ''.join(traceback.format_stack())))
@@ -657,8 +659,6 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			if torrent_id is None:
 				logging.warning('Ignoring incoming peer with unknown info hash')
 				return
-			else:
-				logging.info('Storing incoming peer for torrent {}'.format(torrent_id))
 
 			# Queue for peer handler
 			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, Source.incoming, torrent_id, None)

@@ -231,15 +231,15 @@ class TrackerCommunicator:
 
 		# Extract attributes
 		try:
-			seeders = response[b'complete']
+			seeders = item[b'complete']
 		except KeyError as err:
 			raise TrackerError('Complete value not found')
 		try:
-			completed = response[b'downloaded']
+			completed = item[b'downloaded']
 		except KeyError as err:
 			raise TrackerError('Downloaded value not found')
 		try:
-			leechers = response[b'incomplete']
+			leechers = item[b'incomplete']
 		except KeyError as err:
 			raise TrackerError('Incomplete value not found')
 		return seeders, completed, leechers
