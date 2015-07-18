@@ -7,6 +7,7 @@ import socket
 import binascii
 import struct
 import time
+import heapq
 
 ### CONSTANTS ###
 
@@ -17,8 +18,6 @@ UT_METADATA_BLOCK_SIZE = 16384
 Address = collections.namedtuple('Address', 'ip port')
 
 Message = collections.namedtuple('Message', 'type payload')
-
-Peer = collections.namedtuple('Peer', 'revisit ip_address port id bitfield pieces source torrent key')
 
 Torrent = collections.namedtuple('Torrent', 'announce_url info_hash info_hash_hex pieces_count piece_size complete_threshold')
 
@@ -182,6 +181,67 @@ class MeanList:
 				mean = sum(self.values) / len(self.values)
 				self.values = list()
 				return mean
+
+# This queue
+# - saves each item only once, regarding the item's hash function
+# - rejects items which were stored earlier and removed meanwhile
+# - gives feedback whether or not the item has been accepted
+# - allows adding an item with circumvention of these restrictions
+# - uses the heap queue algorithm to release smallest items first
+# - is thread-safe
+# Items must define rich comparison methods and the hash function
+class PrioritySetQueue:
+	def __init__(self):
+		self.mutex = threading.Lock()
+		self.queue = list()
+		self.total = set()
+
+	def __len__(self):
+		with self.mutex:
+			return len(self.queue)
+
+	def put(self, item):
+		with self.mutex:
+			if hash(item) in self.total:
+				return False
+			else:
+				self.total.add(hash(item))
+				heapq.heappush(self.queue, item)
+				return True
+
+	def force_put(self, item):
+		with self.mutex:
+			self.total.add(hash(item))
+			heapq.heappush(self.queue, item)
+
+	def get(self):
+		with self.mutex:
+			try:
+				return heapq.heappop(self.queue)
+			except IndexError:
+				raise PrioritySetQueueEmpty
+
+class PrioritySetQueueEmpty(Exception):
+	pass
+
+class RichComparisonMixin:
+	def __lt__(self, other):
+		raise NotImplementedError
+
+	def __eq__(self, other):
+		raise NotImplementedError
+
+	def __le__(self, other):
+		return self.__lt__(other) or self.__eq__(other)
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
+
+	def __gt__(self, other):
+		return not self.__lt__(other) and not self.__eq__(other)
+
+	def __ge__(self, other):
+		return not self.__lt__(other)
 
 ### METHODS ###
 

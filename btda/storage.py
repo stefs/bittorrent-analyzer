@@ -271,7 +271,9 @@ class Database:
 	#  @param thread_workload Percentage of active time between 0 and 1
 	#  @param mean_eval_time Averige time for receiving all messages without final timeout
 	#  @exception DatabaseError
-	def store_statistic(self, peer_queue, unique_incoming, success_active, failed_active_first, failed_active_later, success_passive, failed_passive, thread_workload, mean_eval_time):
+	def store_statistic(self, peer_queue, unique_incoming, success_active,
+			failed_active_first, failed_active_later, success_passive,
+			failed_passive, thread_workload, mean_eval_time):
 		# Get thread-local session
 		session = self.Session()
 

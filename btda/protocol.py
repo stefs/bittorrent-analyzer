@@ -243,7 +243,9 @@ def generate_peer_id():
 #  @return Printable string with type string
 def message_to_string(message):
 	# Known message types according to http://www.bittorrent.org/beps/bep_0003.html#peer-messages
-	peer_message_type = {0: 'choke', 1: 'unchoke', 2: 'interested', 3: 'not interested', 4: 'have', 5: 'bitfield', 6: 'request', 7: 'piece', 8: 'cancel', 9: 'port', 20: 'extended'}
+	peer_message_type = {0: 'choke', 1: 'unchoke', 2: 'interested',
+			3: 'not interested', 4: 'have', 5: 'bitfield', 6: 'request',
+			7: 'piece', 8: 'cancel', 9: 'port', 20: 'extended'}
 
 	# Custom id for a keepalive signal
 	peer_message_type[-1] = 'keepalive'

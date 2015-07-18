@@ -2,6 +2,13 @@
 ## TODO
 * initial upload
 * scrape request
+* only one tracker per torrent supported
+* seperate evaluation complete threshold from stop tracking threshold
+
+## Questions
+* How many confirmed downloads are there
+* How many downloads are reported by scrape requests
+* How many new peers are received
 
 ## Resourcces BitTorrent
 * http://www.bittorrent.org/beps/bep_0000.html

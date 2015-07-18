@@ -1,6 +1,8 @@
 [TOC]
 
 * Measure timeout on connection establishment
+* Reduce peer_revisit_delay to 3 min, review thread workload
+* Remove ip and peerid from db
 
 # BitTorrent Download Analyzer
 This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.

@@ -29,7 +29,7 @@ dht_request_interval = 5 * 60
 tracker_request_interval = 13 * 60
 
 # Time delay for revisiting unfinished peers in seconds
-peer_revisit_delay = 13 * 60
+peer_revisit_delay = 5 * 60
 
 # When collecting all messages from a peer, cancel after this amount
 receive_message_max = 128

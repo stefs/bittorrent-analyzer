@@ -41,7 +41,7 @@ class SwarmAnalyzer:
 		logging.basicConfig(**logging_config)
 
 		# Smart queue for peer management
-		self.peers = PeerQueue()
+		self.peers = PrioritySetQueue()
 		self.visited_peers = queue.Queue()
 		self.all_incoming_peers = dict() # equality check
 
@@ -185,14 +185,14 @@ class SwarmAnalyzer:
 
 		# Start main loop
 		while not self.shutdown_request.is_set():
-			# Get new peer with timeout to react to shutdown request
+			# Get new peer, wait on empty queue
 			try:
+				peer = self.peers.get()
+			except PrioritySetQueueEmpty:
 				self.timer.inactive(thread)
-				peer = self.peers.get(timeout=config.evaluator_reaction)
-			except queue.Empty:
-				continue
-			finally:
+				self.shutdown_request.wait(config.evaluator_reaction)
 				self.timer.active(thread)
+				continue
 
 			# Delay evaluation
 			delay = peer.revisit - time.perf_counter()
@@ -201,7 +201,7 @@ class SwarmAnalyzer:
 				self.timer.inactive(thread)
 				self.shutdown_request.wait(config.evaluator_reaction)
 				self.timer.active(thread)
-				self.peers.put((peer, None))
+				self.peers.force_put(peer)
 				continue
 
 			# Establish connection
@@ -312,11 +312,13 @@ class SwarmAnalyzer:
 				# Put peers in queue
 				duplicate_counter = 0
 				for peer_ip in peer_ips:
-					new_peer = Peer(revisit=0, ip_address=peer_ip[0], port=peer_ip[1],
-							id=None, bitfield=None, pieces=None, source=Source.tracker, torrent=torrent_key, key=None)
-					is_duplicate = [False]
-					self.peers.put((new_peer, is_duplicate))
-					if is_duplicate[0]:
+					new_peer = Peer()
+					new_peer.revisit = 0
+					new_peer.ip_address = peer_ip[0]
+					new_peer.port = peer_ip[1]
+					new_peer.source = Source.tracker
+					new_peer.torrent = torrent_key
+					if not self.peers.put(new_peer):
 						duplicate_counter += 1
 				try:
 					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter,
@@ -398,9 +400,9 @@ class SwarmAnalyzer:
 					pass
 
 			# Update peer with results
-			peer = Peer(revisit, peer.ip_address, peer.port,
-					rec_peer_id, bitfield, downloaded_pieces,
-					peer.source, peer.torrent, key)
+			peer.id = rec_peer_id
+			peer.pieces = downloaded_pieces
+			peer.key = key
 
 			# Store evaluated peer and receive database key
 			try:
@@ -420,9 +422,8 @@ class SwarmAnalyzer:
 			# Write back peer when not finished and add key if necessary
 			if peer.pieces < self.torrents[peer.torrent].complete_threshold:
 				if peer.key is None:
-					*old_peer, key = peer
-					peer = Peer(*old_peer, key=peer_key)
-				self.peers.put((peer, None))
+					peer.key = peer_key
+				self.peers.force_put(peer)
 
 			# Allow waiting for all peers to be stored at shutdown
 			self.visited_peers.task_done()
@@ -464,11 +465,13 @@ class SwarmAnalyzer:
 				# Put in queue
 				duplicate_counter = 0
 				for peer in dht_peers:
-					new_peer = Peer(revisit=0, ip_address=peer[0], port=peer[1],
-							id=None, bitfield=None, pieces=None, source=Source.dht, torrent=key, key=None)
-					is_duplicate = [False]
-					self.peers.put((new_peer, is_duplicate))
-					if is_duplicate[0]:
+					new_peer = Peer()
+					new_peer.revisit = 0
+					new_peer.ip_address = peer[0]
+					new_peer.port = peer[1]
+					new_peer.source = Source.dht
+					new_peer.torrent = key
+					if not self.peers.put(new_peer):
 						duplicate_counter += 1
 				try:
 					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter,
@@ -509,7 +512,7 @@ class SwarmAnalyzer:
 			self.shutdown_request.wait(config.statistic_interval)
 			logging.info('Logging analysis statistics to database ...')
 			self.database.store_statistic(
-					peer_queue=self.peers.qsize(),
+					peer_queue=len(self.peers),
 					unique_incoming=len(self.all_incoming_peers),
 					success_active=self.active_success.get(),
 					failed_active_first=self.first_evaluation_error.get(),
@@ -570,50 +573,27 @@ class SwarmAnalyzer:
 		logging.info('Finished')
 		return True
 
-## Smart queue which excludes peers that are already in queue or processed earlier while keeping revisits
-#  according to http://stackoverflow.com/a/1581937 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l197
-class PeerQueue(queue.PriorityQueue):
-	## Add a set to remember processed peers
-	#  @param maxsize Passed in original method, passing through
-	#  @note Overrides intern method
-	def _init(self, maxsize):
-		# Call parent method
-		queue.PriorityQueue._init(self, maxsize)
+class Peer(RichComparisonMixin):
+	revisit = None
+	ip_address = None
+	port = None
+	id = None
+	pieces = None
+	source = None
+	torrent = None
+	key = None
 
-		# Add new attribute
-		self.all_peers = set()
+	def __lt__(self, other):
+		return self.revisit < other.revisit
 
-	## Put new peer in queue if not already processed, does not exclude peers with database id
-	#  @param peer Peer named tuple and duplicate indicator
-	#  @return True if this is a new peer, False if it has already been put
-	#  @note Overrides intern method
-	#  @warning Disables join option according to http://stackoverflow.com/a/24183479 and https://hg.python.org/cpython/file/3.4/Lib/queue.py#l147
-	def _put(self, peer):
-		# Unpack duplicate indicator
-		peer, is_duplicate = peer
+	def __eq__(self, other):
+		return self.revisit == other.revisit
 
-		# FIXME: Analysis of peer parameter for debugging, found instance where peer was of type util.Source, EDIT: still happens
-		if not type(peer) is Peer:
-			logging.critical('Bad object in peer queue: type is {}, object is {}, stacktrace is\n{}\n'.format(
-					type(peer), peer, ''.join(traceback.format_stack())))
-			return
-		if not type(peer[0]) in [int, float]:
-			logging.critical('Bad revisit attribute in peer: type is {}, object is {}, stacktrace is\n{}\n'.format(
-					type(peer[0]), peer[0], ''.join(traceback.format_stack())))
-			return
+	def __hash__(self):
+		return hash((self.ip_address, self.port, self.torrent))
 
-		# Create copy peer data for equality check
-		peer_equality = (peer.ip_address, peer.port, peer.torrent)
-
-		# Check if this is a revisit or if it is a new peer
-		if peer.key is not None or peer_equality not in self.all_peers:
-			# Call parent method
-			queue.PriorityQueue._put(self, peer)
-
-			# Remember equality information, set discards revisit duplicates
-			self.all_peers.add(peer_equality)
-		else:
-			is_duplicate[0] = True
+	def __str__(self):
+		return 'Peer {}'.format(self.key)
 
 ## Subclass of library class to change parameters, add attributes and add multithreading mix-in class
 class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -661,7 +641,11 @@ class PeerHandler(socketserver.BaseRequestHandler):
 				return
 
 			# Queue for peer handler
-			new_peer = Peer(None, self.client_address[0], self.client_address[1], None, None, None, Source.incoming, torrent_id, None)
+			new_peer = Peer()
+			new_peer.ip_address = self.client_address[0]
+			new_peer.port = self.client_address[1]
+			new_peer.source = Source.incoming
+			new_peer.torrent = torrent_id
 			revisit_time = time.perf_counter() + config.peer_revisit_delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
 			self.server.success.increment()
