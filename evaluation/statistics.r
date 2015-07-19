@@ -95,13 +95,18 @@ aggregate_complete <- function(requests) {
 }
 
 calc_size <- function(torrents) {
+	# Reduce piece size to kilobytes to prevent integer overflow
 	torrents$piece_kb <- torrents$piece_size / 1000
+	# Calculate total size
 	torrents$kilobytes <- torrents$pieces_count * torrents$piece_kb
+	# Convert to total size to gigabytes
 	torrents$gigabytes <- torrents$kilobytes/1000000
+	# Purge temporary values
 	torrents$piece_kb <- NULL
 	torrents$kilobytes <- NULL
 	torrents$piece_size <- NULL
 	torrents$pieces_count <- NULL
+	# Return result
 	return(torrents)
 }
 
@@ -137,7 +142,9 @@ torrents <- calc_size(torrents)
 print(head(torrents))
 
 # Data per torrent
-pdf("plots.pdf", width=9, height=6)
+outfile = sub(".sqlite", ".pdf", args[1])
+stopifnot(outfile != args[1])
+pdf(outfile, width=9, height=6)
 for (torrent in unique(downloads$group_torrent)) {
 	# Get torrent name
 	info <- torrents[torrents$id==torrent,]
@@ -175,4 +182,5 @@ for (torrent in unique(downloads$group_torrent)) {
 		labs(title=description, x="Time UTC", y="Downloads")
 	)
 }
+print(paste("Plot written to", outfile))
 print("*** End ***")

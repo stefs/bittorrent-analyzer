@@ -552,21 +552,27 @@ class SwarmAnalyzer:
 			logging.info('Waiting for DHT requests to finish ...')
 			self.dht_shutdown_done.wait()
 			self.dht_conn.close()
+			print('DHT requests terminated')
 		if self.active_evaluation:
 			logging.info('Waiting for current evaluations to finish ...')
 			self.active_shutdown_done.wait()
+			print('Active evaluation terminated')
 		if self.tracker_requests:
 			logging.info('Waiting for current tracker requests to finish ...')
 			self.tracker_shutdown_done.wait()
+			print('Tracker requests terminated')
 		if self.passive_evaluation:
 			logging.info('Shutdown peer evaluation server ...')
 			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
+			print('Passive evaluation server terminated')
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
 			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
+			print('Database thread terminated')
 		if self.statistic_started:
 			logging.info('Waiting for analysis statistics to be written to database ...')
 			self.statistic_shutdown.wait()
+			print('Statistics thread terminated')
 		self.database.close()
 
 		# Do not reraise incoming exceptions, as it is already logged above

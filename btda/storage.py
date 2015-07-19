@@ -25,8 +25,6 @@ class Peer(Base):
 
 	# Types according to http://docs.sqlalchemy.org/en/rel_0_9/core/type_basics.html#generic-types
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
-	partial_ip = sqlalchemy.Column(sqlalchemy.types.String)
-	peer_id = sqlalchemy.Column(sqlalchemy.types.Binary)
 	host = sqlalchemy.Column(sqlalchemy.types.String)
 	city = sqlalchemy.Column(sqlalchemy.types.String)
 	country = sqlalchemy.Column(sqlalchemy.types.String)
@@ -130,13 +128,14 @@ class Database:
 			# Get meta data
 			location = self.get_place_by_ip(peer.ip_address)
 			host = get_short_hostname(peer.ip_address)
-			partial_ip = anonymize_ip(peer.ip_address)
 			timestamp = datetime.datetime.now()
 
 			# Write to database
-			new_peer = Peer(partial_ip=partial_ip, peer_id=peer.id, host=host, city=location[0], country=location[1], continent=location[2],
-					first_pieces=peer.pieces, last_pieces=None, first_seen=int(timestamp.timestamp()), last_seen=None,
-					max_speed=None, visits=1, source=peer.source.name, torrent=peer.torrent)
+			new_peer = Peer(host=host, city=location[0], country=location[1],
+					continent=location[2], first_pieces=peer.pieces,
+					last_pieces=None, first_seen=int(timestamp.timestamp()),
+					last_seen=None, max_speed=None, visits=1,
+					source=peer.source.name, torrent=peer.torrent)
 			try:
 				session.add(new_peer)
 				session.commit()
@@ -323,16 +322,3 @@ def get_short_hostname(ip_address):
 				return host_list[-1]
 			except IndexError:
 				return None
-
-## Anonymize an IP address according to https://support.google.com/analytics/answer/2763052?hl=en
-#  @param ip_address Not anonymized ip adderss
-#  @return Anonymized ip address
-def anonymize_ip(ip_address):
-	ip = ipaddress.ip_address(ip_address)
-	if ip.version == 4:
-		network = ip_address + '/24'
-		net = ipaddress.IPv4Network(network, strict=False)
-	elif ip.version == 6:
-		network = ip_address + '/48'
-		net = ipaddress.IPv6Network(network, strict=False)
-	return str(net.network_address)
