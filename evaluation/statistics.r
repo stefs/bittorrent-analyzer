@@ -3,7 +3,7 @@
 library(DBI)
 library(ggplot2)
 
-read_db <- function(path){
+read_db <- function(path) {
 	# Open raw_peersbase connection
 	con <- dbConnect(RSQLite::SQLite(), path)
 	# Disable auto commit
@@ -12,7 +12,7 @@ read_db <- function(path){
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, complete_threshold, display_name FROM torrent"
+	sql <- "SELECT id, complete_threshold, display_name, pieces_count, piece_size FROM torrent"
 	torrents <- dbGetQuery(con, sql)
 	# Read request table
 	sql <- "SELECT timestamp, completed, torrent FROM request"
@@ -25,14 +25,14 @@ read_db <- function(path){
 	return(ret)
 }
 
-merge_with_torrents <- function(peers, torrents){
+merge_with_torrents <- function(peers, torrents) {
 	# Inner join
 	peers <- merge(peers, torrents, by.x="torrent", by.y="id")
 	# Return result
 	return(peers)
 }
 
-filter_peers <- function(peers){
+filter_peers <- function(peers) {
 	# Filter for usable last pieces
 	peers <- peers[complete.cases(peers$last_pieces),]
 	# Filter according to threshold
@@ -42,7 +42,7 @@ filter_peers <- function(peers){
 	return(peers)
 }
 
-hour_timestamps <- function(timestamps){
+hour_timestamps <- function(timestamps) {
 	# Parse timestamps
 	timestamps <- as.POSIXct(timestamps, tz="GMT", origin="1960-01-01")
 	# Truncate to hours
@@ -53,7 +53,7 @@ hour_timestamps <- function(timestamps){
 	return(timestamps)
 }
 
-aggregate_time <- function(peers){
+aggregate_time <- function(peers) {
 	# Aggregate by torrent id and last seen
 	values_df <- data.frame(downloads=peers$id)
 	groups <- list(group_torrent=peers$torrent, group_hour=peers$last_seen)
@@ -71,7 +71,7 @@ filter_download <- function(downloads, torrent){
 	return(downloads)
 }
 
-filter_request <- function(requests, torrent){
+filter_request <- function(requests, torrent) {
 	# Delete rows without complete value
 	requests <- requests[complete.cases(requests$completed),]
 	# Extract all rows with that id
@@ -94,6 +94,17 @@ aggregate_complete <- function(requests) {
 	return(requests)
 }
 
+calc_size <- function(torrents) {
+	torrents$piece_kb <- torrents$piece_size / 1000
+	torrents$kilobytes <- torrents$pieces_count * torrents$piece_kb
+	torrents$gigabytes <- torrents$kilobytes/1000000
+	torrents$piece_kb <- NULL
+	torrents$kilobytes <- NULL
+	torrents$piece_size <- NULL
+	torrents$pieces_count <- NULL
+	return(torrents)
+}
+
 # Read database
 args <- commandArgs(trailingOnly=TRUE)
 ret <- read_db(args[1])
@@ -104,7 +115,6 @@ requests <- ret[[3]]
 # Prepare data
 print("*** Join peers and torrents ***")
 print(head(peers))
-print(head(torrents))
 peers <- merge_with_torrents(peers, torrents)
 print(head(peers))
 print("*** Filter peers ***")
@@ -121,15 +131,20 @@ print("*** Parse request timestamps ***")
 print(head(requests))
 requests$timestamp <- hour_timestamps(requests$timestamp)
 print(head(requests))
+print("*** Calculate torrent size ***")
+print(head(torrents))
+torrents <- calc_size(torrents)
+print(head(torrents))
 
 # Data per torrent
 pdf("plots.pdf", width=9, height=6)
 for (torrent in unique(downloads$group_torrent)) {
 	# Get torrent name
-	name <- torrents[torrents$id==torrent,]
-	name <- strtrim(name$display_name, 60)
-	name <- paste("Torrent ", torrent, ": ", name, sep="")
-	print(name)
+	info <- torrents[torrents$id==torrent,]
+	name <- strtrim(info$display_name, 50)
+	size <- round(info$gigabytes, digits=1)
+	description <- paste("Torrent ", torrent, ": \"", name, "\" (", size, " GB)", sep="")
+	print(description)
 
 	# Scrape data
 	filtered <- filter_request(requests, torrent)
@@ -157,7 +172,7 @@ for (torrent in unique(downloads$group_torrent)) {
 		ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
 		geom_bar(stat="identity", position="dodge") +
 		theme(axis.text.x=element_text(angle=90, hjust=1)) +
-		labs(title=name, x="Time UTC", y="Downloads")
+		labs(title=description, x="Time UTC", y="Downloads")
 	)
 }
 print("*** End ***")
