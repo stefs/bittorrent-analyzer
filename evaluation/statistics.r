@@ -12,7 +12,7 @@ read_db <- function(path) {
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, complete_threshold, display_name, pieces_count, piece_size FROM torrent"
+	sql <- "SELECT id, display_name, pieces_count, piece_size FROM torrent"
 	torrents <- dbGetQuery(con, sql)
 	# Read request table
 	sql <- "SELECT timestamp, completed, torrent FROM request"
@@ -32,12 +32,19 @@ merge_with_torrents <- function(peers, torrents) {
 	return(peers)
 }
 
+evaluation_threshold <- function(peers, threshold) {
+	# Calculate threshold in pieces
+	peers$threshold = ceiling(peers$pieces_count * threshold)
+	# Return result
+	return(peers)
+}
+
 filter_peers <- function(peers) {
 	# Filter for usable last pieces
 	peers <- peers[complete.cases(peers$last_pieces),]
 	# Filter according to threshold
-	peers <- peers[peers$first_pieces < peers$complete_threshold,]
-	peers <- peers[peers$last_pieces >= peers$complete_threshold,]
+	peers <- peers[peers$first_pieces < peers$threshold,]
+	peers <- peers[peers$last_pieces >= peers$threshold,]
 	# Return result
 	return(peers)
 }
@@ -118,9 +125,12 @@ torrents <- ret[[2]]
 requests <- ret[[3]]
 
 # Prepare data
-print("*** Join peers and torrents ***")
 print(head(peers))
+print("*** Join peers and torrents ***")
 peers <- merge_with_torrents(peers, torrents)
+print(head(peers))
+print("*** Calculate evaluation threshold ***")
+peers <- evaluation_threshold(peers, 0.98)
 print(head(peers))
 print("*** Filter peers ***")
 peers <- filter_peers(peers)
@@ -174,7 +184,7 @@ for (torrent in unique(downloads$group_torrent)) {
 	total <- total[complete.cases(total$group_hour),]
 	print(total)
 
-	# Plot that shit
+	# Plot with ggplot2
 	print(
 		ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
 		geom_bar(stat="identity", position="dodge") +

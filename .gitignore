@@ -51,8 +51,6 @@ env-*
 # tests
 test/
 
-Rplots.pdf
-
 # thesis
 thesis/*.aux
 thesis/*.bbl
@@ -70,3 +68,5 @@ thesis/*.toc
 html/
 latex/
 
+# R
+.Rhistory
