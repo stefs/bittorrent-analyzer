@@ -49,6 +49,7 @@ This is work in progress.
 * Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
 * Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the *pymdht* project using local telnet
 * Actively contact collected peers and calculate minimum number of downloaded pieces by receiving all *have* and *bitfield* messages until a timeout
+* Reconnect to peers until they have downloaded a defined threshold
 * Passively listen for incoming peer connections and calculate minimum number of downloaded pieces analog
 * Save number of downloaded pieces from first and last visit and maximum download speed per peer in a SQLite database
 * Save city, country and continent via IP address geolocation

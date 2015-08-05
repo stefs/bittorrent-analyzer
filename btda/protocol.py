@@ -155,19 +155,21 @@ class PeerSession:
 	#  @return List of tuples of message id and payload and duration without last timeout
 	def receive_all_messages(self):
 		messages = list()
-		start = end = time.perf_counter()
+		max_duration = 0
 		while len(messages) < config.receive_message_max:
+			start = time.perf_counter()
 			try:
 				message = self.receive_message()
 			except PeerError as err:
 				logging.info('No more messages: {}'.format(err))
 				break
-			else:
-				end = time.perf_counter()
-				messages.append(message)
+			messages.append(message)
+			max_duration = max(time.perf_counter() - start, max_duration)
 		else:
 			logging.warning('Reached message limit')
-		return messages, end - start
+		if max_duration == 0:
+			max_duration = None
+		return messages, max_duration
 
 	## Sends a BitTorrent Protocol message
 	#  @param message The message

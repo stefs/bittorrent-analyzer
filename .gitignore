@@ -63,6 +63,8 @@ thesis/*.out
 thesis/*.run.xml
 thesis/*.synctex.gz
 thesis/*.toc
+thesis/*.lof
+thesis/*.lot
 
 # doxygen
 html/

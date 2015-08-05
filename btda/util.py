@@ -167,11 +167,12 @@ class MeanList:
 		self.values = list()
 		self.lock = threading.Lock()
 
-	## Add a new value
-	#  @param value The new value
+	## Add a new value while ignoring Nones
+	#  @param value The new value or None
 	def append(self, value):
-		with self.lock:
-			self.values.append(value)
+		if value is not None:
+			with self.lock:
+				self.values.append(value)
 
 	## Calculate mean and empty list
 	#  @return The mean value
