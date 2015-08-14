@@ -284,15 +284,15 @@ def count_bits(bitfield):
 #  @param outpath File path for output without extensions
 def plot_receive_duration(data, outfile):
 	# round values and calculate frequency
-	data = map(round, data)
-	counter = collections.Counter(data)
+	rounded = list(map(round, data))
+	counter = collections.Counter(rounded)
 	frequency = counter.most_common()
 	value, count = map(list, zip(*frequency))
 
 	# save raw data
 	with open(outfile+'_timeout.txt', mode='w') as file:
-		file.write(repr(list(data)))
-		file.write(len(data))
+		file.write(repr(rounded))
+		file.write('\n'+str(len(rounded)))
 
 	# plot with matplotlib
 	matplotlib.pyplot.figure(figsize=(9, 3))
