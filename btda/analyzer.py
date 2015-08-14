@@ -549,7 +549,7 @@ class SwarmAnalyzer:
 
 		# Plot message receive durations for timeout calibration
 		if config.rec_dur_analysis:
-			util.plot_receive_duration(self.eval_timer)
+			plot_receive_duration(self.eval_timer)
 
 		# Wait for termination
 		if self.dht_started:
