@@ -332,9 +332,14 @@ They have the following roles:
 \paragraph{\config{network\_timeout}}
 The timeout for network operations is five seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical as a failure is visible in the log files and did not happen during this research. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. Message collection is considered to be complete after the timeout finished without receiving a message.
 
-To assess a mimimum timeout, the maximum used time between messages was recorded for every peer session. An average of these values was calculated and stored every five minutes, according to \config{statistic\_interval}. Only for this timeout estimation run \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. As can be seen in \ref{timeout-test}, five seconds is about \_ times above the total average of \_ seconds.
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{files/2015-08-14_14-43-31_faui1-246_timeout}
+\caption{Frequency of durations needed for receiving a peer message}
+\label{timeout-calibration}
+\end{figure}
 
-INSERT MAXIMUM MESSAGE TIMEOUT AVERAGES HERE
+To assess a mimimum timeout, a analysis with special configuration parameters was performed. Here the maximum time used for receiving a message was recorded for every peer contact. These durations were rounded and the number of occurrences for each analyzed in, resulting in the graph of figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. The diagram shows, with a five second timeout the vast majority of messages will be received.
 
 \paragraph{\config{torrent\_complete\_threshold}}
 \dots

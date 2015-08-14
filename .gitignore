@@ -65,6 +65,7 @@ thesis/*.synctex.gz
 thesis/*.toc
 thesis/*.lof
 thesis/*.lot
+thesis/*.pdf
 
 # doxygen
 html/
