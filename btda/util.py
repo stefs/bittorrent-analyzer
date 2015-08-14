@@ -290,14 +290,19 @@ def plot_receive_duration(data, outfile):
 	value, count = map(list, zip(*frequency))
 
 	# save raw data
+	timeout = 6
+	below = 0
+	for d in data:
+		if d <= timeout:
+			below += 1
 	with open(outfile+'_timeout.txt', mode='w') as file:
 		file.write(repr(rounded))
-		file.write('\n'+str(len(rounded)))
+		file.write('\n{} of {} are below {}'.format(below, len(data), timeout))
 
 	# plot with matplotlib
-	matplotlib.pyplot.figure(figsize=(9, 3))
+	matplotlib.pyplot.figure(figsize=(11, 4))
 	matplotlib.pyplot.bar(value, count, label='lala', color='grey', align='center')
-	matplotlib.pyplot.axvline(x=6)
+	matplotlib.pyplot.axvline(x=timeout)
 	matplotlib.pyplot.xlabel('Seconds')
 	matplotlib.pyplot.ylabel('Frequency')
 	matplotlib.pyplot.xlim(-1, 31)
