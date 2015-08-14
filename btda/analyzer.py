@@ -27,7 +27,7 @@ class SwarmAnalyzer:
 		# Set output path
 		if not os.path.exists(config.output_path):
 			os.makedirs(config.output_path)
-		outfile = '{}{}_{}'.format(config.output_path, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
+		self.outfile = '{}{}_{}'.format(config.output_path, time.strftime('%Y-%m-%d_%H-%M-%S'), os.uname().nodename)
 
 		# Configure logging
 		logging_config = {'format': '[%(asctime)s:%(levelname)s:%(module)s:%(threadName)s] %(message)s', 'datefmt': '%dd%Hh%Mm%Ss'}
@@ -35,7 +35,7 @@ class SwarmAnalyzer:
 			logging_config['level'] = logging.DEBUG
 		else:
 			logging_config['level'] = logging.INFO
-			logfile = '{}.log'.format(outfile)
+			logfile = '{}.log'.format(self.outfile)
 			print('Log is written to {}'.format(logfile))
 			logging_config['filename'] = logfile
 		logging.basicConfig(**logging_config)
@@ -70,7 +70,7 @@ class SwarmAnalyzer:
 		self.statistic_started = False
 
 		# Create database
-		self.database = storage.Database(outfile)
+		self.database = storage.Database(self.outfile)
 
 		# Create thread activity timer
 		self.timer = ActivityTimer()
@@ -549,7 +549,7 @@ class SwarmAnalyzer:
 
 		# Plot message receive durations for timeout calibration
 		if config.rec_dur_analysis:
-			plot_receive_duration(self.eval_timer)
+			plot_receive_duration(self.eval_timer, self.outfile)
 
 		# Wait for termination
 		if self.dht_started:

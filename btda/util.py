@@ -280,7 +280,8 @@ def count_bits(bitfield):
 
 ## Plot frequency of a number list, store in file
 #  @param data Input list of numbers
-def plot_receive_duration(data):
+#  @param outpath File path for output without extensions
+def plot_receive_duration(data, outfile):
 	# round values and calculate frequency
 	data = map(round, data)
 	counter = collections.Counter(data)
@@ -295,6 +296,6 @@ def plot_receive_duration(data):
 	matplotlib.pyplot.ylabel('Frequency')
 	matplotlib.pyplot.grid(axis='y')
 	matplotlib.pyplot.savefig(
-		filename = config.output_path + 'message_receive_duration.pdf',
+		filename = outfile + '_timeout.pdf',
 		bbox_inches = 'tight')
 	matplotlib.pyplot.close()
