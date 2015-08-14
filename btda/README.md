@@ -1,37 +1,24 @@
 [TOC]
 
-* Measure timeout on connection establishment
-* Reduce peer_revisit_delay to 3 min, review thread workload
-* Remove ip and peerid from db
-* ducument missing tracker requests
-
 # BitTorrent Download Analyzer
 This tool is aimed at counting confirmed downloads performed via BitTorrent by analyzing its peers. It is part of a Bachelor thesis at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 
 This is work in progress.
 
-### Questions
-* Evaluate database by merging peers via IP, ISP, Client, maybe bitfields?
-* Compare results with tracker scrape requests? - optional
-
-### Next steps
-* ! Statistik mit Grafik in LaTeX mit R
-* ! Write thesis text
-    * Hardwaredaten der VM notieren
-    * Counting transition from leecher to seeder (~98%)
-    * Justify config values
+## Todo
 * ! **FIXME:** database is locked error ([see](output/2015-05-13_16-03-21_faui1-246_crit.log)), bad peer objects in queue
 * ! Note used torrents with time frame and send to RRZE
-* Tidy readme: Requirements, installation, usage, thanks
-* (Tool organization in analyis modules)
+* Reduce peer_revisit_delay to 3 min, review thread workload
+* ducument missing tracker requests
 
 ### Code quality
 * Review logging messages
 * Review doxygen comments
 * Review documentation references
-* Implement unit tests? How about no.
+* Unit tests
+* Tool organization in analyis modules
 
-### Optional steps
+### Optional
 * Ergebinsse auf Plausibilität prüfen
     * Warum keine vollständigen Downloads beobachtet?
     * --> (Reaktion auf Port 0, Statistiken downloaded, uploaded, left)
@@ -60,6 +47,7 @@ This is work in progress.
 * Save duplicate and timing statistics about peers received via DHT and tracker
 * Save statistics about failed and succeeded peer connections
 * Save workload statistics of active peer evaluation threads
+* Timeout calibration mode for recording peer message receive duration
 
 ### Restrictions
 * No support for IPv6 on HTTP, UDP or DHT requests

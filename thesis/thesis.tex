@@ -334,12 +334,16 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 
 \begin{figure}
 \centering
-\includegraphics[width=0.9\textwidth]{files/2015-08-14_15-10-46_faui1-246_timeout}
+\includegraphics[width=\textwidth]{files/2015-08-14_15-50-49_faui1-246_timeout}
 \caption{Frequency of durations needed for receiving a peer message}
 \label{timeout-calibration}
 \end{figure}
 
-To assess a mimimum timeout, a analysis with special configuration parameters was performed. Here the maximum time used for receiving a message was recorded for every peer contact. These durations were rounded and the number of occurrences for each analyzed in, resulting in the graph of figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. The diagram shows, with a six second timeout the vast majority of messages will be received.
+To assess a minimum timeout, an analysis with special configuration parameters was performed. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. This data shows, that with a six second timeout over 94\,\% of messages can be received.
+
+\begin{equation}
+\frac{327}{345}\approx 0.948
+\end{equation}
 
 \paragraph{\config{torrent\_complete\_threshold}}
 \dots
