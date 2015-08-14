@@ -57,7 +57,8 @@ class SwarmAnalyzer:
 		self.active_success = SharedCounter()
 		self.passive_success = SharedCounter()
 		self.passive_error = SharedCounter()
-		self.eval_timer = MeanList()
+		if config.rec_dur_analysis:
+			self.eval_timer = list()
 
 		# Analysis parts, activated via starter methods
 		self.shutdown_request = threading.Event()
@@ -378,7 +379,7 @@ class SwarmAnalyzer:
 			rec_peer_id, rec_info_hash, messages, duration = result
 
 			# Store duration
-			if duration != 0:
+			if config.rec_dur_analysis and duration:
 				self.eval_timer.append(duration)
 
 			# Evaluate messages
@@ -519,8 +520,7 @@ class SwarmAnalyzer:
 					failed_active_later=self.late_evaluation_error.get(),
 					success_passive=self.passive_success.get(),
 					failed_passive=self.passive_error.get(),
-					thread_workload=self.timer.read(),
-					mean_eval_time=self.eval_timer.mean())
+					thread_workload=self.timer.read())
 
 		# Propagate thread termination
 		self.statistic_shutdown.set()
@@ -547,6 +547,10 @@ class SwarmAnalyzer:
 		# Propagate shutdown request
 		self.shutdown_request.set()
 
+		# Plot message receive durations for timeout calibration
+		if config.rec_dur_analysis:
+			util.plot_receive_duration(self.eval_timer)
+
 		# Wait for termination
 		if self.dht_started:
 			logging.info('Waiting for DHT requests to finish ...')
@@ -567,7 +571,7 @@ class SwarmAnalyzer:
 			print('Passive evaluation server terminated')
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
-			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log
+			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log, reason is passive eval threads add peers after shutdown, see above
 			print('Database thread terminated')
 		if self.statistic_started:
 			logging.info('Waiting for analysis statistics to be written to database ...')

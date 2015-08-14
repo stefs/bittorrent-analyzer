@@ -8,6 +8,7 @@ import binascii
 import struct
 import time
 import heapq
+import matplotlib.pyplot
 
 ### CONSTANTS ###
 
@@ -160,29 +161,6 @@ class ActivityTimer:
 		logging.info('Overall thread workload is {}'.format(workload))
 		return workload
 
-## A thread-safe list with mean calculation
-class MeanList:
-	## Initialize an empty
-	def __init__(self):
-		self.values = list()
-		self.lock = threading.Lock()
-
-	## Add a new value while ignoring Nones
-	#  @param value The new value or None
-	def append(self, value):
-		if value is not None:
-			with self.lock:
-				self.values.append(value)
-
-	## Calculate mean and empty list
-	#  @return The mean value
-	def mean(self):
-		with self.lock:
-			if self.values:
-				mean = sum(self.values) / len(self.values)
-				self.values = list()
-				return mean
-
 # This queue
 # - saves each item only once, regarding the item's hash function
 # - rejects items which were stored earlier and removed meanwhile
@@ -297,3 +275,24 @@ def count_bits(bitfield):
 				count += 1
 			mask *= 2
 	return count
+
+## Plot frequency of a number list, store in file
+#  @param data Input list of numbers
+def plot_receive_duration(data):
+	# round values and calculate frequency
+	data = map(round, data)
+	counter = collections.Counter(data)
+	frequency = counter.most_common()
+	value, count = map(list, zip(*frequency))
+
+	# plot with matplotlib
+	matplotlib.pyplot.figure(figsize=(8, 3))
+	matplotlib.pyplot.bar(value, count, label='lala', color='grey', align='center')
+	matplotlib.pyplot.axvline(x=5.5)
+	matplotlib.pyplot.xlabel('Seconds')
+	matplotlib.pyplot.ylabel('Frequency')
+	matplotlib.pyplot.grid(axis='y')
+	matplotlib.pyplot.savefig(
+		filename = config.output_path + 'message_receive_duration.pdf',
+		bbox_inches = 'tight')
+	matplotlib.pyplot.close()
