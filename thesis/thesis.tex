@@ -261,6 +261,8 @@ To count confirmed downloads by peers of one or multiple given torrents over a t
 
 The main task is to count confirmed downloads by peers of a given torrent. A download is considered as confirmed, when a peer crosses a threshold of downloaded pieces as defined in \config{torrent\_complete\_threshold}. Thus there must be contact with a peer at least twice -- with the amount of downloaded pieces once below and once equal or above the threshold -- in order to be counted. To determine the download progress of as many peers as possible, two tasks have to be done: First, establish contact to peers from every possible source. Second, receive continuous and reliable information about the download progress of every peer.
 
+For reference, a scrape request is sent to the tracker server every few minutes in order to compare our own counting of peer downloads with numbers as reported by the tracker server.
+
 \paragraph{Import Torrents}
 Beforehand, the torrents to be analyzed must be imported. Since both magnet links and torrent files are supported, there are two major ways to do this: All torrent files must be placed in a common directory, specified by \config{input\_path}. They are detected by their \texttt{.torrent} file name extension. Following the specification of BitTorrent files \cite{bep3}, the announce URL, info hash, pieces count and pieces size are extracted.
 
@@ -379,8 +381,6 @@ The main script, named \texttt{btda.py} can be controlled by using the following
 
 \section{Evaluation}
 \subsection{Choosing Torrents}
-To determine most popular torrent directory sites, global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites looked up at Alexa were collected through manual investigation using web search engines, relevant news sites and cross references between sites, because there is no complete list of torrent sites. Table~\ref{torrentsites} shows sites found having an Alexa rank below 10,000.
-
 \begin{table}
 \centering
 \begin{tabular}{rllr}
@@ -416,10 +416,29 @@ Rank & Site name & Domain name & Alexa Rank \\
 \label{torrentsites}
 \end{table}
 
-\dots
+To determine most popular torrent directory sites, global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites looked up at Alexa were collected through manual investigation using web search engines, relevant news sites and cross references between sites, because there is no complete list of torrent sites. Table~\ref{torrentsites} shows sites found having an Alexa rank below 10,000 as of July 16, 2015.
+
+\begin{table}
+\centering
+\begin{tabular}{rllrr}
+\toprule
+ID & Site name & Torrent name & Leechers & Seeders \\
+\midrule
+1 & Kickass Torrents & torrent\_name & 42 & 23 \\
+\bottomrule
+\end{tabular}
+\caption{Most popular torrents of the most popular torrent sites}
+\label{torrents}
+\end{table}
+
+From the first three sites, the respective five most popular torrents were chosen for analysis. They are listed in table \ref{torrents}.
 
 \subsection{Confirmed Downloads}
-Diagram: Timeline of confirmed downloads in 1 hour steps
+VM Hardwaredaten
+
+Request statistics (new/duplicate peers, source of peers, saturation)
+
+Diagram: Timeline of confirmed downloads and scrape report in 1 hour steps
 
 Map: Distribution of downloads (TODO)
 

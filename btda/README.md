@@ -56,6 +56,7 @@ This is work in progress.
 * No support for the Tracker exchange extension (BEP 28)
 * No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
 * No analysis of peer upload behaviour
+* Only one tracker server per torrent is supported
 
 ## Installation
 ### Requirements
