@@ -291,7 +291,8 @@ def plot_receive_duration(data, outfile):
 
 	# save raw data
 	with open(outfile+'_timeout.txt', mode='w') as file:
-		file.write(repr(data))
+		file.write(repr(list(data)))
+		file.write(len(data))
 
 	# plot with matplotlib
 	matplotlib.pyplot.figure(figsize=(9, 3))
