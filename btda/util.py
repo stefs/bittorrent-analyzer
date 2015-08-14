@@ -8,6 +8,8 @@ import binascii
 import struct
 import time
 import heapq
+import matplotlib
+matplotlib.use('Agg') # $DISPLAY not defined
 import matplotlib.pyplot
 
 ### CONSTANTS ###
