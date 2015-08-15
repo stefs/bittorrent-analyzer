@@ -336,12 +336,12 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{files/2015-08-14_15-50-49_faui1-246_timeout}
+\includegraphics[width=\textwidth]{2015-08-14_15-50-49_faui1-246_timeout}
 \caption{Frequency of durations needed for receiving a peer message}
 \label{timeout-calibration}
 \end{figure}
 
-To assess a minimum timeout, an analysis with special configuration parameters was performed. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. This data shows, that with a six second timeout over 94\,\% of messages can be received.
+To assess a minimum timeout, an analysis with special configuration parameters was performed. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. This data shows, that with a six second timeout over 94\,\%* of messages can be received.
 
 \begin{equation}
 \frac{327}{345}\approx 0.948
@@ -431,11 +431,38 @@ ID & Site name & Torrent name & Leechers & Seeders \\
 \label{torrents}
 \end{table}
 
-From the first three sites, the respective five most popular torrents were chosen for analysis. They are listed in table \ref{torrents}.
+From the first three sites, the respective five most popular torrents were chosen for analysis. All \textbf{15 torrents} are listed in table \ref{torrents}.
 
-\subsection{Confirmed Downloads}
-VM Hardwaredaten
+\subsection{Counting Downloads}
+\paragraph{Hardware}
+Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}
 
+\begin{table}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Source & Unique peers & Received peers & Ratio \\
+\midrule
+Tracker server & 1 & 2 & 3\,\% \\
+DHT network & 1 & 2 & 3\,\% \\
+Incoming connection & 1 & 2 & 3\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Received peer addresses per source}
+\label{unique-peers}
+\end{table}
+
+\begin{figure}
+\centering
+%\includegraphics[width=\textwidth]{}
+\caption{Development of received peer information per source}
+\label{request-history}
+\end{figure}
+
+\paragraph{Requests}
+The analysis was running for \textbf{48 hours} in order to detect patters during the day-night cycle. Peers from all sources, namely tracker server, DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
+
+\subsection{Results}
 Request statistics (new/duplicate peers, source of peers, saturation)
 
 Diagram: Timeline of confirmed downloads and scrape report in 1 hour steps
