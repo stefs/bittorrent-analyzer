@@ -152,7 +152,7 @@ torrents <- calc_size(torrents)
 print(head(torrents))
 
 # Data per torrent
-outfile = sub(".sqlite", ".pdf", args[1])
+outfile = sub(".sqlite", "_download.pdf", args[1])
 stopifnot(outfile != args[1])
 pdf(outfile, width=9, height=6)
 for (torrent in unique(downloads$group_torrent)) {

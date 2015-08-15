@@ -11,6 +11,9 @@ read_db <- function(path) {
 	# Read request table
 	sql <- "SELECT timestamp, source, received_peers, duplicate_peers, torrent FROM request"
 	request <- dbGetQuery(con, sql)
+	# Read torrent table
+	sql <- "SELECT id, display_name, pieces_count, piece_size FROM torrent"
+	torrents <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
 	# Combine tables
@@ -39,6 +42,52 @@ aggregate_time <- function(request) {
 	return(ret)
 }
 
+filter_request <- function(request, torrent) {
+	# Extract all rows with that id
+	request <- request[request$group_torrent==torrent,]
+	# Drop torrend id
+	request$group_torrent <- NULL
+	# Return result
+	return(request)
+}
+
+new_peers <- function(request) {
+	# new peers from total and duplicate
+	request$new <- request$total - request$duplicate
+	# Drop total peers
+	request$total <- NULL
+	# Return result
+	return(request)
+}
+
+merge_peers <- function(request) {
+	# assemble duplicate part
+	duplicate <- data.frame(
+		group_hour=request$group_hour,
+		group_torrent=request$group_torrent,
+		peers=request$duplicate,
+		category=paste("duplicate", request$group_source, sep="-")
+	)
+	# assemble new part
+	new <- data.frame(
+		group_hour=request$group_hour,
+		group_torrent=request$group_torrent,
+		peers=request$new,
+		category=paste("new", request$group_source, sep="-")
+	)
+	# merge parts vertically
+	request <- rbind(duplicate, new)
+	# factorize category with custom order
+	request$category <- factor(request$category, levels=c(
+		"new-tracker",
+		"new-dht",
+		"duplicate-tracker",
+		"duplicate-dht"
+	))
+	# Return result
+	return(request)
+}
+
 # Read database
 args <- commandArgs(trailingOnly=TRUE)
 ret <- read_db(args[1])
@@ -52,47 +101,33 @@ print(head(request))
 print("*** Aggregate timestamp ***")
 request <- aggregate_time(request)
 print(head(request))
+print("*** Calculate new peers ***")
+request <- new_peers(request)
+print(head(request))
+print("*** Merge peer numbers ***")
+request <- merge_peers(request)
+print(head(request))
 
 # Data per torrent
 outfile = sub(".sqlite", "_source.pdf", args[1])
 stopifnot(outfile != args[1])
 pdf(outfile, width=9, height=6)
-#for (torrent in unique(downloads$group_torrent)) {
-#	# Get torrent name
-#	info <- torrents[torrents$id==torrent,]
-#	name <- strtrim(info$display_name, 50)
-#	size <- round(info$gigabytes, digits=1)
-#	description <- paste("Torrent ", torrent, ": \"", name, "\" (", size, " GB)", sep="")
-#	print(description)
+for (torrent in unique(request$group_torrent)) {
+	# Get torrent name
+	description <- paste("Torrent ", torrent)
+	print(description)
 
-#	# Scrape data
-#	filtered <- filter_request(request, torrent)
-#	if (nrow(filtered) == 0) {
-#		print("No scrape data")
-#		scrape <- data.frame(group_hour=NA, downloads=NA)
-#	} else {
-#		scrape <- aggregate_complete(filtered)
-#	}
-#	print(scrape)
+	# Extract current torrent
+	filtered <- filter_request(request, torrent)
+	print(head(filtered))
 
-#	# Confirmed data
-#	confirmed <- filter_download(downloads, torrent)
-#	print(confirmed)
-
-#	# Merge on timestamp
-#	scrape$category <- "scrape"
-#	confirmed$category <- "confirmed"
-#	total <- rbind(scrape, confirmed)
-#	total <- total[complete.cases(total$group_hour),]
-#	print(total)
-
-#	# Plot with ggplot2
-#	print(
-#		ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
-#		geom_bar(stat="identity", position="dodge") +
-#		theme(axis.text.x=element_text(angle=90, hjust=1)) +
-#		labs(title=description, x="Time UTC", y="Downloads")
-#	)
-#}
-#print(paste("Plot written to", outfile))
+	# Plot with ggplot2 with bar order according to category
+	print(
+		ggplot(filtered, aes(factor(filtered$group_hour), peers, fill=category, order=as.numeric(category))) +
+		geom_bar(stat="identity", position="stack") +
+		theme(axis.text.x=element_text(angle=90, hjust=1)) +
+		labs(title=description, x="Time UTC", y="Peers")
+	)
+}
+print(paste("Plot written to", outfile))
 print("*** End ***")
