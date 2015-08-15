@@ -12,6 +12,7 @@
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
 \usepackage{booktabs}
+\usepackage[autolanguage]{numprint}
 
 % ``quotation marks''
 
@@ -336,16 +337,12 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{2015-08-14_15-50-49_faui1-246_timeout}
-\caption{Frequency of durations needed for receiving a peer message}
+\includegraphics[width=\textwidth]{2015-08-14_17-46-44_faui1-246_timeout}
+\caption{Duration to receive one peer message}
 \label{timeout-calibration}
 \end{figure}
 
-To assess a minimum timeout, an analysis with special configuration parameters was performed. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. This data shows, that with a six second timeout over 94\,\%* of messages can be received.
-
-\begin{equation}
-\frac{327}{345}\approx 0.948
-\end{equation}
+To assess a minimum timeout, an analysis with special configuration parameters was performed\footnote{Files: \texttt{2015-08-14\_17-46-44\_faui1-246.sqlite}, \texttt{2015-08-14\_17-46-44\_faui1-246\_timeout.txt}}. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. During this test at \numprint{977301} out of \numprint{1040817} peer contacts the maximum duration for receiving one message was below six seconds, which equals \numprint[\%]{93.9}.
 
 \paragraph{\config{torrent\_complete\_threshold}}
 \dots
@@ -420,11 +417,11 @@ To determine most popular torrent directory sites, global traffic rankings by \t
 
 \begin{table}
 \centering
-\begin{tabular}{rllrr}
+\begin{tabular}{rllrrr}
 \toprule
-ID & Site name & Torrent name & Leechers & Seeders \\
+ID & Site name & Torrent name & Size & Leechers & Seeders \\
 \midrule
-1 & Kickass Torrents & torrent\_name & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
 \bottomrule
 \end{tabular}
 \caption{Most popular torrents of the most popular torrent sites}

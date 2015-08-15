@@ -5,13 +5,13 @@
 Chapter | Progress
 --- | ---
 1 Introduction |
-– 1.1 Motivation | 
-– 1.2 Task | 
-– 1.3 Related Work | 
-– 1.4 Results | 
-– 1.5 Outline | 
-– 1.6 Acknowledgments | 
-2 Background | 
+– 1.1 Motivation |
+– 1.2 Task |
+– 1.3 Related Work |
+– 1.4 Results |
+– 1.5 Outline |
+– 1.6 Acknowledgments |
+2 Background |
 – 2.1 BitTorrent Protocol | ★
 – 2.2 DHT Protocol | ★
 – 2.3 Magnet Link | ★
@@ -20,14 +20,46 @@ Chapter | Progress
 – 3.1 Dependencies | ★★
 – 3.2 Functionality | ★★
 – 3.3 Architecture |
-– 3.4 Justification of Configuration Values | 
-– 3.5 Restrictions | 
-– 3.6 Usage | 
-4 Evaluation | 
-– 4.1 Choosing Torrents | 
-– 4.2 Confirmed Downloads | 
-– 4.3 Further Results | 
-5 Conclusion and Future Work | 
+– 3.4 Justification of Configuration Values |
+– 3.5 Restrictions |
+– 3.6 Usage |
+4 Evaluation |
+– 4.1 Choosing Torrents |
+– 4.2 Confirmed Downloads |
+– 4.3 Further Results |
+5 Conclusion and Future Work |
+
+## Hinweise 2015-07-17
+> revisit delay verkleinern --> veränderung
+> gb in diagramm --> verhältnis scrape vs confirmed
+>
+> michael mit drauf
+> keine ein-Zeien Absätze--> Roter Fadden
+>
+> Bencode bsp
+> grafik /bsp torent file
+> Alle Abkürzungne einführen, evtl. Abkverzeichnis
+> self weglassen
+> wherby komisch
+> Absatz zwischen tracker Antwort geht unter
+> Aprupter übergang UDP connect, vllt Diagramm oder Ankündigung
+>
+> dht protocol graphiken
+>
+> torrent ominimal size nicht uri
+>
+> Ausführlicher, mehr Text für einfachem Folgen, BitTorrent Kapitel besonders wirr
+>
+> Warum Verwendung von Schwellwert? Erklären begründen oder verweisen auf Auswertung (negative Differenz)
+>
+> Plots: Karten
+>
+> Mehr Torrents
+>
+> Min 24 h laufzeit
+>
+> scrape values am Ende
+> Abstract
 
 ## Resourcces BitTorrent
 * http://www.bittorrent.org/beps/bep_0000.html

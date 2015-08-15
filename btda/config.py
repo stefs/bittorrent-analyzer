@@ -9,7 +9,7 @@ fake_uploaded_stat = 0.42
 # Consider peers to have completely downloaded the torrent at this pieces amount
 torrent_complete_threshold = 0.98
 # Timeout for network connections in seconds
-network_timeout = 5
+network_timeout = 6
 # Integrate an already running DHT node with this UDP port
 dht_node_port = 17000
 # Uses an already running DHT node over the given localhost telnet port

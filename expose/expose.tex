@@ -1,0 +1,51 @@
+\documentclass[a4paper]{scrartcl} % Std 11pt
+\usepackage[T1]{fontenc} % Umlaute
+\usepackage[utf8]{inputenc} % Textcodierung
+\usepackage[ngerman]{babel} % Silbentrennung
+\usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
+
+\usepackage[backend=biber]{biblatex}
+\addbibresource{expose.bib}
+
+\titlehead{Lehrstuhl für IT-Sicherheitsinfrastrukturen, Informatik 1\\Friedrich-Alexander-Universität Erlangen-Nürnberg}
+\subject{Exposé zur Bachelorarbeit}
+\title{Analysis of BitTorrent Trackers and Peers}
+\author{Stefan Schindler\thanks{E-Mail: stefan@kaloix.de, Matrikelnummer: 21676746}}
+\date{14. Januar 2015}
+
+\begin{document}
+\maketitle
+
+\section{Motivation}
+Bram Cohen veröffentlichte 2008 das BitTorrent-Protokoll, mit dem Dateien in einem beliebig großen Computernetzwerk effizient verteilt werden können \cite{bep3}. Dieses Protokoll macht heute 15\,\% des europäischen Internetverkehrs aus; im asiatisch-pazifischen Raum liegt der Anteil sogar bei bei 27\,\%. Übrige Filesharing-Technologien belegen ca. 2\,\% \cite{sandvine2014}.
+
+Da BitTorrent größtenteils zur illegalen Verbreitung von urheberrechtlich geschützten Werken verwendet wird \cite{watters2011much}, ist es von großem Interesse die Aktivitäten über das BitTorrent-Protokoll verstehen und auswerten zu können. Oft wird die Zahl an eindeutigen Peers als Maßeinheit für die Verbreitung eines Torrents herangezogen \cite{drachen2011distribution}, wohingegen in dieser Studie tatsächlich beobachtete Downloads gewertet werden.
+
+\section{Problemstellung}
+Ziel ist es, den Umfang von unrechtmäßigen Downloads sowie deren geographische Verteilung und Geschwindigkeit verlässlich zu erfassen. Größtes Hindernis dabei ist jedoch die Tatsache, dass es kein zentrales Verwaltungssystem gibt. Stattdessen existiert eine Vielzahl an öffentlichen und privaten Trackern, wobei letztere von untergeordneter Relevanz sind \cite{sitescomparison}. Aufgrund dieser Unübersichtlichkeit muss für die Auswertung eine repräsentative Auswahl von Torrents gefunden werden.
+
+Die rechtlichen Aspekte der Datenerfassung werden kurz betrachtet, insbesondere die gesetzliche Notwendigkeit, Torrents mit urheberrechtlich geschützten Werken ohne inhaltlichen Datenaustausch zu beobachten.
+
+\section{Ziel}
+\subsection{Software}
+Es wird ein BitTorrent-Client entwickelt, der zu einem gegebenen Torrent Statistiken über alle Teilnehmer anzeigt. Dieser kann auf bestehender freier Software aufbauen und ist durch einen modularen Aufbau mit weiteren Analysemodulen erweiterbar. Als Eingabe wird eine Torrent-Datei entgegengenommen und vom darin eingebetteten Tracker-Server eine Liste teilnehmender Peers abgerufen. Außerdem werden Magnet-Links \cite{bep9} zur Identifikation von Torrents akzeptiert und das DHT-Protokoll \cite{bep5} zur Suche weiterer Peers verwendet.
+
+Zu den Peers werden folgende Daten ermittelt: Der geographische Standort, die bereits heruntergeladene Datenmenge sowie die Downloadrate. Der Standort wird mit Hilfe einer lokalen Bibliothek anhand der IP-Adresse direkt festgestellt, und die IP-Adresse gelöscht. Wenn ein Peer seine Sitzung beendet, wird der Download registriert. Um unterbrochene Sitzungen zu erkennen, werden Peers anhand ihres mittels Reverse DNS bestimmten ISPs, des verwendeten Clients sowie dem Muster heruntergeladener Segmente wieder erkannt. Für einen gegebenen Messzeitraum kann ein Bericht erstellt werden.
+
+Die Software ist in der Lage, alle Statistiken anzuzeigen, ohne tatsächlich Inhalte des Torrents herunterzuladen oder an andere Teilnehmer wieder zu verteilen. Dadurch können auch Torrents mit urheberrechtlich geschützten Inhalten in einem legalen Rahmen analysiert werden.
+
+\subsection{Auswertung}
+Es werden die verbreitetsten Tracker ausgewählt und von diesen eine möglichst umfangreiche Auswahl der beliebtesten Torrents untersucht, um ein repräsentatives Ergebnis zu erhalten. Im Untersuchungszeitraum wird für alle Torrents die Downloadzahl festgestellt.
+
+Das Ergebnis wird nach Kategorien (z.\,B. Musik, Filme, Software etc.), Legalität und geographischen Gebieten aufgeteilt.
+
+\section{Meilensteine}
+\begin{enumerate}
+\item Recherche (1 Monat): Suche nach passenden Programmbibliotheken für BitTorrent und IP-Ortung, Spezifikation von Datenmodellen und Ausgabeformaten
+\item Software-Entwicklung (1,5 Monate): Schreiben des Programms in Python
+\item Datenerfassung und Auswertung (1 Monat): Auswahl von Torrents verschiedener Tracker, Sammlung von Statistiken, Evaluation der Ergebnisse
+\item Verfassen der schriftlichen Arbeit (1,5 Monate): Entwerfen und Formulieren der Bachelorarbeit
+\end{enumerate}\pagebreak
+
+\printbibliography
+\end{document}
