@@ -104,7 +104,7 @@ Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still 
 ### Start bittorrent-analyzer peer evaluation
 1. `tmux new-session -s btda`
 2. `source env-main/bin/activate`
-3. `./main.py`
+3. `btda/main.py`
 4. Tmux detach with `Ctrl+B` followed by `d`
 
 Logs are saved in `output/`.

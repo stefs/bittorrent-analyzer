@@ -1,42 +1,5 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
-*.py[cod]
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
 
 # Gedit backup copies
 *~
@@ -46,30 +9,23 @@ output/
 input/
 
 # virtualenv
-env-*
-
-# tests
-test/
+env-main/
 
 # thesis
-thesis/*.aux
-thesis/*.bbl
-thesis/*.bcf
-thesis/*.blg
-thesis/*.fdb_latexmk
-thesis/*.fls
-thesis/*.log
-thesis/*.out
-thesis/*.run.xml
-thesis/*.synctex.gz
-thesis/*.toc
-thesis/*.lof
-thesis/*.lot
-thesis/*.pdf
+thesis/thesis.aux
+thesis/thesis.bbl
+thesis/thesis.bcf
+thesis/thesis.blg
+thesis/thesis.fdb_latexmk
+thesis/thesis.fls
+thesis/thesis.log
+thesis/thesis.out
+thesis/thesis.run.xml
+thesis/thesis.synctex.gz
+thesis/thesis.toc
+thesis/thesis.lof
+thesis/thesis.lot
+thesis/thesis.pdf
 
-# doxygen
-html/
-latex/
-
-# R
-.Rhistory
+# test
+btda/test.py
