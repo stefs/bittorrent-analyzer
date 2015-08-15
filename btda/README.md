@@ -10,6 +10,7 @@ This is work in progress.
 * ! Note used torrents with time frame and send to RRZE
 * Reduce peer_revisit_delay to 3 min, review thread workload
 * ducument missing tracker requests
+* Probably interesting: 2015-07-18_21-57-15_faui1-246.sqlite
 
 ### Code quality
 * Review logging messages
