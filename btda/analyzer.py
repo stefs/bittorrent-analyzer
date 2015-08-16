@@ -571,7 +571,10 @@ class SwarmAnalyzer:
 			print('Passive evaluation server terminated')
 		if self.peer_handler:
 			logging.info('Waiting for peers to be written to database ...')
-			self.visited_peers.join() # TODO does not wait long enough, see 2015-04-07_16h03m36s.log, reason is passive eval threads add peers after shutdown, see above
+			# TODO does not wait long enough,
+			# see 2015-04-07_16h03m36s.log,
+			# reason is passive eval threads add peers after shutdown, see above
+			self.visited_peers.join()
 			print('Database thread terminated')
 		if self.statistic_started:
 			logging.info('Waiting for analysis statistics to be written to database ...')

@@ -50,7 +50,7 @@ Friedrich-Alexander-Universität Erlangen-Nürnberg}
 
 \vspace{6cm}
 \large{Examiner: Prof. Dr.-Ing. Felix Freiling\\
-Advisor: Philipp Klein, M. Sc.}
+Advisor: Philipp Klein, M. Sc. und Michael Gruhn}
 
 \vspace{2cm}
 \large{This work is licensed under the\\
@@ -59,20 +59,6 @@ To view a copy of this license, visit\\
 \url{http://creativecommons.org/licenses/by-sa/4.0/}.}
 \end{center}
 \end{titlepage}
-
-\section*{Todo}
-\begin{itemize}
-  \item Describe code functionality or exact implementation or both?
-\end{itemize}
-
-\begin{itemize}
-  \item Program tool
-  \item Program evaluation and diagram output
-  \item Perform main analysis
-  \item Write thesis
-  \item Grafik, Listings, Tabellen-Verzeichnis
-  \item pymdht thesis; http://people.kth.se/~rauljc/p2p11/
-\end{itemize}
 
 \tableofcontents
 
@@ -449,28 +435,10 @@ Incoming connection & 1 & 2 & 3\,\% \\
 \label{unique-peers}
 \end{table}
 
-\begin{figure}
-\centering
-%\includegraphics[width=\textwidth]{}
-\caption{Development of received peer addresses per source}
-\label{request-history}
-\end{figure}
-
 \paragraph{Requests}
-The analysis was running for \textbf{48 hours} in order to detect patters during the day-night cycle. Peers from all sources, namely tracker server, DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76*\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
+The analysis was performed from 11:11 am, August 15 to 11:11 am, August 17, 2015. A time period of 48 hours was chosen in order to detect patters during the day-night cycle. Peers from all sources, namely from the tracker server, the DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76*\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
 
 Request statistics (new/duplicate peers, source of peers, saturation)
-
-\subsection{Results}
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth, page=1]{2015-07-18_21-57-15_faui1-246_download}
-\includegraphics[width=\textwidth, page=2]{2015-07-18_21-57-15_faui1-246_download}
-\includegraphics[width=\textwidth, page=3]{2015-07-18_21-57-15_faui1-246_download}
-\includegraphics[width=\textwidth, page=4]{2015-07-18_21-57-15_faui1-246_download}
-\caption{Confirmed and server reported download numbers}
-\label{downloads}
-\end{figure}
 
 The timeline of confirmed downloads and downloads reported by the tracker server in scrape requests is shown in one hour steps in figure \ref{downloads}.
 
@@ -485,6 +453,30 @@ Table: Examine hostnames by ISP or seedbox provicers (TODO)
 
 \section{Conclusion and Future Work}
 \dots
+
+\appendix
+\section{Evaluation Details}
+\subsection{Development of received peer addresses per source}
+\label{request-history}
+\includegraphics[width=\textwidth, page=1]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=2]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=3]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=4]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=5]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=6]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=7]{2015-07-18_21-57-15_faui1-246_source}\\
+\includegraphics[width=\textwidth, page=8]{2015-07-18_21-57-15_faui1-246_source}
+
+\subsection{Confirmed and server reported download numbers}
+\label{downloads}
+\includegraphics[width=\textwidth, page=1]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=2]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=3]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=4]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=5]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=6]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=7]{2015-07-18_21-57-15_faui1-246_download}\\
+\includegraphics[width=\textwidth, page=8]{2015-07-18_21-57-15_faui1-246_download}
 \newpage
 
 \printbibliography[heading=bibintoc]

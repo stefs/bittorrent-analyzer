@@ -105,7 +105,7 @@ stopifnot(outfile != args[1])
 pdf(outfile, width=10.5, height=3.7)
 for (torrent in unique(request$group_torrent)) {
 	# Make description
-	info <- torrents[torrent$id==torrent,]
+	info <- torrent[torrent$id==torrent,]
 	description <- torrent_description(torrent, info$display_name, info$gigabyte)
 	print(description)
 

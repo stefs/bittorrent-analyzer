@@ -74,25 +74,17 @@ This is work in progress.
 #### Mainline DHT node
 * [pymdht](https://github.com/rauljim/pymdht) with patches
 
-#### Statistical evaluation
-* r-base
-
 ### Steps
-These are the standard installation steps on a Debian based system.
+These are the installation steps used in this project, on a Ubuntu 14.04 LTS operating system. Usually matplotlib can also be installed using pip.
 
-1. `sudo apt-get install python3 python3-pip`
-2. `sudo pip3 install virtualenv`
-3. `virtualenv --python=python3 env-main`
-4. `source env-main/bin/activate`
-5. `pip install bencodepy sqlalchemy geoip2`
-6. `deactivate`
-7. Download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `input/GeoLite2-City.mmdb`
+    sudo apt-get install python3 python3-pip python3-matplotlib
+    sudo pip3 install virtualenv
+    virtualenv --python=python3 --system-site-packages env-main
+    source env-main/bin/activate
+    pip install bencodepy sqlalchemy geoip2
+    deactivate
 
-R
-
-1. `sudo R`
-2. install.packages("DBI")
-3. install.packages("RSQLite")
+Finally, download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `btda/input/GeoLite2-City.mmdb`
 
 ## Usage
 ### Start pymdh DHT node
