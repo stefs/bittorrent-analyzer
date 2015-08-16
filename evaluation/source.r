@@ -2,6 +2,7 @@
 
 library(DBI)
 library(ggplot2)
+source("util.r")
 
 read_db <- function(path) {
 	# Open raw_peersbase connection
@@ -20,17 +21,6 @@ read_db <- function(path) {
 	ret <- list(request)
 	# Return result
 	return(ret)
-}
-
-hour_timestamps <- function(timestamps) {
-	# Parse timestamps
-	timestamps <- as.POSIXct(timestamps, tz="GMT", origin="1960-01-01")
-	# Truncate to hours
-	timestamps <- trunc(timestamps, units="hours")
-	# Revert to strings
-	timestamps <- as.character(timestamps)
-	# Return result
-	return(timestamps)
 }
 
 aggregate_time <- function(request) {
@@ -111,7 +101,7 @@ print(head(request))
 # Data per torrent
 outfile = sub(".sqlite", "_source.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=6)
+pdf(outfile, width=10.5, height=3.7)
 for (torrent in unique(request$group_torrent)) {
 	# Get torrent name
 	description <- paste("Torrent ", torrent)
@@ -126,7 +116,7 @@ for (torrent in unique(request$group_torrent)) {
 		ggplot(filtered, aes(factor(filtered$group_hour), peers, fill=category, order=as.numeric(category))) +
 		geom_bar(stat="identity", position="stack") +
 		theme(axis.text.x=element_text(angle=90, hjust=1)) +
-		labs(title=description, x="Time UTC", y="Peers")
+		labs(title=description, x="Time UTC (day/hour)", y="Peers")
 	)
 }
 print(paste("Plot written to", outfile))
