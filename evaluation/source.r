@@ -86,6 +86,7 @@ torrent <- ret[[2]]
 
 # Prepare data
 print(head(request))
+print(head(torrent))
 print("*** Parse timesamps ***")
 request$timestamp <- hour_timestamps(request$timestamp)
 print(head(request))
@@ -103,14 +104,14 @@ print(head(request))
 outfile = sub(".sqlite", "_source.pdf", args[1])
 stopifnot(outfile != args[1])
 pdf(outfile, width=10.5, height=3.7)
-for (torrent in unique(request$group_torrent)) {
+for (id in unique(request$group_torrent)) {
 	# Make description
-	info <- torrent[torrent$id==torrent,]
-	description <- torrent_description(torrent, info$display_name, info$gigabyte)
+	info <- torrent[torrent$id==id,]
+	description <- torrent_description(id, info$display_name, info$gigabyte)
 	print(description)
 
 	# Extract current torrent
-	filtered <- filter_request(request, torrent)
+	filtered <- filter_request(request, id)
 	print(head(filtered))
 
 	# Plot with ggplot2 with bar order according to category
