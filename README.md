@@ -15,7 +15,7 @@ This is a Bachelor thesis written at the Friedrich-Alexander-Universität Erlang
 ## Current Task
 * Get torrent plots on one page
     * How many torrents are analyzed?
-    * Shorten timestamp in R with strftime()
-    * Legend is shown n times per page
-    * Make script for getting plot on one page
+    * FIXED - Shorten timestamp in R with strftime()
+    * WONTFIX - Legend is shown n times per page
+    * WONTFIX - Make script for getting plot on one page
     * Implement torrent description generator in Python

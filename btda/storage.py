@@ -51,6 +51,7 @@ class Torrent(Base):
 	complete_threshold = sqlalchemy.Column(sqlalchemy.types.Integer)
 	filepath = sqlalchemy.Column(sqlalchemy.types.String)
 	display_name = sqlalchemy.Column(sqlalchemy.types.String)
+	gigabyte = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Declarative class for request table
 class Request(Base):
@@ -210,11 +211,14 @@ class Database:
 		# Get thread-local session
 		session = self.Session()
 
+		# Calculate size in gigabytes
+		gb = (torrent.pieces_count * torrent.piece_size) / 10 ** 9
+
 		# Write to database
 		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
 				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
 				piece_size=torrent.piece_size, complete_threshold=torrent.complete_threshold,
-				filepath=path, display_name=dn)
+				filepath=path, display_name=dn, gigabyte=gb)
 		try:
 			session.add(new_torrent)
 			session.commit()
