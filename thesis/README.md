@@ -30,6 +30,9 @@ Chapter | Progress
 – 4.3 Further Results |
 5 Conclusion and Future Work |
 
+# Todo
+* Compare lenght with [other](https://www1.cs.fau.de/staff/gruhn)
+
 ## Hinweise 2015-07-17
 > revisit delay verkleinern --> veränderung
 > gb in diagramm --> verhältnis scrape vs confirmed

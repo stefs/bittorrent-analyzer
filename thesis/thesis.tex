@@ -1,27 +1,25 @@
-%\documentclass[12pt, a4paper, parskip=half, headings=small, draft=true]{scrartcl} % [10pt, twocolumn] (Schnellübersicht goo.gl/AS72B)
-\documentclass[10pt, a4paper]{scrartcl} % Std 11pt % 10 pt!!!
+\documentclass[10pt, a4paper, twoside]{scrartcl}
 \usepackage[T1]{fontenc} % Umlaute
 \usepackage[utf8]{inputenc} % Textcodierung
 \usepackage[english]{babel} % Silbentrennung
 %\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
 \usepackage[in]{fullpage} % Ränder [in|cm]
-%\usepackage{graphicx, listings} % Grafiken, Quelltext
+\usepackage{graphicx} % Grafiken
+\usepackage{listings} % Quelltext
 \usepackage[hidelinks]{hyperref} % Hyperlinks
 %\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
-\usepackage{booktabs}
-\usepackage[autolanguage]{numprint}
-
-% ``quotation marks''
-
-\usepackage[firstpage]{draftwatermark} % [final]
-\SetWatermarkLightness{0.9}
+\usepackage{booktabs} % Tabellen
+\usepackage[autolanguage]{numprint} % Zahlen
 
 \usepackage{csquotes} % Recommended addition for biblatex
 \usepackage[style=numeric,backend=biber]{biblatex}
 \addbibresource{thesis.bib}
+
+\usepackage[firstpage]{draftwatermark} % [final]
+\SetWatermarkLightness{0.9}
 
 \let\origunderscore\_
 \renewcommand{\_}{\origunderscore\allowbreak}
@@ -59,13 +57,81 @@ To view a copy of this license, visit\\
 \url{http://creativecommons.org/licenses/by-sa/4.0/}.}
 \end{center}
 \end{titlepage}
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\vspace*{\fill}
+\section*{Eidesstattliche Erklärung / Statutory Declaration}
+
+\vspace{0.1cm}
+\noindent\hrule
+\begin{quote}
+Hiermit versichere ich eidesstattlich, dass die vorliegende Arbeit von mir
+selbständig, ohne Hilfe Dritter und ausschließlich unter Verwendung der
+angegebenen Quellen angefertigt wurde. Alle Stellen, die wörtlich oder
+sinngemäß aus den Quellen entnommen sind, habe ich als solche kennt\-lich
+gemacht. Die Arbeit wurde bisher in gleicher oder ähnlicher Form keiner anderen
+Prüfungsbehörde vorgelegt.
+\end{quote}
+
+\begin{quote}
+I hereby declare formally that I have developed and written the enclosed thesis
+entirely by myself and have not used sources or means without declaration in
+the text. Any thoughts or quotations which were inferred from the sources are
+marked as such. This thesis was not submitted in the same or a substantially
+similar version to any other authority to achieve an academic grading.
+\end{quote}
+\noindent\hrule
+
+\vspace{0.5cm}
+\noindent
+Der Friedrich-Alexander-Universität, vertreten durch den Lehrstuhl
+für Informatik 1, wird für Zwecke der Forschung und Lehre ein
+einfaches, kostenloses, zeitlich und örtlich unbeschränktes
+Nutzungsrecht an den Arbeitsergebnissen der Arbeit einschließlich
+etwaiger Schutz- und Urheberrechte eingeräumt.
+
+\vspace{0.5cm}
+\noindent
+Erlangen, \today
+
+\vspace{1cm}
+\begin{flushright}
+Stefan Schindler \quad\null
+\end{flushright}
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\vspace*{\fill}
+\begin{center}
+{\large\textbf{Zusammenfassung}}
+\end{center}
+
+\begin{quote}
+Zusammenfassung auf Deutsch
+\end{quote}
+
+\vspace*{\fill}
+\begin{center}
+{\large\textbf{Abstract}}
+\end{center}
+
+\begin{quote}
+Zusammenfassung auf Englisch
+\end{quote}
+\vspace*{\fill}
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \tableofcontents
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \listoffigures
 
 \listoftables
-\newpage
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}
 [Some general information on the context and setting]
@@ -122,6 +188,8 @@ To view a copy of this license, visit\\
 [A big thank you for the support to ...]
 
 \dots
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Background}
 This chapter explaines technologies and specifications utilized during this research project.
@@ -236,6 +304,8 @@ Even more serious is the upload process always involved in BitTorrent. Illegitim
 
 \subsubsection{Collecting IP addresses}
 Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means the anonymization of IP addresses is preferable.
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Implementation}
 The software tool written for this thesis was developed using the version control system \emph{Git} \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code was published \cite{btda} under the \emph{GNU General Public License} in version 3.
@@ -361,6 +431,8 @@ The main script, named \texttt{btda.py} can be controlled by using the following
   \item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages.
   \item[\texttt{-{}-help}] Show a help message and exit.
 \end{description}
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Evaluation}
 \subsection{Choosing Torrents}
@@ -414,7 +486,7 @@ ID & Site name & Torrent name & Size & Leechers & Seeders \\
 \label{torrents}
 \end{table}
 
-From the first three sites, the respective five most popular torrents were chosen for analysis. All \textbf{15 torrents} are listed in table \ref{torrents}, with leecher and seeder numbers accurate as of August 42*, 2015.
+From the first three sites, on August 8*, 2015, the respective five most popular torrents were chosen for analysis. Popularity was determined by the number of leechers as reported by the website. All these \textbf{15 torrents} are listed in table \ref{torrents}.
 
 \subsection{Counting Downloads}
 \paragraph{Hardware}
@@ -436,7 +508,7 @@ Incoming connection & 1 & 2 & 3\,\% \\
 \end{table}
 
 \paragraph{Requests}
-The analysis was performed from 11:11 am, August 15 to 11:11 am, August 17, 2015. A time period of 48 hours was chosen in order to detect patters during the day-night cycle. Peers from all sources, namely from the tracker server, the DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76*\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
+The analysis was performed from 11:11 am, August 15* to 11:11 am, August 17*, 2015. A time period of 48 hours was chosen in order to detect patters during the day-night cycle. Peers from all sources, namely from the tracker server, the DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76*\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
 
 Request statistics (new/duplicate peers, source of peers, saturation)
 
@@ -450,9 +522,13 @@ Map: Distribution of download speeds (TODO)
 Diagram: Timeline of new vs. duplicate received peers in 1 hour steps (TODO)
 
 Table: Examine hostnames by ISP or seedbox provicers (TODO)
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Conclusion and Future Work}
 \dots
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \appendix
 \section{Evaluation Details}
@@ -477,7 +553,8 @@ Table: Examine hostnames by ISP or seedbox provicers (TODO)
 \includegraphics[width=\textwidth, page=6]{2015-07-18_21-57-15_faui1-246_download}\\
 \includegraphics[width=\textwidth, page=7]{2015-07-18_21-57-15_faui1-246_download}\\
 \includegraphics[width=\textwidth, page=8]{2015-07-18_21-57-15_faui1-246_download}
-\newpage
+\cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \printbibliography[heading=bibintoc]
 \end{document}
