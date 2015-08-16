@@ -11,8 +11,10 @@
 %\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
-\usepackage{booktabs, tabularx} % Tabellen spacing/lines, linebreak/width
 \usepackage[autolanguage]{numprint} % Zahlen
+
+\usepackage{booktabs, tabularx} % Tabellen spacing/lines, linebreak/width
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \usepackage{csquotes} % Recommended addition for biblatex
 \usepackage[style=numeric,backend=biber]{biblatex}
@@ -208,27 +210,24 @@ In order to store common data structures as well as transmit them over TCP, enco
 \centering
 \begin{tabularx}{\textwidth}{lX}
 \toprule
-Key & Value \\
+Key & Explanation \\
 \midrule
-\texttt{announce} & URL of the tracker server, usually in the form of \nolinkurl{http://<host>:<port>/announce} \\
-\texttt{info/name} & Optional file or directory name \\
-\texttt{info/piece length} & Number of bytes per piece \\
-\texttt{info/pieces} & Concatenation of raw SHA-1 hash values for every individual piece \\
-\texttt{info/length} & Only present if the torrent is a single file; file size in bytes; not used in this project at all \\
-\texttt{info/files/length} & Only present if the torrent contains multiple files; list of dictionaries, one per file; not used in
-this project at all --- File size in bytes \\
-\texttt{info/files/path} & List of subdirectory names and filename representing a path \\
+\texttt{announce} & This is the URL of the tracker server, which usually has the format \nolinkurl{http://<host>:<port>/announce}. \\
+\texttt{info} & This dictionary describes the torrent's contents, its keys are explained below. \\
+\texttt{info/name} & In case of of a single file, this is the file name the data is stored with when downloaded, otherwise the directory name. This key is optional. \\
+\texttt{info/piece length} & The number of bytes of each piece. \\
+\texttt{info/pieces} & For each piece a SHA-1 hash value calculated. Their raw bytes are concatenated and stored here. The total number of pieces can be derived from this value by dividing it's length by 20, since a SHA-1 hash is 20 bytes. \\
+\texttt{info/length} & In single file mode, this is the total file size in bytes, otherwise it's not present. The value is not used in this research. \\
+\texttt{info/files} & In multi file mode, this is a list of dictionaries with information about every file, otherwise it's not present. The keys of these dictionaries are described below, but are not used in this research. \\
+\texttt{info/files/length} & The size of this file in bytes. \\
+\texttt{info/files/path} & This is the file's path and name, represented as a list of strings. All but the last item are directory names, the last item is the file name. \\
 \bottomrule
 \end{tabularx}
-\caption{Structure of dictionaries in the bencoded metainfo file format}
+\caption{Structure of nested dictionaries in the bencoded metainfo file format}
 \label{metainfo-file}
 \end{table}
 
-Metadata about a downloadable file set is stored using bencoding as described above. These so called \emph{metainfo files} are using the \texttt{.torrent} file name extension. Values are grouped in dictionaries for easy reference as listed in table \ref{metainfo-file}.
-
-These files allow users to identify torrents, since they mostly contain a human readable description as well as cryptographic hash values on the torrent's content. Additionally the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network.
-
-The number of pieces can be derived from the \texttt{pieces} key of the \texttt{info} dictionary by dividing it's length by 20, since a SHA-1 hash is 20 bytes. The torrent identifying \emph{info hash} is calculated as the SHA-1 hash of the bencoded info dictionary.
+A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files allow users to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file.
 
 \subsubsection{Tracker Server}
 The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of the Hypertext Transfer Protocol. The request is sent with the following parameters, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}.
@@ -540,7 +539,7 @@ Table: Examine hostnames by ISP or seedbox provicers (TODO)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \appendix
-\section{Evaluation Details}
+\section{Collected Data}
 \subsection{Development of received peer addresses per source}
 \label{request-history}
 \includegraphics[width=\textwidth, page=1]{2015-07-18_21-57-15_faui1-246_source}\\

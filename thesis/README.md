@@ -33,12 +33,17 @@ Chapter | Progress
 # Todo
 * Compare length with [other](https://www1.cs.fau.de/staff/gruhn)
 * Degree/title of Michael Gruhn
+* table scheme
 
 # Begriffserklärung or in place erklärung
 * Dictionary
 * Cryptographic hash
 
 ## Hinweise 2015-07-17
+→ Siehe gedruckte PDF-Notizen!
+
+Mündliche Hinweise:
+
 > revisit delay verkleinern --> veränderung
 > gb in diagramm --> verhältnis scrape vs confirmed
 >
