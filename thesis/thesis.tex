@@ -11,7 +11,7 @@
 %\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
-\usepackage{booktabs} % Tabellen
+\usepackage{booktabs, tabularx} % Tabellen spacing/lines, linebreak/width
 \usepackage[autolanguage]{numprint} % Zahlen
 
 \usepackage{csquotes} % Recommended addition for biblatex
@@ -26,6 +26,7 @@
 \newcommand{\config}[1]{\texttt{config.\allowbreak #1}}
 
 \begin{document}
+\pagenumbering{alph}
 \begin{titlepage}
 \begin{center}
 \large{Lehrstuhl für IT-Sicherheitsinfrastrukturen, Informatik 1\\
@@ -48,7 +49,7 @@ Friedrich-Alexander-Universität Erlangen-Nürnberg}
 
 \vspace{6cm}
 \large{Examiner: Prof. Dr.-Ing. Felix Freiling\\
-Advisor: Philipp Klein, M. Sc. und Michael Gruhn}
+Advisor: Philipp Klein, M. Sc. and Michael Gruhn}
 
 \vspace{2cm}
 \large{This work is licensed under the\\
@@ -60,6 +61,7 @@ To view a copy of this license, visit\\
 \cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\pagenumbering{roman}
 \vspace*{\fill}
 \section*{Eidesstattliche Erklärung / Statutory Declaration}
 
@@ -133,6 +135,7 @@ Zusammenfassung auf Englisch
 \cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\pagenumbering{arabic}
 \section{Introduction}
 [Some general information on the context and setting]
 
@@ -201,23 +204,29 @@ Besides several extensions, BitTorrent still works as designed by \textsc{Bram C
 In order to store common data structures as well as transmit them over TCP, encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported data types are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
 
 \subsubsection{Metainfo File}
-Metadata about a downloadable file set is stored bencoded in a metainfo file, which uses the \texttt{.torrent} file name extension. The purpose is to locate the tracker server and describe all content pieces with cryptographic hashes. Data is arranged in dictionaries of the following structure:
+\begin{table}
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Key & Value \\
+\midrule
+\texttt{announce} & URL of the tracker server, usually in the form of \nolinkurl{http://<host>:<port>/announce} \\
+\texttt{info/name} & Optional file or directory name \\
+\texttt{info/piece length} & Number of bytes per piece \\
+\texttt{info/pieces} & Concatenation of raw SHA-1 hash values for every individual piece \\
+\texttt{info/length} & Only present if the torrent is a single file; file size in bytes; not used in this project at all \\
+\texttt{info/files/length} & Only present if the torrent contains multiple files; list of dictionaries, one per file; not used in
+this project at all --- File size in bytes \\
+\texttt{info/files/path} & List of subdirectory names and filename representing a path \\
+\bottomrule
+\end{tabularx}
+\caption{Structure of dictionaries in the bencoded metainfo file format}
+\label{metainfo-file}
+\end{table}
 
-\begin{description}
-  \item[announce] Uniform resource locator of the tracker server, usually of the form \nolinkurl{http://<host>:<port>/announce}.
-  \item[info] The info dictionary describing the torrent's pieces
-  \begin{description}
-    \item[name] Optional file or directory name
-    \item[piece length] Number of bytes per piece
-    \item[pieces] Concatenation of raw SHA-1 hash values for every individual piece
-    \item[length] Only present if the torrent is a single file; file size in bytes; not used in this project at all
-    \item[files] Only present if the torrent contains multiple files; list of dictionaries, one per file; not used in this project at all
-    \begin{description}
-      \item[length] File size in bytes
-      \item[path] List of subdirectory names and filename representing a path
-    \end{description}
-  \end{description}
-\end{description}
+Metadata about a downloadable file set is stored using bencoding as described above. These so called \emph{metainfo files} are using the \texttt{.torrent} file name extension. Values are grouped in dictionaries for easy reference as listed in table \ref{metainfo-file}.
+
+These files allow users to identify torrents, since they mostly contain a human readable description as well as cryptographic hash values on the torrent's content. Additionally the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network.
 
 The number of pieces can be derived from the \texttt{pieces} key of the \texttt{info} dictionary by dividing it's length by 20, since a SHA-1 hash is 20 bytes. The torrent identifying \emph{info hash} is calculated as the SHA-1 hash of the bencoded info dictionary.
 

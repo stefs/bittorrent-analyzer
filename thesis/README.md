@@ -31,7 +31,12 @@ Chapter | Progress
 5 Conclusion and Future Work |
 
 # Todo
-* Compare lenght with [other](https://www1.cs.fau.de/staff/gruhn)
+* Compare length with [other](https://www1.cs.fau.de/staff/gruhn)
+* Degree/title of Michael Gruhn
+
+# Begriffserklärung or in place erklärung
+* Dictionary
+* Cryptographic hash
 
 ## Hinweise 2015-07-17
 > revisit delay verkleinern --> veränderung
