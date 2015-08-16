@@ -8,3 +8,14 @@ hour_timestamps <- function(timestamps) {
 	# Return result
 	return(timestamps)
 }
+
+torrent_description <- function(id, display_name, gigabyte) {
+	# Trim to 50 characters
+	name <- strtrim(display_name, 50)
+	# Round size to one digit
+	size <- round(gigabyte, digits=1)
+	# Assemble with format stirng
+	description <- paste("Torrent ", id, ": \"", name, "\" (", size, " GB)", sep="")
+	# Return result
+	return(description)
+}

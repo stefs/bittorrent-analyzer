@@ -13,7 +13,7 @@ read_db <- function(path) {
 	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, display_name, pieces_count, piece_size FROM torrent"
+	sql <- "SELECT id, display_name, pieces_count, gigabyte FROM torrent"
 	torrents <- dbGetQuery(con, sql)
 	# Read request table
 	sql <- "SELECT timestamp, completed, torrent FROM request"
@@ -91,22 +91,6 @@ aggregate_complete <- function(requests) {
 	return(requests)
 }
 
-calc_size <- function(torrents) {
-	# Reduce piece size to kilobytes to prevent integer overflow
-	torrents$piece_kb <- torrents$piece_size / 1000
-	# Calculate total size
-	torrents$kilobytes <- torrents$pieces_count * torrents$piece_kb
-	# Convert to total size to gigabytes
-	torrents$gigabytes <- torrents$kilobytes/1000000
-	# Purge temporary values
-	torrents$piece_kb <- NULL
-	torrents$kilobytes <- NULL
-	torrents$piece_size <- NULL
-	torrents$pieces_count <- NULL
-	# Return result
-	return(torrents)
-}
-
 # Read database
 args <- commandArgs(trailingOnly=TRUE)
 ret <- read_db(args[1])
@@ -136,21 +120,15 @@ print("*** Parse request timestamps ***")
 print(head(requests))
 requests$timestamp <- hour_timestamps(requests$timestamp)
 print(head(requests))
-print("*** Calculate torrent size ***")
-print(head(torrents))
-torrents <- calc_size(torrents)
-print(head(torrents))
 
 # Data per torrent
 outfile = sub(".sqlite", "_download.pdf", args[1])
 stopifnot(outfile != args[1])
 pdf(outfile, width=10.5, height=3.7)
 for (torrent in unique(downloads$group_torrent)) {
-	# Get torrent name
+	# Make description
 	info <- torrents[torrents$id==torrent,]
-	name <- strtrim(info$display_name, 50)
-	size <- round(info$gigabytes, digits=1)
-	description <- paste("Torrent ", torrent, ": \"", name, "\" (", size, " GB)", sep="")
+	description <- torrent_description(torrent, info$display_name, info$gigabyte)
 	print(description)
 
 	# Scrape data

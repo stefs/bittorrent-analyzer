@@ -13,12 +13,12 @@ read_db <- function(path) {
 	sql <- "SELECT timestamp, source, received_peers, duplicate_peers, torrent FROM request"
 	request <- dbGetQuery(con, sql)
 	# Read torrent table
-	sql <- "SELECT id, display_name, pieces_count, piece_size FROM torrent"
-	torrents <- dbGetQuery(con, sql)
+	sql <- "SELECT id, display_name, gigabyte FROM torrent"
+	torrent <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
 	# Combine tables
-	ret <- list(request)
+	ret <- list(request, torrent)
 	# Return result
 	return(ret)
 }
@@ -82,6 +82,7 @@ merge_peers <- function(request) {
 args <- commandArgs(trailingOnly=TRUE)
 ret <- read_db(args[1])
 request <- ret[[1]]
+torrent <- ret[[2]]
 
 # Prepare data
 print(head(request))
@@ -103,8 +104,9 @@ outfile = sub(".sqlite", "_source.pdf", args[1])
 stopifnot(outfile != args[1])
 pdf(outfile, width=10.5, height=3.7)
 for (torrent in unique(request$group_torrent)) {
-	# Get torrent name
-	description <- paste("Torrent ", torrent)
+	# Make description
+	info <- torrents[torrent$id==torrent,]
+	description <- torrent_description(torrent, info$display_name, info$gigabyte)
 	print(description)
 
 	# Extract current torrent
