@@ -1,10 +1,10 @@
-\documentclass[10pt, a4paper, twoside]{scrbook}
+\documentclass[10pt, a4paper, twoside, headsepline]{scrbook}
 \usepackage[T1]{fontenc} % Umlaute
 \usepackage[utf8]{inputenc} % Textcodierung
 \usepackage[english]{babel} % Silbentrennung
 %\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
-\usepackage[in]{fullpage} % Ränder [in|cm]
+\usepackage[vmargin=3.5cm,hmargin=3cm]{geometry}
 %\usepackage{graphicx} % Grafiken
 %\usepackage{listings} % Quelltext
 \usepackage[hidelinks]{hyperref} % Hyperlinks
@@ -14,11 +14,14 @@
 \usepackage[autolanguage]{numprint} % Zahlen
 
 \usepackage{booktabs, tabularx} % Tabellen spacing/lines, linebreak/width
-\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+%\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \usepackage{csquotes} % Recommended addition for biblatex
 \usepackage[style=numeric,backend=biber]{biblatex}
 \addbibresource{thesis.bib}
+
+\usepackage{caption}
+\captionsetup{labelfont=bf}
 
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
@@ -63,6 +66,7 @@ To view a copy of this license, visit\\
 \cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\thispagestyle{plain}
 \pagenumbering{roman}
 \vspace*{\fill}
 \section*{Eidesstattliche Erklärung / Statutory Declaration}
@@ -106,6 +110,7 @@ Stefan Schindler \quad\null
 \cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\thispagestyle{plain}
 \vspace*{\fill}
 \begin{center}
 {\large\textbf{Zusammenfassung}}
