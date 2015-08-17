@@ -1,12 +1,12 @@
-\documentclass[10pt, a4paper, twoside]{scrartcl}
+\documentclass[10pt, a4paper, twoside]{scrbook}
 \usepackage[T1]{fontenc} % Umlaute
 \usepackage[utf8]{inputenc} % Textcodierung
 \usepackage[english]{babel} % Silbentrennung
 %\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
 \usepackage[in]{fullpage} % Ränder [in|cm]
-\usepackage{graphicx} % Grafiken
-\usepackage{listings} % Quelltext
+%\usepackage{graphicx} % Grafiken
+%\usepackage{listings} % Quelltext
 \usepackage[hidelinks]{hyperref} % Hyperlinks
 %\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
@@ -124,21 +124,19 @@ Zusammenfassung auf Deutsch
 Zusammenfassung auf Englisch
 \end{quote}
 \vspace*{\fill}
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \tableofcontents
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \listoffigures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \listoftables
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \pagenumbering{arabic}
-\section{Introduction}
+\chapter{Introduction}
 [Some general information on the context and setting]
 
 \begin{itemize}
@@ -147,7 +145,7 @@ Zusammenfassung auf Englisch
   \item Other file sharing technologies
 \end{itemize}
 
-\subsection{Motivation}
+\section{Motivation}
 [Specific motivation for the problem at hand]
 
 \begin{itemize}
@@ -156,7 +154,7 @@ Zusammenfassung auf Englisch
   \item Gather statistics without up- or downloading content
 \end{itemize}
 
-\subsection{Task}
+\section{Task}
 [Concrete task to be solved]
 
 \begin{itemize}
@@ -170,7 +168,7 @@ Zusammenfassung auf Englisch
   \item Evaluation: Run analysis tool for several days or weeks
 \end{itemize}
 
-\subsection{Related Work}
+\section{Related Work}
 [Other relevant academic work and how it differs from this work]
 
 \begin{itemize}
@@ -179,33 +177,32 @@ Zusammenfassung auf Englisch
   \item \dots
 \end{itemize}
 
-\subsection{Results}
+\section{Results}
 [What has been achieved in this work?]
 
 \dots
 
-\subsection{Outline}
+\section{Outline}
 [How is the thesis structured and why?]
 
 \dots
 
-\subsection{Acknowledgments}
+\section{Acknowledgments}
 [A big thank you for the support to ...]
 
 \dots
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Background}
+\chapter{Background}
 This chapter explaines technologies and specifications utilized during this research project.
 
-\subsection{BitTorrent Protocol}
+\section{BitTorrent Protocol}
 Besides several extensions, BitTorrent still works as designed by \textsc{Bram Cohen} in January 10, 2008, in the \emph{BitTorrent Enhancement Proposal} number 3 \cite{bep3}. It establishes a method to distribute a predefined set of files among an arbitrary number of recipients without overwhelming load on a central entity. This is achieved by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process: The BitTorrent file format containing identifying metadata about the file set, the communication procedure with a tracker server where peers can learn Internet Protocol addresses of other peers, and the peer wire protocol spoken between peers.
 
-\subsubsection{Bencoding}
+\subsection{Bencoding}
 In order to store common data structures as well as transmit them over TCP, encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported data types are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
 
-\subsubsection{Metainfo File}
+\subsection{Metainfo File}
 \begin{table}
 \centering
 \begin{tabularx}{\textwidth}{lX}
@@ -229,7 +226,7 @@ Key & Explanation \\
 
 A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files allow users to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file.
 
-\subsubsection{Tracker Server}
+\subsection{Tracker Server}
 The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of the Hypertext Transfer Protocol. The request is sent with the following parameters, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}.
 
 \begin{description}
@@ -259,7 +256,7 @@ The tracker's response message should contain a bencoded dictionary in the messa
   In case of a compact peer list, this is a single byte string instead of a list of dictionaries. 6 bytes per peer are used containing 4 bytes for the IPv4 address and 2 byte representing the port number.
 \end{description}
 
-\subsubsection{UDP Tracker Protocol}
+\subsection{UDP Tracker Protocol}
 Tracker servers are the only centralized infrastructure required by traditional BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As BEP 23 demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by 50\,\% \cite{bep15}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards.
 
 \paragraph{connect}
@@ -271,12 +268,12 @@ This announce request includes the same parameters as the HTTP communication des
 \paragraph{scrape}
 Finally a scrape request is defined, giving clients access to the numbers of leechers, seeders and completed downloads as reported by the server. There is no guarantee of validity for these values, since they may be manipulated or chosen by the server freely. An error response package containing a human-readable message may be sent by the server at any time.
 
-\subsubsection{Peer Wire Protocol}
+\subsection{Peer Wire Protocol}
 The peer protocol is spoken between peers and allows bidirectional communication with predefined messages. At first an initial handshake is exchanged, containing a protocol string, eight bytes reserved for alternate protocol behavior and extensions, as well as the torrent's info hash and the peer's ID. The connecting client sends it's handshake message first. All following messages begin with an overall length prefix, followed by a type identifier and the payload, if appropriate.
 
 The so called \texttt{bitfield} message may be sent immediately after the handshake to indicate which pieces were already downloaded and verified by the peer. With same intentions \texttt{have} messages are sent to all connected clients, if a peer has successfully downloaded a new piece. These are the only two message types relevant in the scope of this work; for completeness, the meanings of further message types are as follows: \texttt{choke} and \texttt{unchoke} express the willingness and possibility to fulfill requests for pieces. Similarly \texttt{interested} and \texttt{not interested} indicate whether a peer would start downloading if unchoked. A bulk of missing pieces can be requested using a \texttt{request} message with begin and end indices, a single piece can be requested using \texttt{piece}. When requests were sent to multiple clients to increase download speed, a \texttt{cancel} message is used to revoke a pieces request.
 
-\subsection{DHT Protocol}
+\section{DHT Protocol}
 Despite the complete file payload being transmitted from client to client, still a central server keeping track of all peers is needed. However, the mandatory tracker server contradicts the concept of a decentralized file distribution network and, in addition, has to be maintained financially. The \emph{DHT Protocol} \cite{bep5} solves this issue, as it stores peer contact information in a distributed hash table. Participating peers run a separate DHT \emph{node}, which communicate sending bencoded messages over the User Datagram Protocol. The distributed hash table follows the Kademlia design as described by \textsc{Maymounkov} and \textsc{Mazières} in 2002 \cite{kademlia}.
 
 \paragraph{Nodes}
@@ -291,37 +288,36 @@ When a peer downloads a torrent, it should announce the info hash and BitTorrent
 \paragraph{Integration}
 The presence of DHT support is advertised in the standard BitTorrent handshake of the Peer Wire Protocol using the last bit of the eight reserved bytes. Peers receiving this indicator should send a \texttt{port} message, containing their own UDP node port number. This technique helps populate routing tables, especially on newly installed systems with an empty table.
 
-\subsection{Magnet Link}
+\section{Magnet Link}
 The concept of a \emph{magnet link} described in BEP 9 \cite{bep9} is used to create a uniform resource identifier for torrents of minimal size, in comparison to the metainfo file format. It's only mandatory component is the info hash, the SHA-1 value of the info dictionary. The link uses the \texttt{magnet:} URI scheme and stores info hash, a display name and tracker announce URLs in the query string. The emerging problem is the loss of the info dictionary's content. Since a tracker URL is optional, the metadata must be obtained from other peers.
 
-\subsubsection{Extension Protocol}
+\subsection{Extension Protocol}
 To expand the functionality of the BitTorrent Protocol, the \emph{Extension Protocol} was defined \cite{bep10}. It introduces the generic \texttt{extended} message to the Peer Wire Protocol, which itself can have various subtypes depending on which extensions are actually used. Extension Protocol support is indicated in the standard Peer Wire Protocol handshake by setting the 20th bit from the right of the eight reserved bytes.
 
 When both peers ascertain support for the Extension Protocol, extended messages containing a second handshake are exchanged. The handshakes contain a dictionary with one or multiple keys: First, a bencoded dictionary \texttt{m} with names of supported extensions together with randomly assigned extension IDs and secondly, additional keys depending on the used extensions. This setup allows for an arbitrary number of extensions with dynamic IDs, without the need for a global registry of extensions. Further extended messages contain the extension ID and payload as defined by the respective extension.
 
-\subsubsection{Extension for Peers to Send Metadata Files}
+\subsection{Extension for Peers to Send Metadata Files}
 The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} with identifier \texttt{ut\_metadata} is the first and only extension described here to make use of the Extension Protocol. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containing the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is divided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
 
 To gather initial contact information of peers to be asked for metadata, the DHT protocol may be used. Then every piece must be requested separately from these peers, using a \texttt{request} message. These are answered by the same number of \texttt{data} or \texttt{reject} messages, depending on whether the opposing client is able to deliver the piece. When all pieces are present, they can be composed and checked against the info hash value.
 
-\subsection{BitTorrent and German Law}
-\subsubsection{Illegal Content}
+\section{BitTorrent and German Law}
+\subsection{Illegal Content}
 While there are no legal restrictions on using BitTorrent in general, the download of content without permission of the author or right holder is considered an illegitimate reproduction according to the German Copyright Act \cite[art.~15\,(1),~16]{urhg}. The common exception of private copying \cite[art.~53]{urhg} is not applicable here, since the source is ``obviously unlawfully-produced''.
 
 Even more serious is the upload process always involved in BitTorrent. Illegitimate distribution of proprietary content may be sentenced with imprisonment or a fine \cite[art.~106]{urhg}. More common and often abused \cite{abmahnung} is the system of special notifications \cite[art.~97a]{urhg}, sent from right holders to assumed copyright infringers. These warning letters are supposed to settle the controversy extrajudicial in exchange of a fee. Entitlement of right holders to indemnity and expense allowance exists \cite[art.~97]{urhg}.
 
-\subsubsection{Collecting IP addresses}
+\subsection{Collecting IP addresses}
 Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means the anonymization of IP addresses is preferable.
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Implementation}
+\chapter{Implementation}
 The software tool written for this thesis was developed using the version control system \emph{Git} \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code was published \cite{btda} under the \emph{GNU General Public License} in version 3.
 
-\subsection{Dependencies}
+\section{Dependencies}
 There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} project by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}. In order to run a dedicated DHT node, the tool \emph{pymdht} by \textsc{Raul Jimenez} \cite{pymdht} is used.
 
-\subsection{Functionality}
+\section{Functionality}
 To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, as they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file.
 
 The main task is to count confirmed downloads by peers of a given torrent. A download is considered as confirmed, when a peer crosses a threshold of downloaded pieces as defined in \config{torrent\_complete\_threshold}. Thus there must be contact with a peer at least twice -- with the amount of downloaded pieces once below and once equal or above the threshold -- in order to be counted. To determine the download progress of as many peers as possible, two tasks have to be done: First, establish contact to peers from every possible source. Second, receive continuous and reliable information about the download progress of every peer.
@@ -378,7 +374,7 @@ Explain implementation of the features:
 \item Save workload statistics of active peer evaluation threads
 \end{itemize}
 
-\subsection{Architecture}
+\section{Architecture}
 It is structured in the main script, an application module, five helper modules and an utility module, which will be described in detail.
 
 They have the following roles:
@@ -395,7 +391,7 @@ They have the following roles:
   \item[\texttt{config.py}]
 \end{description}
 
-\subsection{Justification of Configuration Values}
+\section{Justification of Configuration Values}
 \paragraph{\config{network\_timeout}}
 The timeout for network operations is six seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical as a failure is visible in the log files and did not happen during this research. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. Message collection is considered to be complete after the timeout finished without receiving a message.
 
@@ -414,7 +410,7 @@ To assess a minimum timeout, an analysis with special configuration parameters w
 \paragraph{\config{peer\_evaluation\_threads}}
 \dots
 
-\subsection{Restrictions}
+\section{Restrictions}
 
 Restrictions and why this does not invalidate the results (hopefully, TBD):
 
@@ -427,7 +423,7 @@ Restrictions and why this does not invalidate the results (hopefully, TBD):
   \item No BitTrorrent Protocol support for getting download progress info
 \end{itemize}
 
-\subsection{Usage}
+\section{Usage}
 pymdht: It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results.
 
 The main script, named \texttt{btda.py} can be controlled by using the following command line options.
@@ -439,11 +435,10 @@ The main script, named \texttt{btda.py} can be controlled by using the following
   \item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages.
   \item[\texttt{-{}-help}] Show a help message and exit.
 \end{description}
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Evaluation}
-\subsection{Choosing Torrents}
+\chapter{Evaluation}
+\section{Choosing Torrents}
 \begin{table}
 \centering
 \begin{tabular}{rllr}
@@ -490,13 +485,13 @@ ID & Site name & Torrent name & Size & Leechers & Seeders \\
 1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
 \bottomrule
 \end{tabular}
-\caption{Most popular torrents of the most popular torrent sites}
+\caption{Compilation of torrents from the most popular torrent sites}
 \label{torrents}
 \end{table}
 
 From the first three sites, on August 8*, 2015, the respective five most popular torrents were chosen for analysis. Popularity was determined by the number of leechers as reported by the website. All these \textbf{15 torrents} are listed in table \ref{torrents}.
 
-\subsection{Counting Downloads}
+\section{Counting Downloads}
 \paragraph{Hardware}
 Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}
 
@@ -526,21 +521,19 @@ Map: Distribution of downloads (TODO)
 
 Map: Distribution of download speeds (TODO)
 
-\subsection{Further Results}
+\section{Further Results}
 Diagram: Timeline of new vs. duplicate received peers in 1 hour steps (TODO)
 
 Table: Examine hostnames by ISP or seedbox provicers (TODO)
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Conclusion and Future Work}
+\chapter{Conclusion and Future Work}
 \dots
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \appendix
-\section{Collected Data}
-\subsection{Development of received peer addresses per source}
+\chapter{Collected Data}
+\section{Development of received peer addresses per source}
 \label{request-history}
 \includegraphics[width=\textwidth, page=1]{2015-07-18_21-57-15_faui1-246_source}\\
 \includegraphics[width=\textwidth, page=2]{2015-07-18_21-57-15_faui1-246_source}\\
@@ -551,7 +544,7 @@ Table: Examine hostnames by ISP or seedbox provicers (TODO)
 \includegraphics[width=\textwidth, page=7]{2015-07-18_21-57-15_faui1-246_source}\\
 \includegraphics[width=\textwidth, page=8]{2015-07-18_21-57-15_faui1-246_source}
 
-\subsection{Confirmed and server reported download numbers}
+\section{Confirmed and server reported download numbers}
 \label{downloads}
 \includegraphics[width=\textwidth, page=1]{2015-07-18_21-57-15_faui1-246_download}\\
 \includegraphics[width=\textwidth, page=2]{2015-07-18_21-57-15_faui1-246_download}\\
@@ -561,7 +554,6 @@ Table: Examine hostnames by ISP or seedbox provicers (TODO)
 \includegraphics[width=\textwidth, page=6]{2015-07-18_21-57-15_faui1-246_download}\\
 \includegraphics[width=\textwidth, page=7]{2015-07-18_21-57-15_faui1-246_download}\\
 \includegraphics[width=\textwidth, page=8]{2015-07-18_21-57-15_faui1-246_download}
-\cleardoublepage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \printbibliography[heading=bibintoc]
