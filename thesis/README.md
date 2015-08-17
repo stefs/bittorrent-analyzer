@@ -34,6 +34,7 @@ Chapter | Progress
 * Compare length with [other](https://www1.cs.fau.de/staff/gruhn)
 * Degree/title of Michael Gruhn
 * table scheme
+* Quantify incoming peers in table `unique-peers` and request history plots
 
 # Begriffserklärung or in place erklärung
 * Dictionary
