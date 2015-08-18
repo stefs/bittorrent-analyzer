@@ -63,16 +63,18 @@ merge_peers <- function(request) {
 		group_hour=request$group_hour,
 		group_torrent=request$group_torrent,
 		peers=request$new,
-		category=paste("new", request$group_source, sep="-")
+		category=paste("unique", request$group_source, sep="-")
 	)
 	# merge parts vertically
 	request <- rbind(duplicate, new)
 	# factorize category with custom order
 	request$category <- factor(request$category, levels=c(
-		"new-tracker",
-		"new-dht",
+		"unique-tracker",
+		"unique-dht",
+		"unique-incoming",
 		"duplicate-tracker",
-		"duplicate-dht"
+		"duplicate-dht",
+		"duplicate-incoming"
 	))
 	# Return result
 	return(request)

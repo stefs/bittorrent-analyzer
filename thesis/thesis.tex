@@ -177,15 +177,17 @@ To date BitTorrent still has a remarkable share in private Internet traffic. Acc
 % Numbers about illegal usage of BitTorrent
 BitTorrent is repeatedly reported by leading film studios to cause Billions of losses in movie and tv series sales. Whether or not illegal downloads translate directly to losses in sales figures, certainly the number of illegal downloaded copies itself is often vague.
 
-http://www.mpaa.org/research-and-reports/
+%start big analysis
 
-see expose
+%http://www.mpaa.org/research-and-reports/
 
-2011 How-much-material-on-BitTorrent-is-infringing-content-A-case-study_2011_Information-Security-Technical-Report
+%see expose
 
-dracental cap 2
+%2011 How-much-material-on-BitTorrent-is-infringing-content-A-case-study_2011_Information-Security-Technical-Report
 
-see /home/stefan/stefan-privat/University/Bachelorarbeit/Resources
+%dracental cap 2
+
+%see /home/stefan/stefan-privat/University/Bachelorarbeit/Resources
 
 
 
@@ -475,6 +477,8 @@ To assess a minimum timeout, an analysis with special configuration parameters w
 \paragraph{\config{peer\_evaluation\_threads}}
 \dots
 
+Number of threads: workload plot
+
 \section{Restrictions}
 
 Restrictions and why this does not invalidate the results (hopefully, TBD):
@@ -503,8 +507,10 @@ The main script, named \texttt{btda.py} can be controlled by using the following
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
+Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}
+
 \section{Choosing Torrents}
-\begin{table}
+\begin{table}[b!]
 \centering
 \begin{tabular}{rllr}
 \toprule
@@ -556,10 +562,7 @@ ID & Site name & Torrent name & Size & Leechers & Seeders \\
 
 From the first three sites, on August 8*, 2015, the respective five most popular torrents were chosen for analysis. Popularity was determined by the number of leechers as reported by the website. All these \textbf{15 torrents} are listed in table \ref{torrents}.
 
-\section{Counting Downloads}
-\paragraph{Hardware}
-Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}
-
+\section{Getting Addresses of Peers}
 \begin{table}
 \centering
 \begin{tabular}{lrrrr}
@@ -575,20 +578,31 @@ Incoming connection & 1 & 2 & 3\,\% \\
 \label{unique-peers}
 \end{table}
 
-\paragraph{Requests}
 The analysis was performed from 11:11 am, August 15* to 11:11 am, August 17*, 2015. A time period of 48 hours was chosen in order to detect patters during the day-night cycle. Peers from all sources, namely from the tracker server, the DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76*\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
 
-Request statistics (new/duplicate peers, source of peers, saturation)
+\section{Evaluating Peer's Download Progress}
+\begin{table}
+\centering
+\begin{tabular}{llrr}
+\toprule
+Event & Reason & Quantity & Share \\
+\midrule
+a & b & c & d \\
+\bottomrule
+\end{tabular}
+\caption{Reasons for failed peer evaluation}
+\label{connection-failure}
+\end{table}
 
+\section{Counting Confirmed Downloads}
 The timeline of confirmed downloads and downloads reported by the tracker server in scrape requests is shown in one hour steps in figure \ref{downloads}.
 
 Map: Distribution of downloads (TODO)
 
+\section{Peer's Download Speeds}
 Map: Distribution of download speeds (TODO)
 
-\section{Further Results}
-Diagram: Timeline of new vs. duplicate received peers in 1 hour steps (TODO)
-
+\section{Peer's Host Names}
 Table: Examine hostnames by ISP or seedbox provicers (TODO)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
