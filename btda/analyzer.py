@@ -138,7 +138,7 @@ class SwarmAnalyzer:
 					logging.info('Trying to fetch metadata from peer ...')
 					try:
 						info_dict_bencoded = protocol.get_ut_metadata(info_hash, peer, own_peer_id)
-					except PeerError as err:
+					except (PeerError, UtilError) as err:
 						logging.warning('Failed to fetch metadata: {}'.format(err))
 					else:
 						break
