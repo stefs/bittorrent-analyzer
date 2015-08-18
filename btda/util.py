@@ -225,6 +225,27 @@ class RichComparisonMixin:
 	def __ge__(self, other):
 		return not self.__lt__(other)
 
+# Count frequency of items thread-safe
+class DictCounter:
+	counter = dict()
+	lock = threading.Lock()
+
+	def count(self, item):
+		with self.lock:
+			try:
+				self.counter[item] += 1
+			except KeyError:
+				self.counter[item] = 1
+
+	def write_file(self, name):
+		with self.lock:
+			try:
+				with open(name+'_error.txt', mode='w') as file:
+					file.write(str(self.counter))
+			except OSError as err:
+				logging.error('Failed to write error stats: {}'.format(err))
+				logging.info(str(self.counter))
+
 ### METHODS ###
 
 ## Convert bytes to hex string

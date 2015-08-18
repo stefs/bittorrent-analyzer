@@ -52,11 +52,9 @@ class SwarmAnalyzer:
 		self.own_peer_id = protocol.generate_peer_id()
 
 		# Statistical counters
-		self.first_evaluation_error = SharedCounter()
-		self.late_evaluation_error = SharedCounter()
 		self.active_success = SharedCounter()
 		self.passive_success = SharedCounter()
-		self.passive_error = SharedCounter()
+		self.error = DictCounter()
 		if config.rec_dur_analysis:
 			self.eval_timer = list()
 
@@ -215,9 +213,9 @@ class SwarmAnalyzer:
 				sock = socket.create_connection((peer.ip_address, peer.port), config.network_timeout)
 			except OSError as err:
 				if peer.key is None:
-					self.first_evaluation_error.increment()
+					self.error.count('On first connection: {}'.format(err))
 				else:
-					self.late_evaluation_error.increment()
+					self.error.count('On later connection: {}'.format(err))
 				logging.warning('Connection establishment failed: {}'.format(err))
 				continue
 			logging.debug('Connection established')
@@ -230,9 +228,9 @@ class SwarmAnalyzer:
 			# Handle bad peers
 			except PeerError as err:
 				if peer.key is None:
-					self.first_evaluation_error.increment()
+					self.error.count('On first contact: {}'.format(err))
 				else:
-					self.late_evaluation_error.increment()
+					self.error.count('On later contact: {}'.format(err))
 				logging.warning('Peer evaluation failed: {}'.format(err))
 				continue
 
@@ -345,7 +343,7 @@ class SwarmAnalyzer:
 				torrents=self.torrents,
 				visited_peers=self.visited_peers,
 				success=self.passive_success,
-				error=self.passive_error,
+				error=self.error,
 				dht_enabled=self.dht_started)
 		logging.info('Listening on {}:{} for incomming peer connections'.format(*address))
 
@@ -389,7 +387,7 @@ class SwarmAnalyzer:
 			downloaded_pieces = protocol.count_bits(bitfield)
 			percentage = int(downloaded_pieces * 100 / self.torrents[peer.torrent].pieces_count)
 			remaining = self.torrents[peer.torrent].pieces_count - downloaded_pieces
-			logging.info('Peer reports to have {} pieces, {} remaining, equals {}%'.format(downloaded_pieces, remaining, percentage))
+			logging.debug('Peer reports to have {} pieces, {} remaining, equals {}%'.format(downloaded_pieces, remaining, percentage))
 
 			# Retrieve key for reoccurred incoming peers
 			key = peer.key
@@ -516,11 +514,10 @@ class SwarmAnalyzer:
 					peer_queue=len(self.peers),
 					unique_incoming=len(self.all_incoming_peers),
 					success_active=self.active_success.get(),
-					failed_active_first=self.first_evaluation_error.get(),
-					failed_active_later=self.late_evaluation_error.get(),
 					success_passive=self.passive_success.get(),
-					failed_passive=self.passive_error.get(),
 					thread_workload=self.timer.read())
+
+			self.error.write_file(self.outfile)
 
 		# Propagate thread termination
 		self.statistic_shutdown.set()
@@ -642,7 +639,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			result = protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
 		except PeerError as err:
 			logging.warning('Could not evaluate incoming peer: {}'.format(err))
-			self.server.error.increment()
+			self.server.error.count('On incoming contact: {}'.format(err))
 		else:
 			# Search received info hash in torrents dict
 			torrent_id = None

@@ -161,7 +161,7 @@ class PeerSession:
 			try:
 				message = self.receive_message()
 			except PeerError as err:
-				logging.info('No more messages: {}'.format(err))
+				logging.debug('No more messages: {}'.format(err))
 				break
 			messages.append(message)
 			max_duration = max(time.perf_counter() - start, max_duration)
@@ -190,7 +190,7 @@ class PeerSession:
 	def send_port(self, dht_port):
 		data = struct.pack('!H', dht_port)
 		self.send_message(Message(9, data)) # PeerError
-		logging.info('Sent DHT port {} to remote peer'.format(dht_port))
+		logging.debug('Sent DHT port {} to remote peer'.format(dht_port))
 
 	## Sends a extended message using the BEP 10 Extension Protocol
 	#  @param message The Message

@@ -77,10 +77,7 @@ class Statistic(Base):
 	peer_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
 	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
-	failed_active_first = sqlalchemy.Column(sqlalchemy.types.Integer)
-	failed_active_later = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
-	failed_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
 	thread_workload = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Handling database access with SQLAlchemy
@@ -166,7 +163,7 @@ class Database:
 			time_delta_seconds = time_delta.total_seconds()
 			pieces_delta = peer.pieces - database_peer.last_pieces
 			pieces_per_second = pieces_delta / time_delta_seconds
-			logging.info('Download speed since last visit is {} pieces per second'.format(pieces_per_second))
+			logging.debug('Download speed since last visit is {} pieces per second'.format(pieces_per_second))
 
 			# Update peer
 			database_peer.last_pieces = peer.pieces
@@ -183,7 +180,7 @@ class Database:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
 				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
-			logging.info('Updated peer with database id {}'.format(peer.key))
+			logging.debug('Updated peer with database id {}'.format(peer.key))
 
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question
@@ -266,15 +263,11 @@ class Database:
 	#  @param peer_queue Currently number of peers in queue
 	#  @param unique_incoming Seen unique incoming peers
 	#  @param success_active Active evaluations successful
-	#  @param failed_active_first Active evaluations failed on first contact
-	#  @param failed_active_later Active evaluations failed on later contact
 	#  @param success_passive Passive evaluations successful
-	#  @param failed_passive Passive evaluations failed
 	#  @param thread_workload Percentage of active time between 0 and 1
 	#  @exception DatabaseError
 	def store_statistic(self, peer_queue, unique_incoming, success_active,
-			failed_active_first, failed_active_later, success_passive,
-			failed_passive, thread_workload):
+			success_passive, thread_workload):
 		# Get thread-local session
 		session = self.Session()
 
@@ -283,10 +276,7 @@ class Database:
 				peer_queue=peer_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,
-				failed_active_first=failed_active_first,
-				failed_active_later=failed_active_later,
 				success_passive=success_passive,
-				failed_passive=failed_passive,
 				thread_workload=thread_workload)
 		try:
 			session.add(new_statistic)
