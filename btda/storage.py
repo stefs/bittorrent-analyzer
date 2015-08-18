@@ -234,11 +234,8 @@ class Database:
 	#  @param duplicate_peers Number of duplicate peers
 	#  @param duration Duration in seconds
 	#  @param torrent Corresponding torrent ID
-	#  @param incoming_duplicate Incoming connections which connected before
-	#  @param incoming_new Incoming connections which are new
 	#  @exception DatabaseError
-	def store_request(self, source, received_peers, duplicate_peers, seeders, completed, leechers, duration, torrent,
-			incoming_duplicate, incoming_new):
+	def store_request(self, source, received_peers, duplicate_peers, seeders, completed, leechers, duration, torrent):
 		# Get thread-local session
 		session = self.Session()
 
@@ -251,9 +248,7 @@ class Database:
 				completed=completed,
 				leechers=leechers,
 				duration_sec=duration,
-				torrent=torrent,
-				incoming_duplicate=incoming_duplicate,
-				incoming_new=incoming_new)
+				torrent=torrent)
 		try:
 			session.add(new_request)
 			session.commit()

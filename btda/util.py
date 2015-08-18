@@ -237,6 +237,15 @@ class DictCounter:
 			except KeyError:
 				self.counter[item] = 1
 
+	def reset(self, item):
+		with self.lock:
+			try:
+				value = self.counter[item]
+				self.counter[item] = 0
+			except KeyError:
+				value = 0
+		return value
+
 	def write_file(self, name):
 		with self.lock:
 			try:

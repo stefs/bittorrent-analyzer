@@ -53,8 +53,8 @@ class SwarmAnalyzer:
 
 		# Statistical counters
 		self.active_success = SharedCounter()
-		self.incoming_duplicate = SharedCounter()
-		self.incoming_new = SharedCounter()
+		self.incoming_total = DictCounter()
+		self.incoming_duplicate = DictCounter()
 		self.error = DictCounter()
 		if config.rec_dur_analysis:
 			self.eval_timer = list()
@@ -322,8 +322,7 @@ class SwarmAnalyzer:
 						duplicate_counter += 1
 				try:
 					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter,
-							seeders, completed, leechers, end-start, torrent_key,
-							self.incoming_duplicate.get(), incoming_new.get())
+							seeders, completed, leechers, end-start, torrent_key)
 				except DatabaseError as err:
 					logging.critical(err)
 
@@ -345,10 +344,7 @@ class SwarmAnalyzer:
 				torrents=self.torrents,
 				visited_peers=self.visited_peers,
 				error=self.error,
-				dht_enabled=self.dht_started,
-				all_incoming_peers=self.all_incoming_peers,
-				incoming_duplicate=self.incoming_duplicate,
-				incoming_new=self.incoming_new)
+				dht_enabled=self.dht_started)
 		logging.info('Listening on {}:{} for incomming peer connections'.format(*address))
 
 		# Activate the server in it's own thread
@@ -417,8 +413,10 @@ class SwarmAnalyzer:
 
 			# Remember equality information of new incoming peers and discard all incoming
 			if peer.source is Source.incoming:
+				self.incoming_total.count(peer.torrent)
 				if peer_key is not None:
 					self.all_incoming_peers[equality] = peer_key
+					self.incoming_duplicate.count(peer.torrent)
 				self.visited_peers.task_done()
 				continue
 
@@ -520,7 +518,17 @@ class SwarmAnalyzer:
 					success_active=self.active_success.get(),
 					thread_workload=self.timer.read())
 
+			# Store peer connection errors
 			self.error.write_file(self.outfile)
+
+			# Store incoming peer statistics
+			for id in self.torrents:
+				self.database.store_request(
+					source = Source.incoming,
+					received_peers = self.incoming_total.reset(id),
+					duplicate_peers = self.incoming_duplicate.reset(id),
+					seeders=None, completed=None, leechers=None, duration=None,
+					torrent = id)
 
 		# Propagate thread termination
 		self.statistic_shutdown.set()
@@ -612,8 +620,8 @@ class Peer(RichComparisonMixin):
 class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	# Parent class parameter
 	allow_reuse_address = True
-	self.all_incoming_ips = set()
-	self.all_incoming_ips_lock = threading.Lock()
+	all_incoming_ips = set()
+	all_incoming_ips_lock = threading.Lock()
 
 	## Extended init
 	#  @param server_address Pass through to parent
@@ -634,16 +642,6 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		# self.client_address is tuple of incoming client address and port
 		# self.request is incoming connection socket
 		# self.server is own server instance
-
-		# count new and duplicate peers
-		with self.server.all_incoming_ips_lock:
-			if self.client_address[0] in self.server.all_incoming_ips:
-				self.server.incoming_duplicate.increment()
-			else:
-				self.server.incoming_new.increment()
-				self.server.all_incoming_ips.add(self.client_address[0])
-
-		# perform evaluation
 		try:
 			self.request.settimeout(config.network_timeout)
 		except OSError as err:
