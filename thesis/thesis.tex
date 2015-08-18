@@ -507,10 +507,10 @@ The main script, named \texttt{btda.py} can be controlled by using the following
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
-Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}
+Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed from 11:11 am, August 15* to 11:11 am, August 17*, 2015. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
 
 \section{Choosing Torrents}
-\begin{table}[b!]
+\begin{table}
 \centering
 \begin{tabular}{rllr}
 \toprule
@@ -533,19 +533,13 @@ Rank & Site name & Domain name & Alexa Rank \\
 15 & LimeTorrents.cc & \texttt{www.limetorrents.cc} & 4,552 \\
 16 & TamilRockers.net & \texttt{tamilrockers.com} & 4,586 \\
 17 & Monova Torrent Search & \texttt{www.monova.org} & 4,843 \\
-18 & Torrent Reactor & \texttt{torrentreactor.com} & 5,362 \\
-19 & YourBittorrent & \texttt{yourbittorrent.com} & 5,952 \\
-20 & TorrentProject & \texttt{torrentproject.se} & 6,670 \\
-21 & TorrentFunk & \texttt{www.torrentfunk.com} & 7,682 \\
-22 & demonoid.pw & \texttt{www.demonoid.pw} & 7,947 \\
-23 & TorrentLeech.org & \texttt{torrentleech.org} & 9,749 \\
 \bottomrule
 \end{tabular}
-\caption{Popularity of torrent directory sites according to Alexa's global traffic ranking}
+\caption[Popular torrent directory sites according to \textsc{Alexa}]{Popularity of torrent directory sites according to \textsc{Alexa}'s \cite{alexa} global traffic ranking. Only sites with a rank below \numprint{5000} are listed. Data is accurate as of July 16, 2015.}
 \label{torrentsites}
 \end{table}
 
-To determine most popular torrent directory sites, global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites looked up at Alexa were collected through manual investigation using web search engines, relevant news sites and cross references between sites, because there is no complete list of torrent sites. Table~\ref{torrentsites} shows sites found having an Alexa rank below 10,000 as of July 16, 2015.
+Due to the distributed nature of BitTorrent, there unfortunately is no complete list or for all torrents currently active. Thus external data about popularity of torrents is needed, even if there is no guarantee of correctness. So to determine most popular torrent directory sites the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
 
 \begin{table}
 \centering
@@ -554,13 +548,42 @@ To determine most popular torrent directory sites, global traffic rankings by \t
 ID & Site name & Torrent name & Size & Leechers & Seeders \\
 \midrule
 1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+15 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+15 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
 \bottomrule
 \end{tabular}
-\caption{Compilation of torrents from the most popular torrent sites}
+\caption[List of torrent chosen for evaluation]{Compilation of torrents from the most popular torrent sites. The \emph{ID} was chosen by the SQLite database used for storage during the analysis.}
 \label{torrents}
 \end{table}
 
-From the first three sites, on August 8*, 2015, the respective five most popular torrents were chosen for analysis. Popularity was determined by the number of leechers as reported by the website. All these \textbf{15 torrents} are listed in table \ref{torrents}.
+Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Additionally torrents from \textsc{ExtraTorrent.cc} were included, because it reported very high interest on certain torrents in contradiction to \textsc{Torrentz}' numbers. Across both sites 20 of the most popular torrents were chosen. Additionally, 5 large torrents over \numprint[GB]{5} and 5 recently published torrents were added to compare their behavior. These \textbf{30 torrents} are listed in table \ref{torrents}.
 
 \section{Getting Addresses of Peers}
 \begin{table}
@@ -571,28 +594,53 @@ Source & Total & Unique & New & Unique per Hour \\
 \midrule
 Tracker server & 5 & 2 & 3\,\% \\
 DHT network & 10 & 2 & 3\,\% \\
-Incoming connection & 1 & 2 & 3\,\% \\
+Incoming peers & 1 & 2 & 3\,\% \\
 \bottomrule
 \end{tabular}
-\caption{Received peer addresses per source}
+\caption[Received peer addresses per source]{Total and unique received peer addresses per source. \emph{Tracker server} and the \emph{DHT network} are actively contacted for new peers. Values of \emph{incoming peers} only include peers whose download progress was evaluated successfully. The duration to calculate the \emph{unique per hour} value is \numprint[h]{48}*, as mentioned earlier.}
 \label{unique-peers}
 \end{table}
 
-The analysis was performed from 11:11 am, August 15* to 11:11 am, August 17*, 2015. A time period of 48 hours was chosen in order to detect patters during the day-night cycle. Peers from all sources, namely from the tracker server, the DHT network and incoming connections, were considered. The number of unique peers in regards to their source is shown in table \ref{unique-peers}. The ratio between new and duplicate received peer address information settles after about \textbf{6 hours} at \textbf{76*\,\%}. A history of all peer requests is shown in figure \ref{request-history}.
+Peers from all sources were considered, namely from the tracker server, the DHT network and incoming connections. The number collected peer addresses in regards to their source is shown in table \ref{unique-peers}. Since the \emph{incoming peers} data point only includes peers when their download progress was successfully evaluated, the ratio of \numprint[\%]{95}* new incoming peers implies that $1-\numprint[\%]{95}=\numprint[\%]{5}$* of unique incoming peers contacted us a second time, despite not receiving any torrent data.
+
+Summary plot
+
+The progression during the analysis period of all peer requests is shown in appendix \ref{request-history}. The ratio between new and duplicate received peer address information settles fairly quickly*. \emph{incoming-duplicate} is actually good.
 
 \section{Evaluating Peer's Download Progress}
 \begin{table}
 \centering
 \begin{tabular}{llrr}
 \toprule
-Event & Reason & Quantity & Share \\
+Event & Reason & Quantity & Share per Event \\
 \midrule
-a & b & c & d \\
+First contact & timed out & 1653 \\
+& [Errno 111] Connection refused & 420 \\
+& Socket connection broken & 317 \\
+& [Errno 104] Connection reset by peer & 47 \\
+& [Errno 113] No route to host & 26 \\
+& \emph{Total} & 4321 \\
+\midrule
+Later contact & Socket connection broken & 265 \\
+& timed out & 27 \\
+& [Errno 111] Connection refused & 6 \\
+& [Errno 104] Connection reset by peer & 2 \\
+& \emph{Total} & 4321 \\
+\midrule
+Incoming peer & Peer speaks unknown protocol & 891 \\
+& timed out & 353 \\
+& [Errno 104] Connection reset by peer & 9 \\
+& Socket connection broken & 7 \\
+& \emph{Total} & 4321 \\
 \bottomrule
 \end{tabular}
-\caption{Reasons for failed peer evaluation}
+\caption[Reasons for failed peer evaluation]{Reasons for failed peer valuations during the analysis process. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.}
 \label{connection-failure}
 \end{table}
+
+Define failure
+
+Peer addresses received via DHT and tracker requests were contacted continuously. \numprint[\%]{0} of contacted peers failed when contacted for the first time. Of the peers contacted successfully once, \numprint[\%]{0} failed later.
 
 \section{Counting Confirmed Downloads}
 The timeline of confirmed downloads and downloads reported by the tracker server in scrape requests is shown in one hour steps in figure \ref{downloads}.
