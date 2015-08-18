@@ -146,6 +146,7 @@ class SwarmAnalyzer:
 					raise AnalyzerError('Could not fetch metadata from any peer')
 
 				# Decode info dict
+				tracker = torrent.tracker_from_magnet(magnet)
 				info_dict = torrent.InfoDict(info_dict_bencoded)
 				info_hash_hex = bytes_to_hex(info_hash)
 				pieces_count = info_dict.get_pieces_count()
@@ -154,7 +155,7 @@ class SwarmAnalyzer:
 				name = info_dict.get_name()
 
 				# Store in database and dictionary
-				new_torrent = Torrent(None, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
+				new_torrent = Torrent(tracker, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold)
 				key = self.database.store_torrent(new_torrent, filename, name)
 				self.torrents[key] = new_torrent
 

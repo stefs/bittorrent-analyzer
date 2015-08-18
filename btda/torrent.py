@@ -129,3 +129,17 @@ def hash_from_magnet(magnet):
 	elif len(splitted[2]) == 32:
 		raise FileError('Base32 hashes not supported')
 	raise FileError('Bad info hash length')
+
+## Extract the tracker announce URL according to BEP 9
+#  @return The announce URL
+#  @exception FileError
+def tracker_from_magnet(magnet)
+	url = urllib.parse.urlparse(magnet)
+	if url.scheme != 'magnet':
+		return
+	params = urllib.parse.parse_qs(url.query)
+	if 'tr' not in params:
+		return
+	if len(params['tr']) > 1:
+		logging.warning('Only using first tracker')
+	return params['tr'][0]
