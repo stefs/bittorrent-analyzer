@@ -26,9 +26,9 @@ class Peer(Base):
 	# Types according to http://docs.sqlalchemy.org/en/rel_0_9/core/type_basics.html#generic-types
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
 	host = sqlalchemy.Column(sqlalchemy.types.String)
-	city = sqlalchemy.Column(sqlalchemy.types.String)
 	country = sqlalchemy.Column(sqlalchemy.types.String)
-	continent = sqlalchemy.Column(sqlalchemy.types.String)
+	latitude = sqlalchemy.Column(sqlalchemy.types.Float)
+	longitude = sqlalchemy.Column(sqlalchemy.types.Float)
 	first_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
 	last_pieces = sqlalchemy.Column(sqlalchemy.types.Integer)
 	first_seen = sqlalchemy.Column(sqlalchemy.types.Integer)
@@ -127,8 +127,8 @@ class Database:
 			timestamp = datetime.datetime.now()
 
 			# Write to database
-			new_peer = Peer(host=host, city=location[0], country=location[1],
-					continent=location[2], first_pieces=peer.pieces,
+			new_peer = Peer(host=host, country=location[0], latitude=location[1],
+					longitude=location[2], first_pieces=peer.pieces,
 					last_pieces=None, first_seen=int(timestamp.timestamp()),
 					last_seen=None, max_speed=None, visits=1,
 					source=peer.source.name, torrent=peer.torrent)
@@ -195,7 +195,7 @@ class Database:
 			return None, None, None
 		else:
 			logging.info('Location of ip address is {}, {}, {}'.format(response.city.name, response.country.name, response.continent.name))
-			return response.city.name, response.country.iso_code, response.continent.code
+			return response.country.iso_code, response.location.latitude, response.location.longitude
 
 	## Store a given torrent in the database
 	#  @param torrent Torrent named tuple

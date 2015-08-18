@@ -662,7 +662,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 					torrent_id = key
 			if torrent_id is None:
 				logging.warning('Ignoring incoming peer with unknown info hash')
-				self.server.error.count('Incoming peer,Unknown info hash'.format(err))
+				self.server.error.count('Incoming peer,Unknown info hash')
 				return
 
 			# Queue for peer handler
