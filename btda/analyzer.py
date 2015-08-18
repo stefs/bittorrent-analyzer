@@ -595,14 +595,15 @@ class SwarmAnalyzer:
 		return True
 
 class Peer(RichComparisonMixin):
-	revisit = None
-	ip_address = None
-	port = None
-	id = None
-	pieces = None
-	source = None
-	torrent = None
-	key = None
+	def __init__(self):
+		self.revisit = None
+		self.ip_address = None
+		self.port = None
+		self.id = None
+		self.pieces = None
+		self.source = None
+		self.torrent = None
+		self.key = None
 
 	def __lt__(self, other):
 		return self.revisit < other.revisit
@@ -618,16 +619,16 @@ class Peer(RichComparisonMixin):
 
 ## Subclass of library class to change parameters, add attributes and add multithreading mix-in class
 class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-	# Parent class parameter
-	allow_reuse_address = True
-	all_incoming_ips = set()
-	all_incoming_ips_lock = threading.Lock()
-
 	## Extended init
 	#  @param server_address Pass through to parent
 	#  @param RequestHandlerClass Pass through to parent
 	#  @param **server_args Server attributes available in handle method
 	def __init__(self, server_address, RequestHandlerClass, **server_args):
+		# Parent class parameter
+		self.allow_reuse_address = True
+		self.all_incoming_ips = set()
+		self.all_incoming_ips_lock = threading.Lock()
+
 		# Call base constructor
 		socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
 

@@ -227,8 +227,9 @@ class RichComparisonMixin:
 
 # Count frequency of items thread-safe
 class DictCounter:
-	counter = dict()
-	lock = threading.Lock()
+	def __init__(self):
+		self.counter = dict()
+		self.lock = threading.Lock()
 
 	def count(self, item):
 		with self.lock:

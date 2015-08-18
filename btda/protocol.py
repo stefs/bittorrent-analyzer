@@ -81,7 +81,7 @@ class PeerSession:
 		# Parse protocol string
 		pstr = handshake_tuple[0]
 		if pstr != b'BitTorrent protocol':
-			raise PeerError('Peer speaks unknown protocol: {}'.format(pstr))
+			raise PeerError('Peer speaks unknown protocol')
 
 		# Parse reserved bytes for protocol extensions according to https://wiki.theory.org/BitTorrentSpecification#Reserved_Bytes
 		reserved = handshake_tuple[1]
@@ -91,7 +91,7 @@ class PeerSession:
 		# Parse info hash
 		received_info_hash = handshake_tuple[2]
 		if not expected_hash is None and received_info_hash != expected_hash:
-			raise PeerError('Mismatch on received info hash: {}'.format(received_info_hash))
+			raise PeerError('Mismatch on received info hash')
 
 		# Parse peer id
 		received_peer_id = handshake_tuple[3]
