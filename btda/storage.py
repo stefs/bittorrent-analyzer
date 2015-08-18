@@ -77,7 +77,6 @@ class Statistic(Base):
 	peer_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
 	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
-	success_passive = sqlalchemy.Column(sqlalchemy.types.Integer)
 	thread_workload = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Handling database access with SQLAlchemy
@@ -235,8 +234,11 @@ class Database:
 	#  @param duplicate_peers Number of duplicate peers
 	#  @param duration Duration in seconds
 	#  @param torrent Corresponding torrent ID
+	#  @param incoming_duplicate Incoming connections which connected before
+	#  @param incoming_new Incoming connections which are new
 	#  @exception DatabaseError
-	def store_request(self, source, received_peers, duplicate_peers, seeders, completed, leechers, duration, torrent):
+	def store_request(self, source, received_peers, duplicate_peers, seeders, completed, leechers, duration, torrent,
+			incoming_duplicate, incoming_new):
 		# Get thread-local session
 		session = self.Session()
 
@@ -249,7 +251,9 @@ class Database:
 				completed=completed,
 				leechers=leechers,
 				duration_sec=duration,
-				torrent=torrent)
+				torrent=torrent,
+				incoming_duplicate=incoming_duplicate,
+				incoming_new=incoming_new)
 		try:
 			session.add(new_request)
 			session.commit()
@@ -263,11 +267,9 @@ class Database:
 	#  @param peer_queue Currently number of peers in queue
 	#  @param unique_incoming Seen unique incoming peers
 	#  @param success_active Active evaluations successful
-	#  @param success_passive Passive evaluations successful
 	#  @param thread_workload Percentage of active time between 0 and 1
 	#  @exception DatabaseError
-	def store_statistic(self, peer_queue, unique_incoming, success_active,
-			success_passive, thread_workload):
+	def store_statistic(self, peer_queue, unique_incoming, success_active, thread_workload):
 		# Get thread-local session
 		session = self.Session()
 
@@ -276,7 +278,6 @@ class Database:
 				peer_queue=peer_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,
-				success_passive=success_passive,
 				thread_workload=thread_workload)
 		try:
 			session.add(new_statistic)
