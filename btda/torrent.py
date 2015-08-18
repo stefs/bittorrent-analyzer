@@ -40,13 +40,18 @@ class TorrentFile:
 		logging.info('Read torrent file ' + path)
 
 	## Extract announce URL
-	#  @return The tracker announce URL
+	#  @return A list of tracker announce URLs
 	#  @exception FileError
 	def get_announce_url(self):
-		try:
-			return self.torrent_file[b'announce'].decode()
-		except KeyError as err:
+		announce = set()
+		if b'announce' in self.torrent_file:
+			announce.add(self.torrent_file[b'announce'].decode())
+		if b'announce-list' in self.torrent_file:
+			for url in self.torrent_file[b'announce']
+				announce.add(url[0].deode())
+		if not announce:
 			raise FileError('File did not contain a announce URL: ' + str(err))
+		return list(announce)
 
 	## Extract info dict
 	#  @return Bencoded info dict
@@ -136,10 +141,8 @@ def hash_from_magnet(magnet):
 def tracker_from_magnet(magnet)
 	url = urllib.parse.urlparse(magnet)
 	if url.scheme != 'magnet':
-		return
+		return list()
 	params = urllib.parse.parse_qs(url.query)
 	if 'tr' not in params:
-		return
-	if len(params['tr']) > 1:
-		logging.warning('Only using first tracker')
-	return params['tr'][0]
+		return list()
+	return params['tr']

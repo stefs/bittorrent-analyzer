@@ -211,7 +211,7 @@ class Database:
 		gb = (torrent.pieces_count * torrent.piece_size) / 10 ** 9
 
 		# Write to database
-		new_torrent = Torrent(announce_url=torrent.announce_url, info_hash=torrent.info_hash,
+		new_torrent = Torrent(announce_url=','.join(torrent.announce_url), info_hash=torrent.info_hash,
 				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
 				piece_size=torrent.piece_size, complete_threshold=torrent.complete_threshold,
 				filepath=path, display_name=dn, gigabyte=gb)

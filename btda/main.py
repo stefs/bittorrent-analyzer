@@ -26,6 +26,7 @@ with analyzer.SwarmAnalyzer(args.debug) as app:
 	# Import torrents
 	app.import_magnets()
 	app.import_torrents()
+	app.torrent_duplicates()
 
 	# Requesting new peers
 	app.start_tracker_requests()

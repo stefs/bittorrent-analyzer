@@ -159,6 +159,14 @@ class SwarmAnalyzer:
 				key = self.database.store_torrent(new_torrent, filename, name)
 				self.torrents[key] = new_torrent
 
+	## Raise exception when duplicate torrents found
+	def torrent_duplicates(self):
+		info_hashes = set()
+		for id, torrent in self.torrents.items():
+			if torrent.info_hash in info_hashes:
+				raise AnalyzerError('Duplicate torrent: id {}, hash {}'.format(id, torrent.info_hash_hex))
+			info_hashes.add(torrent.info_hash)
+
 	## Evaluates all peers in the queue
 	def start_active_evaluation(self):
 		# Concurrency management
@@ -279,53 +287,54 @@ class SwarmAnalyzer:
 		# Remember activation to enable shutdown
 		self.tracker_requests = True
 
-	## Issues GET request to tracker, puts received peers in queue, wait an interval considering tracker minimum
+	## Issues GET request to tracker, puts received peers in queue, wait an interval
 	#  @param torrent_key Torrent key specifying the target torrent and tracker
 	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, torrent_key):
-		tracker_conn = tracker.TrackerCommunicator(self.own_peer_id, self.torrents[torrent_key].announce_url,
-				self.torrents[torrent_key].pieces_count)
-
 		while not self.shutdown_request.is_set():
-			# Try scrape request
-			try:
-				seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
-			except TrackerError as err:
-				logging.warning('Scrape request failed on torrent {}: {}'.format(torrent_key, err))
-				seeders = completed = leechers = None
+			for announce_url in self.torrents[torrent_key].announce_url:
+				# Create tracker connection
+				tracker_conn = tracker.TrackerCommunicator(self.own_peer_id, announce_url, self.torrents[torrent_key].pieces_count)
 
-			# Ask tracker
-			logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
-			try:
-				start = time.perf_counter()
-				tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
-				end = time.perf_counter()
-			except TrackerError as err:
-				logging.error('Could not receive peers from tracker: {}'.format(err))
-			else:
-				# Log recommended interval
-				if config.tracker_request_interval > tracker_interval:
-					logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60,
-							config.tracker_request_interval/60))
-				else:
-					logging.info('Tracker recommended interval of {} minutes'.format(tracker_interval/60))
-
-				# Put peers in queue
-				duplicate_counter = 0
-				for peer_ip in peer_ips:
-					new_peer = Peer()
-					new_peer.revisit = 0
-					new_peer.ip_address = peer_ip[0]
-					new_peer.port = peer_ip[1]
-					new_peer.source = Source.tracker
-					new_peer.torrent = torrent_key
-					if not self.peers.put(new_peer):
-						duplicate_counter += 1
+				# Try scrape request
 				try:
-					self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter,
-							seeders, completed, leechers, end-start, torrent_key)
-				except DatabaseError as err:
-					logging.critical(err)
+					seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
+				except TrackerError as err:
+					logging.warning('Scrape request failed on torrent {}: {}'.format(torrent_key, err))
+					seeders = completed = leechers = None
+
+				# Ask tracker
+				logging.info('Contacting tracker for torrent with id {}'.format(torrent_key))
+				try:
+					start = time.perf_counter()
+					tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
+					end = time.perf_counter()
+				except TrackerError as err:
+					logging.error('Could not receive peers from tracker: {}'.format(err))
+				else:
+					# Log recommended interval
+					if config.tracker_request_interval > tracker_interval:
+						logging.warning('Tracker wished interval of {} but we are using {} minutes'.format(tracker_interval/60,
+								config.tracker_request_interval/60))
+					else:
+						logging.info('Tracker recommended interval of {} minutes'.format(tracker_interval/60))
+
+					# Put peers in queue
+					duplicate_counter = 0
+					for peer_ip in peer_ips:
+						new_peer = Peer()
+						new_peer.revisit = 0
+						new_peer.ip_address = peer_ip[0]
+						new_peer.port = peer_ip[1]
+						new_peer.source = Source.tracker
+						new_peer.torrent = torrent_key
+						if not self.peers.put(new_peer):
+							duplicate_counter += 1
+					try:
+						self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter,
+								seeders, completed, leechers, end-start, torrent_key)
+					except DatabaseError as err:
+						logging.critical(err)
 
 			# Wait interval
 			logging.info('Waiting {} minutes until next tracker request ...'.format(config.tracker_request_interval/60))
