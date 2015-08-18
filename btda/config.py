@@ -1,5 +1,5 @@
 # Number of threads used to contact peers in queue
-peer_evaluation_threads = 64
+peer_evaluation_threads = 512
 # Amount of downloaded pieces reported to the tracker
 fake_downloaded_stat = 1.0
 # Amount of left pieces reported to the tracker
@@ -17,7 +17,7 @@ dht_control_port = 17001
 # Time delay between asking DHT for new peers in seconds
 dht_request_interval = 5 * 60
 # Time delay between asking the tracker for new peers in seconds
-tracker_request_interval = 13 * 60
+tracker_request_interval = 5 * 60
 # Time delay for revisiting unfinished peers in seconds
 peer_revisit_delay = 5 * 60
 # When collecting all messages from a peer, cancel after this amount

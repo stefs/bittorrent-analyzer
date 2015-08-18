@@ -207,9 +207,9 @@ class SwarmAnalyzer:
 			# Establish connection
 			# TODO use util.TCPConnection
 			if peer.key is None:
-				logging.info('################ Connecting to new peer ... ################')
+				logging.info('Connecting to new peer ...')
 			else:
-				logging.info('################ Reconnecting to peer {} ... ################'.format(peer.key))
+				logging.info('Reconnecting to peer {} ...'.format(peer.key))
 			try:
 				sock = socket.create_connection((peer.ip_address, peer.port), config.network_timeout)
 			except OSError as err:
@@ -648,7 +648,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		except OSError as err:
 			logging.warning('Could not set timeout on incoming connection')
 			return
-		logging.info('################ Evaluating an incoming peer ################')
+		logging.info('Evaluating an incoming peer ...')
 		try:
 			result = protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
 		except PeerError as err:

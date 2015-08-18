@@ -234,7 +234,7 @@ class DictCounter:
 	def __str__(self):
 		data = list()
 		with self.lock:
-			for item, count in self.counter:
+			for item, count in self.counter.items():
 				data.append('{},{}'.format(item, count))
 		return '\n'.join(data)
 
@@ -255,13 +255,12 @@ class DictCounter:
 		return value
 
 	def write_csv(self, name):
-		with self.lock:
-			try:
-				with open(name+'_error.txt', mode='w') as file:
-					file.write(self.__str__())
-			except OSError as err:
-				logging.error('Failed to write error stats: {}'.format(err))
-				logging.info(self.__str__())
+		try:
+			with open(name+'_error.txt', mode='w') as file:
+				file.write(self.__str__())
+		except OSError as err:
+			logging.error('Failed to write error stats: {}'.format(err))
+			logging.info(self.__str__())
 
 ### METHODS ###
 
