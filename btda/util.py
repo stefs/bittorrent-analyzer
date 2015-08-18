@@ -231,6 +231,13 @@ class DictCounter:
 		self.counter = dict()
 		self.lock = threading.Lock()
 
+	def __str__(self):
+		data = list()
+		with self.lock:
+			for item, count in self.counter:
+				data.append('{},{}'.format(item, count))
+		return '\n'.join(data)
+
 	def count(self, item):
 		with self.lock:
 			try:
@@ -247,14 +254,14 @@ class DictCounter:
 				value = 0
 		return value
 
-	def write_file(self, name):
+	def write_csv(self, name):
 		with self.lock:
 			try:
 				with open(name+'_error.txt', mode='w') as file:
-					file.write(str(self.counter))
+					file.write(self.__str__())
 			except OSError as err:
 				logging.error('Failed to write error stats: {}'.format(err))
-				logging.info(str(self.counter))
+				logging.info(self.__str__())
 
 ### METHODS ###
 

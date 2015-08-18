@@ -35,7 +35,7 @@ class PeerSession:
 		try:
 			self.sock.sendall(data)
 		except OSError as err:
-			raise PeerError('Sending data failed: {}'.format(err))
+			raise PeerError(str(err))
 
 	## Receives bytes blocking according to https://stackoverflow.com/a/17508900
 	#  @param required_bytes Nuber of bytes to be returned
@@ -47,13 +47,16 @@ class PeerSession:
 		if bytes_to_receive > 0:
 			data_parts = [self.received_bytes_buffer]
 			received_bytes = 0
+			attempts_after_fail = 0 # robust against occasionally empty responses
 			while received_bytes < bytes_to_receive:
 				try:
 					buffer = self.sock.recv(1024)
 				except OSError as err:
-					raise PeerError('Receiving data failed: {}'.format(err))
+					raise PeerError(str(err))
 				if buffer == b'':
-			                raise PeerError('Socket connection broken')
+					attempts_after_fail += 1
+				if attempts_after_fail >= 20:
+					raise PeerError('Socket connection broken')
 				data_parts.append(buffer)
 				received_bytes += len(buffer)
 			self.received_bytes_buffer = b''.join(data_parts)

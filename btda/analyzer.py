@@ -214,9 +214,9 @@ class SwarmAnalyzer:
 				sock = socket.create_connection((peer.ip_address, peer.port), config.network_timeout)
 			except OSError as err:
 				if peer.key is None:
-					self.error.count('On first connection: {}'.format(err))
+					self.error.count('First contact,{}'.format(err))
 				else:
-					self.error.count('On later connection: {}'.format(err))
+					self.error.count('Later contact,{}'.format(err))
 				logging.warning('Connection establishment failed: {}'.format(err))
 				continue
 			logging.debug('Connection established')
@@ -229,9 +229,9 @@ class SwarmAnalyzer:
 			# Handle bad peers
 			except PeerError as err:
 				if peer.key is None:
-					self.error.count('On first contact: {}'.format(err))
+					self.error.count('First contact,{}'.format(err))
 				else:
-					self.error.count('On later contact: {}'.format(err))
+					self.error.count('Later contact,{}'.format(err))
 				logging.warning('Peer evaluation failed: {}'.format(err))
 				continue
 
@@ -519,7 +519,7 @@ class SwarmAnalyzer:
 					thread_workload=self.timer.read())
 
 			# Store peer connection errors
-			self.error.write_file(self.outfile)
+			self.error.write_csv(self.outfile)
 
 			# Store incoming peer statistics
 			for id in self.torrents:
@@ -653,7 +653,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			result = protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
 		except PeerError as err:
 			logging.warning('Could not evaluate incoming peer: {}'.format(err))
-			self.server.error.count('On incoming contact: {}'.format(err))
+			self.server.error.count('Incoming peer,{}'.format(err))
 		else:
 			# Search received info hash in torrents dict
 			torrent_id = None
