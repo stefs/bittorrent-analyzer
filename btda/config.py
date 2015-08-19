@@ -1,5 +1,5 @@
 # Number of threads used to contact peers in queue
-peer_evaluation_threads = 512
+peer_evaluation_threads = 256
 # Amount of downloaded pieces reported to the tracker
 fake_downloaded_stat = 1.0
 # Amount of left pieces reported to the tracker

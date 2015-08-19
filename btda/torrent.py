@@ -47,8 +47,8 @@ class TorrentFile:
 		if b'announce' in self.torrent_file:
 			announce.add(self.torrent_file[b'announce'].decode())
 		if b'announce-list' in self.torrent_file:
-			for url in self.torrent_file[b'announce']
-				announce.add(url[0].deode())
+			for url in self.torrent_file[b'announce-list']:
+				announce.add(url[0].decode())
 		if not announce:
 			raise FileError('File did not contain a announce URL: ' + str(err))
 		return list(announce)
@@ -138,7 +138,7 @@ def hash_from_magnet(magnet):
 ## Extract the tracker announce URL according to BEP 9
 #  @return The announce URL
 #  @exception FileError
-def tracker_from_magnet(magnet)
+def tracker_from_magnet(magnet):
 	url = urllib.parse.urlparse(magnet)
 	if url.scheme != 'magnet':
 		return list()

@@ -120,7 +120,10 @@ class TrackerCommunicator:
 		action = 0x0
 		transaction_id = udp_transaction_id()
 		req = struct.pack('!qii', connection_id, action, transaction_id)
-		sock.sendto(req, conn)
+		try:
+			sock.sendto(req, conn)
+		except TypeError as err:
+			raise TrackerError('Bad announce url: {}'.format(err))
 
 		# Parse connection id from connect response
 		buf = sock.recvfrom(2048)[0]
@@ -260,7 +263,10 @@ class TrackerCommunicator:
 		action = 0x0
 		transaction_id = udp_transaction_id()
 		req = struct.pack('!qii', connection_id, action, transaction_id)
-		sock.sendto(req, conn)
+		try:
+			sock.sendto(req, conn)
+		except TypeError as err:
+			raise TrackerError('Bad scrape url: {}'.format(err))
 
 		# Parse connection id from connect response
 		buf = sock.recvfrom(2048)[0]

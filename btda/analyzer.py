@@ -34,7 +34,7 @@ class SwarmAnalyzer:
 		if debug:
 			logging_config['level'] = logging.DEBUG
 		else:
-			logging_config['level'] = logging.INFO
+			logging_config['level'] = logging.WARNING
 			logfile = '{}.log'.format(self.outfile)
 			print('Log is written to {}'.format(logfile))
 			logging_config['filename'] = logfile

@@ -33,7 +33,7 @@ This is work in progress.
 ## Features
 * Import torrents from `.torrent` files (BEP 3)
 * Import torrents form magnet links by fetching metadata via the *ut_metadata* extension (BEP 9) using the Extension Protocol (BEP 10)
-* Continuously get IPv4 peers and scrape information from the tracker using HTTP (BEP 3) and UDP announce requests (BEP 15)
+* Continuously get IPv4 peers and scrape information from the multiple trackers per peer using HTTP (BEP 3) and UDP announce requests (BEP 15)
 * Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
 * Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the *pymdht* project using local telnet
 * Actively contact collected peers and calculate minimum number of downloaded pieces by receiving all *have* and *bitfield* messages until a timeout
