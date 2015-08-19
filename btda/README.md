@@ -107,7 +107,7 @@ to increase per-user limits. After rebooting, check success with
 2. `./run_pymdht_node.py --port=17000 --telnet-port=17001`
 3. Tmux detach with `Ctrl+B` followed by `d`
 
-Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still works as expected!
+Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht is not crashed meanwhile!
 
 ### Start bittorrent-analyzer peer evaluation
 1. `tmux new-session -s btda`

@@ -144,7 +144,7 @@ Zusammenfassung auf Englisch
 \chapter{Introduction}
 \pagestyle{headings}
 \pagenumbering{arabic}
-\begin{table}[b!]
+\begin{table}
 \centering
 \begin{tabular}{llrrrr}
 \toprule
@@ -197,9 +197,7 @@ Reading a peer's download \textbf{progress} is the core part. After exchanging B
 
 The download progress is stored in a \textbf{database}, together with a timestamp of the contact. When contacting a peer later another time, a decision can be made if the peer has crossed the threshold. This threshold is below \numprint[\%]{100} to compensate for peers disconnecting immediately after they finished the download. For additional analysis, the peer's download speed is derivated. Also, a lookup in a IP geolocation database is performed, and the peer's location, host name and client program is recorded.
 
-Finally the number of confirmed downloads can be compiled from the database.
-
-Count observed downloads per hour
+In the database there is only one record per peer, with two pieces values: one from the first contact with that peer and one from the latest contact. The number of confirmed downloads can now be obtained by filtering for peers with the first value below the threshold and the second one equal or above the threshold. Remaining rows can be aggregated by their latest timestamp to get download numbers per hour.
 
 \section{Related Work}
 [Other relevant academic work and how it differs from this work]
