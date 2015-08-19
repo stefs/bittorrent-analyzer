@@ -25,7 +25,9 @@ class Peer(Base):
 
 	# Types according to http://docs.sqlalchemy.org/en/rel_0_9/core/type_basics.html#generic-types
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
+	client = sqlalchemy.Column(sqlalchemy.types.String)
 	host = sqlalchemy.Column(sqlalchemy.types.String)
+	continent = sqlalchemy.Column(sqlalchemy.types.String)
 	country = sqlalchemy.Column(sqlalchemy.types.String)
 	latitude = sqlalchemy.Column(sqlalchemy.types.Float)
 	longitude = sqlalchemy.Column(sqlalchemy.types.Float)
@@ -125,10 +127,11 @@ class Database:
 			location = self.get_place_by_ip(peer.ip_address)
 			host = get_short_hostname(peer.ip_address)
 			timestamp = datetime.datetime.now()
+			client = client_from_peerid(peer.id)
 
 			# Write to database
-			new_peer = Peer(host=host, country=location[0], latitude=location[1],
-					longitude=location[2], first_pieces=peer.pieces,
+			new_peer = Peer(client=client, host=host, continent=location[0], country=location[1],
+					latitude=location[2], longitude=location[3], first_pieces=peer.pieces,
 					last_pieces=None, first_seen=int(timestamp.timestamp()),
 					last_seen=None, max_speed=None, visits=1,
 					source=peer.source.name, torrent=peer.torrent)
@@ -187,15 +190,15 @@ class Database:
 	def get_place_by_ip(self, ip_address):
 		if self.geoipdb_closed:
 			logging.critical('Called get_place_by_ip after close')
-			return None, None, None
+			return None, None, None, None
 		try:
 			response = self.reader.city(ip_address)
 		except geoip2.errors.AddressNotFoundError as err:
 			logging.warning('IP address is not in the database: {}'.format(err))
-			return None, None, None
+			return None, None, None, None
 		else:
-			logging.info('Location of ip address is {}, {}, {}'.format(response.city.name, response.country.name, response.continent.name))
-			return response.country.iso_code, response.location.latitude, response.location.longitude
+			logging.debug('Location of ip address is {}, {}, {}'.format(response.city.name, response.country.name, response.continent.name))
+			return response.continent.code, response.country.iso_code, response.location.latitude, response.location.longitude
 
 	## Store a given torrent in the database
 	#  @param torrent Torrent named tuple
@@ -309,3 +312,12 @@ def get_short_hostname(ip_address):
 				return host_list[-1]
 			except IndexError:
 				return None
+
+## Parse client code from peer id, according to BEP 20
+#  @param Raw peer id
+#  @return String of client code with only ASCII or None
+def client_from_peerid(peer_id):
+	try:
+		return str(peer_id[0:7], encoding='ascii')
+	except (KeyError, ValueError):
+		return None
