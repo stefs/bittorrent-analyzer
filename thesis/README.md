@@ -6,8 +6,8 @@ Chapter | Progress
 --- | ---
 [Abstract](https://www.ece.cmu.edu/~koopman/essays/abstract.html) |
 1 Introduction | ★★
-– 1.1 Motivation |
-– 1.2 Task |
+– 1.1 Motivation | ★★
+– 1.2 Task | ★
 – 1.3 Related Work |
 – 1.4 Results |
 – 1.5 Outline |

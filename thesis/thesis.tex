@@ -1,4 +1,4 @@
-\documentclass[10pt, a4paper, twoside, halfparskip, headsepline]{scrbook}
+\documentclass[10pt, a4paper, twoside, headsepline]{scrbook}
 \usepackage[T1]{fontenc} % Umlaute
 \usepackage[utf8]{inputenc} % Textcodierung
 \usepackage[english]{babel} % Silbentrennung
@@ -144,7 +144,7 @@ Zusammenfassung auf Englisch
 \chapter{Introduction}
 \pagestyle{headings}
 \pagenumbering{arabic}
-\begin{table}
+\begin{table}[b!]
 \centering
 \begin{tabular}{llrrrr}
 \toprule
@@ -183,33 +183,23 @@ When assessing popularity or peer numbers, previous studies \cite{drachen2011dis
 
 This thesis will make an attempt to collect confirmed download numbers by contacting every peer of the BitTorrent swarm for a given set of torrents and learning his download progress form first-hand. The download progress is extracted using the standard BitTorrent protocol with various common extensions thereof. This is done repeatedly for all peers over a time period, while a confirmed download is recorded when the peer crosses a certain threshold. This method has flaws which will be discussed later*, but it gives a fix lower bound for download numbers.
 
-To observe the law in every way, it was important to neither download nor upload any actual content. Luckily this is not necessary for this task, as it is practice for every peer to inform the opposing peer about its exact presence of downloaded pieces upon connection establishment. This behavior will be exploited by recording this progress in a database. For additional analysis, data about peers' download speed, location, host name and client program will be recorded.
+To observe the law in every way, it was important to neither download nor upload any actual content. Luckily this is not necessary for this task, as it is practice for every peer to inform the opposing peer about its exact presence of downloaded pieces upon connection establishment. This behavior will be exploited by recording this progress in a database.
 
 % Concrete task to be solved
 \section{Task}
-Since there is no client or framework for peer communication on BitTorrent protocol level, and every other task is very specific to the requirements of this project, the whole code base used here was written from scratch. The need for communicating with peers without downloading any torrent payload disqualifies other related projects like \emph{libtorrent}. Only exception is the mainline DHT node \emph{pymdht} \cite{pymdht} which is used.
+Since there is no client or framework for peer communication on BitTorrent protocol level, and every other task is very specific to the requirements of this project, the whole code base used here was written from \textbf{scratch}. The need for communicating with peers without downloading any torrent payload disqualifies other related projects like \emph{libtorrent}. Only exception is the mainline DHT node which is a foreign project.
 
-The process of analyzing a torrent should be completely automated. As the most convenient method, input of torrents via \texttt{.torrent} files and magnet links is supported. They must be parsed beforehand and are stored in a SQL database for later reference. Metadata for magnet links is retrieved from other peers using the \emph{Extension for Peers to Send Metadata Files}.
+The process of analyzing a torrent should be completely automated. As the most convenient method, \textbf{input} of torrents via \texttt{.torrent} files and magnet links is supported. They must be parsed beforehand and are stored in a SQL database for later reference. Metadata for magnet links is retrieved from other peers using the \emph{Extension for Peers to Send Metadata Files}.
 
-Secondly, addresses of peers participating in the relevant torrents are needed. They are collected by sending appropriate requests to the torrent's tracker servers using either the TCP or the UDP tracker protocol. Likewise requests for peers of the given torrent are issued on the DHT network. The collection of peers is performed continuously during the analysis to include newly participating clients. Additionally a TCP server is listening for incoming connections in order to include peers behind a NAT and hence are not reachable otherwise.
+Secondly, addresses of \textbf{peers} participating in the relevant torrents are needed. They are collected by sending appropriate requests to the torrent's tracker servers using either the TCP or the UDP tracker protocol. Likewise requests for peers of the given torrent are issued on the DHT network. The collection of peers is performed continuously during the analysis to include newly participating clients. Additionally a TCP server is listening for incoming connections in order to include peers behind a NAT and hence are not reachable otherwise. Incoming peer will be evaluated equally, but only can be counted when connecting once with progress below and once with progress above the threshold. Statistics about duplicate versus unique received address-port tuples are recorded.
 
-Reading a peer's download progress is the core part. After exchanging BitTorrent protocol handshakes, all further messages from the remote peer are received and recorded until no more message is received for certain period. These messages specify which pieces are available for download and analog which pieces the peer has downloaded. Before closing the connection, a message announcing the port of my own DHT node is sent to the peer in order to popularize the node's routing table.
+Reading a peer's download \textbf{progress} is the core part. After exchanging BitTorrent protocol handshakes, all further messages from the remote peer are received and recorded until no more message is received for certain period. These messages specify which pieces are available for download, and analog which pieces the peer has downloaded. There is research whether or not peers can gain an advantage for misreporting this data \cite{levin2008bittorrent, locher2006free}, but until now it has not surfaced as a problem at large. Before closing the connection, a message announcing the port of my own DHT node is sent to the peer in order to popularize the node's routing table.
 
-
-
-
-
-
-\begin{itemize}
-  \item Tool: Evaluate one or multiple given torrents
-  \item Tool: Count observed downloads per hour
-  \item Tool: Determine download speeds of peers
-  \item Tool: Group them after geographical territories using IP address geolocation
-  \item Evaluation: Choose interesting torrents for analysis from different content categories
-  \item Evaluation: Run analysis tool for several days or weeks
-\end{itemize}
+The download progress is stored in a \textbf{database}, together with a timestamp of the contact. When contacting a peer later another time, a decision can be made if the peer has crossed the threshold. This threshold is below \numprint[\%]{100} to compensate for peers disconnecting immediately after they finished the download. For additional analysis, the peer's download speed is derivated. Also, a lookup in a IP geolocation database is performed, and the peer's location, host name and client program is recorded.
 
 Finally the number of confirmed downloads can be compiled from the database.
+
+Count observed downloads per hour
 
 \section{Related Work}
 [Other relevant academic work and how it differs from this work]
@@ -219,8 +209,6 @@ Finally the number of confirmed downloads can be compiled from the database.
   \item \cite{drachen2011distribution}
   \item \dots
 \end{itemize}
-
-There is research whether or not peers gain an advantage for misreporting these data \cite{levin2008bittorrent, locher2006free}, but it has not surfaced as a problem at large until now. 
 
 \section{Results}
 [What has been achieved in this work?]
