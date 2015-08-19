@@ -169,71 +169,47 @@ Africa        & fixed  & \numprint[\%]{28.21} & n/a & \numprint[\%]{13.29} & n/a
 \end{table}
 
 % BitTorrent by Cohen, a decentralized network
-In 2008, \textsc{Bram Cohen} published a specification for a decentralized file sharing protocoll called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enable software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to manipulate the content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
+In 2008, \textsc{Bram Cohen} published the specification for a decentralized file sharing protocol called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enable software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to manipulate the content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
 
 % BitTorrent traffic statistics, other file sharing technologies
 To date BitTorrent still has a remarkable share in private Internet traffic. According to a study \cite{sandvine2014} by networking equipment company \textsc{Sandvine Inc.}, BitTorrent has a downstream traffic share in fixed-line Internet accesses between \numprint[\%]{3} in North America and \numprint[\%]{23} in the Asia-Pacific region, with Europe at \numprint[\%]{10}. In downloaded data per month, this translates to \numprint[GB]{1.4}, \numprint[GB]{7.2} and \numprint[GB]{2.4}, respectively. Even more bandwidth is used for upstream with values ranging from \numprint[\%]{24} in Latin America to \numprint[\%]{56} in the Asia-Pacific region. Detailed numbers are cited in table \ref{traffic}. Other file sharing technologies than BitTorrent are hardly used.
 
 % Numbers about illegal usage of BitTorrent
-BitTorrent is repeatedly reported by leading film studios to cause Billions of losses in movie and tv series sales. Whether or not illegal downloads translate directly to losses in sales figures, certainly the number of illegal downloaded copies itself is often vague.
+File sharing such as BitTorrent is reported by music as well as film industry to cause billions of losses: An industry friendly institute reported ``3.7 billion USD Estimated Download Piracy Losses to U.S. Integrated Firms'' \cite[table~1]{siwek2007true} in 2006 regarding music sales only. However, the harm of illegal downloads is unclear \cite{hammond2014profit}. Other studies suggest delayed digital releases promote piracy \cite{danaher2012reel} or find no \cite{mckenzie2009illegal} or even positive \cite{smith2010piracy} correlation between illegal downloads and legal sales. Undoubtedly the amount of copyright infringing content which is downloaded via BitTorrent is quite high. A case study \cite{watters2011much} from the University of Ballarat, Australia, finds numbers between \numprint[\%]{90} and \numprint[\%]{97}.
 
-%start big analysis
-
-%http://www.mpaa.org/research-and-reports/
-
-%see expose
-
-%2011 How-much-material-on-BitTorrent-is-infringing-content-A-case-study_2011_Information-Security-Technical-Report
-
-%dracental cap 2
-
-%see /home/stefan/stefan-privat/University/Bachelorarbeit/Resources
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% Specific motivation for the problem at hand
 \section{Motivation}
-[Specific motivation for the problem at hand]
+When assessing popularity or peer numbers, previous studies \cite{drachen2011distribution, watters2011much, zhang2011unraveling} often relied on numbers reported by tracker servers using so called \emph{scrape requests}. These requests allow clients to ask for statistics about one, multiple or even all torrents a tracker is managing. When successful, servers answer with the number of current downloaders, current uploaders and finished downloads since the torrent was registered with the server. These values may be either to their best knowledge or flawed and misleading, it can even be manipulated by peers by sending false download confirmations to the tracker. There is no possibility for a client to verify these numbers.
 
-\begin{itemize}
-  \item Unique peers vs observed downloads as lower bound
-  \item Gather statistics without up- or downloading content
-\end{itemize}
+This thesis will make an attempt to collect confirmed download numbers by contacting every peer of the BitTorrent swarm for a given set of torrents and learning his download progress form first-hand. The download progress is extracted using the standard BitTorrent protocol with various common extensions thereof. This is done repeatedly for all peers over a time period, while a confirmed download is recorded when the peer crosses a certain threshold. This method has flaws which will be discussed later*, but it gives a fix lower bound for download numbers.
 
-see anforderungen email pdf
+To observe the law in every way, it was important to neither download nor upload any actual content. Luckily this is not necessary for this task, as it is practice for every peer to inform the opposing peer about its exact presence of downloaded pieces upon connection establishment. This behavior will be exploited by recording this progress in a database. For additional analysis, data about peers' download speed, location, host name and client program will be recorded.
 
-
-
-
+% Concrete task to be solved
 \section{Task}
-[Concrete task to be solved]
+Since there is no client or framework for peer communication on BitTorrent protocol level, and every other task is very specific to the requirements of this project, the whole code base used here was written from scratch. The need for communicating with peers without downloading any torrent payload disqualifies other related projects like \emph{libtorrent}. Only exception is the mainline DHT node \emph{pymdht} \cite{pymdht} which is used.
+
+The process of analyzing a torrent should be completely automated. As the most convenient method, input of torrents via \texttt{.torrent} files and magnet links is supported. They must be parsed beforehand and are stored in a SQL database for later reference. Metadata for magnet links is retrieved from other peers using the \emph{Extension for Peers to Send Metadata Files}.
+
+Secondly, addresses of peers participating in the relevant torrents are needed. They are collected by sending appropriate requests to the torrent's tracker servers using either the TCP or the UDP tracker protocol. Likewise requests for peers of the given torrent are issued on the DHT network. The collection of peers is performed continuously during the analysis to include newly participating clients. Additionally a TCP server is listening for incoming connections in order to include peers behind a NAT and hence are not reachable otherwise.
+
+Reading a peer's download progress is the core part. After exchanging BitTorrent protocol handshakes, all further messages from the remote peer are received and recorded until no more message is received for certain period. These messages specify which pieces are available for download and analog which pieces the peer has downloaded. Before closing the connection, a message announcing the port of my own DHT node is sent to the peer in order to popularize the node's routing table.
+
+
+
+
+
 
 \begin{itemize}
   \item Tool: Evaluate one or multiple given torrents
   \item Tool: Count observed downloads per hour
   \item Tool: Determine download speeds of peers
   \item Tool: Group them after geographical territories using IP address geolocation
-  \item Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol
-  \item Drawback: There is no complete overview about all running torrents, we need to choose a subset
   \item Evaluation: Choose interesting torrents for analysis from different content categories
   \item Evaluation: Run analysis tool for several days or weeks
 \end{itemize}
+
+Finally the number of confirmed downloads can be compiled from the database.
 
 \section{Related Work}
 [Other relevant academic work and how it differs from this work]
@@ -243,6 +219,8 @@ see anforderungen email pdf
   \item \cite{drachen2011distribution}
   \item \dots
 \end{itemize}
+
+There is research whether or not peers gain an advantage for misreporting these data \cite{levin2008bittorrent, locher2006free}, but it has not surfaced as a problem at large until now. 
 
 \section{Results}
 [What has been achieved in this work?]
@@ -256,6 +234,14 @@ see anforderungen email pdf
 
 \section{Acknowledgments}
 [A big thank you for the support to ...]
+
+* Philipp Klein for discussing methods and implementation
+
+* RRZE for providing the VM and probably receiving copyright warning letters
+
+* Michael Gruhn for discussing ideas
+
+* Felix Freiling for extending the deadline
 
 \dots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -414,6 +400,8 @@ With reference to the peer's database identifier, the IP address and port number
 Other information about peers stored in the database include an anonymized IP address, the BitTorrent Protocol peer ID, top and second level domain of the hostname, IP geolocation with city, country and continent as determined by the \emph{GeoIP2 API} \cite{geoip2-api}, number of contacts and the original source of the peer's IP address. Afterwards the peer's queue timestamp is updated with the current time plus \config{peer\_revisit\_delay} and it is returned to the queue if \config{torrent\_complete\_threshold} is not reached.
 
 \paragraph{Secondary Statistics}
+TODO probably out of date
+
 In order to enable and proof validity of test results some statistics are logged at a certain interval defined in \config{statistic\_interval}. These are the length of the peer queue, length of the queue of visited peers, average workload of peer contact threads, mean time for receiving all messages before timeout. Cumulative values are unique incoming peers, successful initiated contacts, failed initiated contacts at first try, failed initiated contacts at later try and successful evaluated incoming peers.
 
 \dots
@@ -422,24 +410,7 @@ In order to enable and proof validity of test results some statistics are logged
 
 Explain implementation of the features:
 
-\begin{itemize}
-\item Import torrents from \texttt{.torrent} files (BEP 3)
-\item Import torrents form magnet links by fetching metadata via the \emph{ut\_metadata} extension (BEP 9) using the Extension Protocol (BEP 10)
-\item Continuously get IPv4 peers from the tracker using HTTP (BEP 3) and UDP announce requests (BEP 15)
-\item Communicate with peers using a subset of the Peer Wire Protocol (BEP 3)
-\item Continuously get IPv4 peers by integrating a running DHT node (BEP 5) from the \emph{pymdht} project using local telnet
-\item Actively contact collected peers and calculate minimum number of downloaded pieces by receiving all \emph{have} and \emph{bitfield} messages until a timeout
-\item Passively listen for incoming peer connections and calculate minimum number of downloaded pieces analog
-\item Save number of downloaded pieces from first and last visit and maximum download speed per peer in a SQLite database
-\item Save city, country and continent via IP address geolocation
-\item Save ISP by hostname and anonymized IP address
-\item Analyze multiple torrents at once
-\item Synchronized analysis shutdown process
-\item Produce extensive log output
-\item Save duplicate and timing statistics about peers received via DHT and tracker
-\item Save statistics about failed and succeeded peer connections
-\item Save workload statistics of active peer evaluation threads
-\end{itemize}
+See btda/README.md/Features
 
 \section{Architecture}
 It is structured in the main script, an application module, five helper modules and an utility module, which will be described in detail.
@@ -477,7 +448,7 @@ To assess a minimum timeout, an analysis with special configuration parameters w
 \paragraph{\config{peer\_evaluation\_threads}}
 \dots
 
-Number of threads: workload plot
+TODO: Number of threads: workload plot
 
 \section{Restrictions}
 
@@ -490,7 +461,9 @@ Restrictions and why this does not invalidate the results (hopefully, TBD):
   \item No support for the Tracker exchange extension (BEP 28)
   \item No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
   \item No BitTrorrent Protocol support for getting download progress info
+  \item Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol
 \end{itemize}
+
 
 \section{Usage}
 pymdht: It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results.
@@ -574,16 +547,13 @@ ID & Site name & Torrent name & Size & Leechers & Seeders \\
 1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
 1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
 1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-15 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
 \bottomrule
 \end{tabular}
-\caption[List of torrent chosen for evaluation]{Compilation of torrents from the most popular torrent sites. The \emph{ID} was chosen by the SQLite database used for storage during the analysis.}
+\caption[List of torrent chosen for evaluation]{* List of the 20 most popular torrents according to meta-search engine \textsc{Torrentz} \cite{torrentz}. At the end are five torrents above \numprint[GB]{5} and five recently published torrents . Selection was made on August 42, 2015, 11:00. The \emph{ID} was chosen by the SQLite database used for storage during the analysis.}
 \label{torrents}
 \end{table}
 
-Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Additionally torrents from \textsc{ExtraTorrent.cc} were included, because it reported very high interest on certain torrents in contradiction to \textsc{Torrentz}' numbers. Across both sites 20 of the most popular torrents were chosen. Additionally, 5 large torrents over \numprint[GB]{5} and 5 recently published torrents were added to compare their behavior. These \textbf{30 torrents} are listed in table \ref{torrents}.
+Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen: The nine most popular torrents below \numprint[GB]{1}, the nine most popular torrents above \numprint[GB]{1} and the nine most popular torrents above \numprint[GB]{10}. These \textbf{27 torrents} are listed in table \ref{torrents}.
 
 \section{Getting Addresses of Peers}
 \begin{table}
@@ -640,6 +610,12 @@ Incoming peer & Peer speaks unknown protocol & 891 \\
 
 Define failure
 
+Failure reasons: Unsuppored client (mTP), probably not, see Client Analysis, probably bad/out of date peer address data
+
+Failure rate per source out of scope
+
+Total unique active success from peer database
+
 Peer addresses received via DHT and tracker requests were contacted continuously. \numprint[\%]{0} of contacted peers failed when contacted for the first time. Of the peers contacted successfully once, \numprint[\%]{0} failed later.
 
 \section{Counting Confirmed Downloads}
@@ -647,11 +623,17 @@ The timeline of confirmed downloads and downloads reported by the tracker server
 
 Map: Distribution of downloads (TODO)
 
-\section{Peer's Download Speeds}
-Map: Distribution of download speeds (TODO)
+\section{Peer's Analysis}
+\subsection{Download Speed}
+TODO: Graph of speed per country with standard derivation indicators, n>=10 per country
 
-\section{Peer's Host Names}
-Table: Examine hostnames by ISP or seedbox provicers (TODO)
+todo: Map of Distribution of download speeds
+
+\subsection{BitTorrent Clients}
+TODO: Table of frequency of BT clients
+
+\subsection{Peer's Host Names}
+TODO: Table: Examine hostnames by ISP or seedbox provicers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
