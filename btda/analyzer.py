@@ -315,7 +315,7 @@ class SwarmAnalyzer:
 					tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
 					end = time.perf_counter()
 				except TrackerError as err:
-					logging.error('Could not receive peers from tracker on torrent {}: {}'.format(torrent_key, err))
+					logging.warning('Could not receive peers from tracker on torrent {}: {}'.format(torrent_key, err))
 				else:
 					# Log recommended interval
 					if config.tracker_request_interval > tracker_interval:
