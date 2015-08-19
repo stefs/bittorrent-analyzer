@@ -79,12 +79,27 @@ These are the installation steps used in this project, on a Ubuntu 14.04 LTS ope
 
     sudo apt-get install python3 python3-pip python3-matplotlib
     sudo pip3 install virtualenv
-    virtualenv --python=python3 --system-site-packages env-main
-    source env-main/bin/activate
+    virtualenv --python=python3 --system-site-packages ve
+    source ve/bin/activate
     pip install bencodepy sqlalchemy geoip2
     deactivate
 
-Finally, download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `btda/input/GeoLite2-City.mmdb`
+Download the [GeoLite2 City Database](http://dev.maxmind.com/geoip/geoip2/geolite2/#Downloads) and place it at `btda/input/GeoLite2-City.mmdb`.
+
+To handle many incoming connections, the open file descriptor limit may be increased. In `/etc/sysctl.conf` set
+
+    fs.file-max = 1000000
+
+to increase the system wide limit and in `/etc/security/limits.conf` append
+
+    *   hard   nofile   1000000
+    *   soft   nofile   1000000
+
+to increase per-user limits. After rebooting, check success with
+
+    cat /proc/sys/fs/file-max
+    ulimit -Hn
+    ulimit -Sn
 
 ## Usage
 ### Start pymdh DHT node
@@ -96,7 +111,7 @@ Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht still 
 
 ### Start bittorrent-analyzer peer evaluation
 1. `tmux new-session -s btda`
-2. `source env-main/bin/activate`
+2. `source ve/bin/activate`
 3. `btda/main.py`
 4. Tmux detach with `Ctrl+B` followed by `d`
 
