@@ -292,15 +292,20 @@ class SwarmAnalyzer:
 	#  @note This is a worker method to be started as a thread
 	def _tracker_requestor(self, torrent_key):
 		while not self.shutdown_request.is_set():
+			is_first_announce_url = True
 			for announce_url in self.torrents[torrent_key].announce_url:
 				# Create tracker connection
 				tracker_conn = tracker.TrackerCommunicator(self.own_peer_id, announce_url, self.torrents[torrent_key].pieces_count)
 
 				# Try scrape request
-				try:
-					seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
-				except TrackerError as err:
-					logging.warning('Scrape request failed on torrent {}: {}'.format(torrent_key, err))
+				if is_first_announce_url:
+					is_first_announce_url = False
+					try:
+						seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
+					except TrackerError as err:
+						logging.warning('Scrape request failed on torrent {}: {}'.format(torrent_key, err))
+						seeders = completed = leechers = None
+				else:
 					seeders = completed = leechers = None
 
 				# Ask tracker
@@ -310,7 +315,7 @@ class SwarmAnalyzer:
 					tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
 					end = time.perf_counter()
 				except TrackerError as err:
-					logging.error('Could not receive peers from tracker: {}'.format(err))
+					logging.error('Could not receive peers from tracker on torrent {}: {}'.format(torrent_key, err))
 				else:
 					# Log recommended interval
 					if config.tracker_request_interval > tracker_interval:

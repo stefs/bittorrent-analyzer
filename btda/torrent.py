@@ -43,15 +43,17 @@ class TorrentFile:
 	#  @return A list of tracker announce URLs
 	#  @exception FileError
 	def get_announce_url(self):
-		announce = set()
+		announce = list()
 		if b'announce' in self.torrent_file:
-			announce.add(self.torrent_file[b'announce'].decode())
+			announce.append(self.torrent_file[b'announce'].decode())
 		if b'announce-list' in self.torrent_file:
 			for url in self.torrent_file[b'announce-list']:
-				announce.add(url[0].decode())
+				au = url[0].decode()
+				if au not in announce:
+					announce.append(au)
 		if not announce:
 			raise FileError('File did not contain a announce URL: ' + str(err))
-		return list(announce)
+		return announce
 
 	## Extract info dict
 	#  @return Bencoded info dict
