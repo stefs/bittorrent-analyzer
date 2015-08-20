@@ -339,7 +339,7 @@ The process of extracting peers for a given info hash proceeds iteratively. The 
 When a peer downloads a torrent, it should announce the info hash and BitTorrent port to multiple other nodes in order to be included in the distributed hash table. Again, the problem of IP address spoofing exists, allowing malicious hosts to register third parties for a torrent. This is why a token system is used. On every successful request for peers, the response includes the SHA-1 hash of both the source IP address and a secret value. The recipient's IP address and the IP address included in the hash are now guaranteed to be equal. When announcing download participation, a node must include this token, allowing the contacted node to verify the announce request's source IP address and updating its hash table.
 
 \paragraph{Integration}
-The presence of DHT support is advertised in the standard BitTorrent handshake of the Peer Wire Protocol using the last bit of the eight reserved bytes. Peers receiving this indicator should send a \texttt{port} message, containing their own UDP node port number. This technique helps populate routing tables, especially on newly installed systems with an empty table.
+The presence of DHT support is advertised in the standard BitTorrent handshake of the Peer Wire Protocol using the last bit of the eight reserved bytes. Peers receiving this indicator should send a \texttt{port} message, containing their own UDP node port number. This technique helps populate routing tables, especially on newly installed systems with an empty table. *[try to get own ip from dht query]
 
 \section{Magnet Link}
 The concept of a \emph{magnet link} described in BEP 9 \cite{bep9} is used to create a uniform resource identifier for torrents of minimal size, in comparison to the metainfo file format. Its only mandatory component is the info hash, the SHA-1 value of the info dictionary. The link uses the \texttt{magnet:} URI scheme and stores info hash, a display name and tracker announce URLs in the query string. The emerging problem is the loss of the info dictionary's content. Since a tracker URL is optional, the metadata must be obtained from other peers.
@@ -392,6 +392,7 @@ Every peer in the queue has a timestamp assigned and must not be contacted prior
 When a peer with permitted timestamp is picked, a TCP connection is established and the download progress evaluation initiated. Additionally, incoming connections from peers trying to download pieces are used to gather their download status. Therefore a TCP server is listening on the the port defined in \config{bittorrent\_listen\_port}. On successful download progress extraction results are written to the database and IP address port tuples are linked to their database ID in internal memory for later database updates. Failed contacts or peers with unknown info hashes are ignored.
 
 \paragraph{Evaluate Download Progress}
+\label{peer-evaluation}
 Once a connection is established with a peer, its download progress must be determined only using peer messages as defined by the BitTorrent Protocol \cite{bep3}. Since there is no dedicated request command for the number of available pieces, we depend on peer messages sent voluntary by the remote peer. Fortunately it is common to advertise available pieces right after the BitTorrent Protocol handshake with \texttt{bitfield} and \texttt{have} messages. These are stored for every peer contact in a separate queue and processed by another thread. Messages are received until a timeout defined by \config{network\_timeout} hits, which is restarted after every message. Additionally there is a limit on the number of messages named \config{receive\_message\_max} to prevent infinite sessions.
 
 Now the only possible approach to acquire the download progress is to compile a combined bitfield from these messages and count the present pieces. The number of total torrent pieces from in the info dictionary helps validating the results.
@@ -484,6 +485,8 @@ The main script, named \texttt{btda.py} can be controlled by using the following
 \chapter{Evaluation}
 Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
 
+[Thread workload and system load were normal as described earlier*.]
+
 \section{Choosing Torrents}
 \begin{table}[b!]
 \centering
@@ -565,7 +568,7 @@ DHT network & 10 & 2 & 3\,\% \\
 Incoming peers & 1 & 2 & 3\,\% \\
 \bottomrule
 \end{tabular}
-\caption[Received peer addresses per source]{Total and unique received peer addresses per source. \emph{Tracker server} and the \emph{DHT network} are actively contacted for new peers. Values of \emph{incoming peers} only include peers whose download progress was evaluated successfully. The duration to calculate the \emph{unique per hour} value is \numprint[h]{48}*, as mentioned earlier.}
+\caption[Received peer addresses per source]{Total and unique received peer \textbf{addresses} per source. \emph{Tracker server} and the \emph{DHT network} are actively contacted for new peers. Values of \emph{incoming peers} only include peers whose download progress was evaluated successfully. The duration to calculate the \emph{unique per hour} value is \numprint[h]{48}*, as mentioned earlier.}
 \label{unique-peers}
 \end{table}
 
@@ -574,13 +577,15 @@ Peers from all sources were considered, namely from the tracker server, the DHT 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{graphics/2015-08-19_20-43-43_faui1-246_source_all_torrents}
-\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents, on average. New peers from the tracker server and the DHT network are requested every five minutes. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. The values \emph{incoming-unique} and \emph{incoming-duplicate} only include peers after their download progress was extracted successfully. The analysis lasted \range.}
+\caption[Development of received peer addresses per source]{Development of received peer \textbf{addresses} per source for all torrents, on average. New peers from the tracker server and the DHT network are requested every five minutes. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. The values \emph{incoming-unique} and \emph{incoming-duplicate} only include peers after their download progress was extracted successfully. The analysis lasted \range.}
 \label{request-history}
 \end{figure}
 
-The progression of received peer addresses during the analysis period is shown in figure \ref{request-history}. Again, this is a summary for all torrents. The ratio between new and duplicate received peer address information is slightly higher in the first hours*. From the incoming peers, only the ones represented by \emph{incoming-duplicate} are candidates to be counted as confirmed downloads, since the were evaluated at least twice.
+The progression of received peer addresses during the analysis period is shown in figure \ref{request-history}. Again, this is a summary for all torrents. From the incoming peers, only the ones represented by \emph{incoming-duplicate} are candidates to be counted as confirmed downloads, since the were evaluated at least twice. The ratio between new and duplicate received peer address information is slightly higher in the first hours*.
 
-\section{Evaluating Peer's Download Progress}
+[In general the amount of duplicate received peers is above xx\%*, so presumably many of the addresses known to trackers and the DHT network are collected in this process.]
+
+\section{Counting Confirmed Downloads}
 \begin{table}
 \centering
 \begin{tabular}{lrrrr}
@@ -592,79 +597,76 @@ Set B & 10 & 2 & 3\,\% \\
 Set C & 1 & 2 & 3\,\% \\
 \bottomrule
 \end{tabular}
-\caption[Confirmed downloads per torrent set]{Confirmed downloads per torrent set. In comparison, \emph{reported} downloads are responses from scrape requests to the tracker during the analysis. \emph{Unique peers} are all peers successfully evaluated for the torrents in question, although not crossing the confirmed download threshold.}
+\caption[Confirmed downloads per torrent set]{Confirmed \textbf{downloads} per torrent set. In comparison, \emph{reported} downloads are responses from scrape requests to the tracker during the analysis. \emph{Unique peers} are all peers successfully evaluated for the torrents in question, although not crossing the confirmed download threshold.}
 \label{confirmed-downloads}
 \end{table}
 
 Table \ref{confirmed-downloads} shows the confirmed download numbers measured during this analysis per torrent set. For comparison, numbers reported by the tracker in scrape requests are given. * [Compare sets and unique peers]
+
+[Note all things in the plots, even the obvious] Scrape is higher than confirmed.
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(1,4,8,11,13)}
 \includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(3,6,9,10,14)}
 \includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(5,7,12,15,16)}
-\caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported download numbers per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
+\caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported \textbf{downloads} per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
 \label{download-history}
 \end{figure}
 
-The history of download numbers during the analysis period is shown in figure \ref{download-history}. Server reported numbers
+The history of download numbers during the analysis period is shown in figure \ref{download-history}.
 
+[Check single torrents for outliers]
+
+[correlation with scrape bachelor and ieee bt]
+
+\subsection{Problems of this Method}
+\label{problems}
 \begin{table}
 \centering
 \begin{tabular}{llrr}
 \toprule
-Event & Reason & Quantity & Share per Event \\
+Event & Error & Quantity & Share per Event \\
 \midrule
-First contact & timed out & 1653 \\
-& [Errno 111] Connection refused & 420 \\
-& Socket connection broken & 317 \\
-& [Errno 104] Connection reset by peer & 47 \\
-& [Errno 113] No route to host & 26 \\
-& \emph{Total} & 4321 \\
+First contact & timed out & 182209 & 63.8\% \\
+& Socket connection broken & 47690 & 16.7\% \\
+ & Connection refused & 47028 & 16.5\% \\
+ & No route to host & 4938 & 1.7\% \\
+ & Connection reset by peer & 3330 & 1.2\% \\
+ &  Network is unreachable & 213 & 0.1\% \\
+ & Peer speaks unknown protocol & 5 & 0.0\% \\
+ & \textit{Total} & 285413 &  \\
 \midrule
-Later contact & Socket connection broken & 265 \\
-& timed out & 27 \\
-& [Errno 111] Connection refused & 6 \\
-& [Errno 104] Connection reset by peer & 2 \\
-& \emph{Total} & 4321 \\
+Later contact & Socket connection broken & 3847 & 55.9\% \\
+ & timed out & 2244 & 32.6\% \\
+ &  No route to host & 369 & 5.4\% \\
+ & Connection refused & 249 & 3.6\% \\
+ &  Connection reset by peer & 176 & 2.6\% \\
+ & \textit{Total} & 6885 &  \\
 \midrule
-Incoming peer & Peer speaks unknown protocol & 891 \\
-& timed out & 353 \\
-& [Errno 104] Connection reset by peer & 9 \\
-& Socket connection broken & 7 \\
-& \emph{Total} & 4321 \\
+Incoming peer & Unknown info hash & 399331 & 68.3\% \\
+ & Peer speaks unknown protocol & 124794 & 21.4\% \\
+ & timed out & 57021 & 9.8\% \\
+ & Connection reset by peer & 1821 & 0.3\% \\
+ & Socket connection broken & 1427 & 0.2\% \\
+ & \textit{Total} & 584394 &  \\
 \bottomrule
 \end{tabular}
-\caption[Reasons for failed peer evaluation]{Reasons for failed peer valuations during the analysis process. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.}
+\caption[Reasons for failure of peer evaluation]{Outcome of peer evaluations during the analysis process with error and success rates. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.}
 \label{connection-failure}
 \end{table}
 
-Plot confirmed downloads per source, or maybe just one table
+The Evaluation of a peer's download progress was described in section \ref{peer-evaluation}. This process can fail for various reasons. The superficial problems which occurred in this analysis are listed in table \ref{connection-failure}. The table shows every attempt of connecting to a peer and performing the evaluation procedure. Outgoing evaluation attempts were usually* successful. The mainly* appearing error is a timed out peer, which indicates outdated or wrong peer address information. However, the value of failed evaluations on a second or later contact is very low. Regarding incoming peers, most evaluations* failed due to an unknown info hash. This is probably because of other torrents evaluated beforehand from the same IP address and port. The response rate between peers obtained via trackers and peers received through the DHT network was not examined.
 
-Define failure
-
-Failure reasons: Unsuppored client (mTP), probably not, see Client Analysis, probably bad/out of date peer address data
-
-Failure rate per source out of scope
-
-Total unique active success from peer database
-
-Peers may blacklist the ip over time, since the don't receive any data
-
-Peer addresses received via DHT and tracker requests were contacted continuously. \numprint[\%]{0} of contacted peers failed when contacted for the first time. Of the peers contacted successfully once, \numprint[\%]{0} failed later.
-
-correlation with srape bachelor and ieee bt
-
-\section{Counting Confirmed Downloads}
-The timeline of confirmed downloads and downloads reported by the tracker server in scrape requests is shown in one hour steps in figure \ref{downloads}.
-
-Map: Distribution of downloads (TODO)
+The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
 
 \section{Peers Analysis}
 \subsection{Download Speed}
 TODO: Graph of speed per country with standard derivation indicators, n>=10 per country
 
 todo: Map of Distribution of download speeds
+
+Map: Distribution of downloads (TODO)
 
 \subsection{BitTorrent Clients}
 TODO: Table of frequency of BT clients

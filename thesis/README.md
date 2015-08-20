@@ -13,10 +13,10 @@ Chapter | Progress
 – 1.5 Outline |
 – 1.6 Acknowledgments |
 2 Background |
-– 2.1 BitTorrent Protocol | ★
+– 2.1 BitTorrent Protocol +5 | ★
 – 2.2 DHT Protocol | ★
-– 2.3 Magnet Link | ★
-– 2.4 BitTorrent and German Law | ★★
+– 2.3 Magnet Link +2 | ★
+– 2.4 BitTorrent and German Law +2 | ★★
 3 Implementation | ★★
 – 3.1 Dependencies | ★★
 – 3.2 Functionality | ★★
@@ -24,12 +24,11 @@ Chapter | Progress
 – 3.4 Justification of Configuration Values |
 – 3.5 Restrictions |
 – 3.6 Usage |
-4 Evaluation |
+4 Evaluation | ★
 – 4.1 Choosing Torrents | ★★
-– 4.2 Getting Addresses of Peers |
-– 4.3 Evaluating Peer’s Download Progress |
-– 4.4 Counting Confirmed Downloads |
-– 4.3 Peer Analysis |
+– 4.2 Getting Addresses of Peers +1 | ★
+– 4.3 Counting Confirmed Downloads +1 |
+– 4.4 Peer Analysis |
 5 Conclusion and Future Work |
 
 # Todo
