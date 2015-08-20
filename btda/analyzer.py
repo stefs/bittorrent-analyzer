@@ -217,7 +217,7 @@ class SwarmAnalyzer:
 
 			# Establish connection
 			# TODO use util.TCPConnection
-			self.evaluator_threads.increase()
+			self.evaluator_threads.increment()
 			if peer.key is None:
 				logging.info('Connecting to new peer ...')
 			else:
@@ -265,7 +265,7 @@ class SwarmAnalyzer:
 			revisit_time = time.perf_counter() + delay
 			self.visited_peers.put((peer, result, revisit_time))
 			self.active_success.increment()
-			self.evaluator_threads.decrease()
+			self.evaluator_threads.decrement()
 
 		# Propagate shutdown finish
 		self.active_shutdown_done.wait()
