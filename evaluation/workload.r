@@ -66,7 +66,6 @@ print(
 	ggplot(data=statistic, aes(x=time, y=value, group=type, colour=type)) +
     geom_line() +
     geom_point() +
-    ylim(0, 1) +
 	labs(x="Time UTC", y=NULL)
 )
 print(paste("Plot written to", outfile))

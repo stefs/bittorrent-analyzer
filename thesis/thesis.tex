@@ -453,6 +453,13 @@ To assess a minimum timeout, an analysis with special configuration parameters w
 
 TODO: Number of threads: workload plot
 
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_workload}
+\caption[Load parameters during the analysis]{a and b}
+\label{load}
+\end{figure}
+
 \section{Restrictions}
 
 Restrictions and why this does not invalidate the results (hopefully, TBD):
@@ -652,7 +659,7 @@ Incoming peer & Unknown info hash & 399331 & 68.3\% \\
  & \textit{Total} & 584394 &  \\
 \bottomrule
 \end{tabular}
-\caption[Reasons for failure of peer evaluation]{Outcome of peer evaluations during the analysis process with error and success rates. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.}
+\caption[Reasons for failure of peer evaluation]{Outcome of peer evaluations during the analysis process with error and success rates. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.} % TODO* add success (maybe all_incoming_peers, unique success)
 \label{connection-failure}
 \end{table}
 
