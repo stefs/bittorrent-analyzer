@@ -136,4 +136,4 @@ Results are saved in `output/`.
 
 ### Copyright
 Copyright © 2015 Stefan Schindler  
-Licensed under the GNU General Public License Version 3
+Licensed under the GNU General Public License v3

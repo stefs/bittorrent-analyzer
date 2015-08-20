@@ -417,7 +417,7 @@ They have the following roles:
 
 \section{Justification of Configuration Values}
 \paragraph{\config{network\_timeout}}
-The timeout for network operations is six seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical as a failure is visible in the log files and did not happen during this research. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. Message collection is considered to be complete after the timeout finished without receiving a message.
+The timeout for network operations is six seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical since they were observed to be much faster usually. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. Message collection is considered to be complete after the timeout finished without receiving a message.
 
 \begin{figure}
 \centering
@@ -539,7 +539,15 @@ ID & Site name & Torrent name & Size & Leechers & Seeders \\
 \label{torrents}
 \end{table}
 
-Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen: The nine most popular torrents below \numprint[GB]{1}, the nine most popular torrents above \numprint[GB]{1} and the nine most popular torrents above \numprint[GB]{10}. These \textbf{27 torrents} are listed in table \ref{torrents}.
+Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen:
+
+\begin{itemize}
+  \item Set A: The 8 most popular torrents below \numprint[GB]{1}
+  \item Set B: The 8 most popular torrents above \numprint[GB]{1}
+  \item Set C: The 8 most popular torrents above \numprint[GB]{10}
+\end{itemize}
+
+Popular torrents were chosen regarding leecher numbers, despite the website sorting by the sum of seeders and leechers. Set B only contains only torrent smaller than \numprint[GB]{10} since larger torrents are less pupular in comparision. The 27 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
 
 \section{Getting Addresses of Peers}
 \begin{table}
@@ -604,12 +612,14 @@ Total unique active success from peer database
 
 Peer addresses received via DHT and tracker requests were contacted continuously. \numprint[\%]{0} of contacted peers failed when contacted for the first time. Of the peers contacted successfully once, \numprint[\%]{0} failed later.
 
+correlation with srape bachelor and ieee bt
+
 \section{Counting Confirmed Downloads}
 The timeline of confirmed downloads and downloads reported by the tracker server in scrape requests is shown in one hour steps in figure \ref{downloads}.
 
 Map: Distribution of downloads (TODO)
 
-\section{Peer's Analysis}
+\section{Peers Analysis}
 \subsection{Download Speed}
 TODO: Graph of speed per country with standard derivation indicators, n>=10 per country
 

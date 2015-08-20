@@ -16,7 +16,7 @@ Chapter | Progress
 – 2.1 BitTorrent Protocol | ★
 – 2.2 DHT Protocol | ★
 – 2.3 Magnet Link | ★
-– 2.4 BitTorrent and German Law | ★
+– 2.4 BitTorrent and German Law | ★★
 3 Implementation | ★★
 – 3.1 Dependencies | ★★
 – 3.2 Functionality | ★★
@@ -25,9 +25,11 @@ Chapter | Progress
 – 3.5 Restrictions |
 – 3.6 Usage |
 4 Evaluation |
-– 4.1 Choosing Torrents |
-– 4.2 Confirmed Downloads |
-– 4.3 Further Results |
+– 4.1 Choosing Torrents | ★★
+– 4.2 Getting Addresses of Peers |
+– 4.3 Evaluating Peer’s Download Progress |
+– 4.4 Counting Confirmed Downloads |
+– 4.3 Peer Analysis |
 5 Conclusion and Future Work |
 
 # Todo
@@ -39,6 +41,7 @@ Chapter | Progress
 # Begriffserklärung or in place erklärung
 * Dictionary
 * Cryptographic hash
+* Leecher / Seeder / Peer
 
 ## Hinweise 2015-07-17
 → Siehe gedruckte PDF-Notizen!
