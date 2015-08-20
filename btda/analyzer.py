@@ -338,7 +338,7 @@ class SwarmAnalyzer:
 					try:
 						self.database.store_request(Source.tracker, len(peer_ips), duplicate_counter,
 								seeders, completed, leechers, end-start, torrent_key)
-					except DatabaseError as err:
+					except Exception as err:
 						logging.critical(err)
 
 			# Wait interval
@@ -419,7 +419,7 @@ class SwarmAnalyzer:
 			# Store evaluated peer and receive database key
 			try:
 				new_peer_key = self.database.store_peer(peer)
-			except DatabaseError as err:
+			except Exception as err:
 				self.visited_peers.task_done()
 				logging.critical(err)
 				continue
@@ -491,7 +491,7 @@ class SwarmAnalyzer:
 				try:
 					self.database.store_request(Source.dht, len(dht_peers), duplicate_counter,
 							None, None, None, end-start, key)
-				except DatabaseError as err:
+				except Exception as err:
 					logging.critical(err)
 
 			# Print stats at DHT node # TODO receive instead of print
@@ -526,23 +526,29 @@ class SwarmAnalyzer:
 		while not self.shutdown_request.is_set():
 			self.shutdown_request.wait(config.statistic_interval)
 			logging.info('Logging analysis statistics to database ...')
-			self.database.store_statistic(
-					peer_queue=len(self.peers),
-					unique_incoming=len(self.all_incoming_peers),
-					success_active=self.active_success.get(),
-					thread_workload=self.timer.read())
+			try:
+				self.database.store_statistic(
+						peer_queue=len(self.peers),
+						unique_incoming=len(self.all_incoming_peers),
+						success_active=self.active_success.get(),
+						thread_workload=self.timer.read())
+			except Exception as err:
+				logging.critical(err)
 
 			# Store peer connection errors
 			self.error.write_csv(self.outfile)
 
 			# Store incoming peer statistics
 			for id in self.torrents:
-				self.database.store_request(
-					source = Source.incoming,
-					received_peers = self.incoming_total.reset(id),
-					duplicate_peers = self.incoming_duplicate.reset(id),
-					seeders=None, completed=None, leechers=None, duration=None,
-					torrent = id)
+				try:
+					self.database.store_request(
+						source = Source.incoming,
+						received_peers = self.incoming_total.reset(id),
+						duplicate_peers = self.incoming_duplicate.reset(id),
+						seeders=None, completed=None, leechers=None, duration=None,
+						torrent = id)
+				except Exception as err:
+					logging.critical(err)
 
 		# Propagate thread termination
 		self.statistic_shutdown.set()
