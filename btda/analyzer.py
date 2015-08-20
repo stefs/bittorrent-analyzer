@@ -405,22 +405,20 @@ class SwarmAnalyzer:
 			logging.debug('Peer reports to have {} pieces, {} remaining, equals {}%'.format(downloaded_pieces, remaining, percentage))
 
 			# Retrieve key for reoccurred incoming peers
-			key = peer.key
 			if peer.source is Source.incoming:
 				equality = (peer.ip_address, peer.torrent) # Port differs every time
 				try:
-					key = self.all_incoming_peers[equality]
+					peer.key = self.all_incoming_peers[equality]
 				except KeyError:
 					pass
 
 			# Update peer with results
 			peer.id = rec_peer_id
 			peer.pieces = downloaded_pieces
-			peer.key = key
 
 			# Store evaluated peer and receive database key
 			try:
-				peer_key = self.database.store_peer(peer)
+				new_peer_key = self.database.store_peer(peer)
 			except DatabaseError as err:
 				self.visited_peers.task_done()
 				logging.critical(err)
@@ -429,8 +427,9 @@ class SwarmAnalyzer:
 			# Remember equality information of new incoming peers and discard all incoming
 			if peer.source is Source.incoming:
 				self.incoming_total.count(peer.torrent)
-				if peer_key is not None:
-					self.all_incoming_peers[equality] = peer_key
+				if peer.key is None:
+					self.all_incoming_peers[equality] = new_peer_key
+				else:
 					self.incoming_duplicate.count(peer.torrent)
 				self.visited_peers.task_done()
 				continue
