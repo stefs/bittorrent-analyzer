@@ -230,6 +230,7 @@ class SwarmAnalyzer:
 				else:
 					self.error.count('Later contact,{}'.format(err))
 				logging.warning('Connection establishment failed: {}'.format(err))
+				self.evaluator_threads.decrement()
 				continue
 			logging.debug('Connection established')
 
@@ -245,12 +246,14 @@ class SwarmAnalyzer:
 				else:
 					self.error.count('Later contact,{}'.format(err))
 				logging.warning('Peer evaluation failed: {}'.format(err))
+				self.evaluator_threads.decrement()
 				continue
 
 			# Catch all exceptions to enable ongoing analysis, should never happen
 			except Exception as err:
 				tb = traceback.format_tb(err.__traceback__)
 				logging.critical('{} during peer evaluation: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				self.evaluator_threads.decrement()
 				continue
 
 			# Close connection
@@ -674,13 +677,13 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		try:
 			self.request.settimeout(config.network_timeout)
 		except OSError as err:
-			logging.warning('Could not set timeout on incoming connection')
+			self.server.error.count('Incoming peer,Failed to set timeout')
+			self.server.server_threads.decrement()
 			return
 		logging.info('Evaluating an incoming peer ...')
 		try:
 			result = protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
 		except PeerError as err:
-			logging.warning('Could not evaluate incoming peer: {}'.format(err))
 			self.server.error.count('Incoming peer,{}'.format(err))
 		else:
 			# Search received info hash in torrents dict
@@ -689,8 +692,8 @@ class PeerHandler(socketserver.BaseRequestHandler):
 				if result[1] == self.server.torrents[key].info_hash:
 					torrent_id = key
 			if torrent_id is None:
-				logging.warning('Ignoring incoming peer with unknown info hash')
 				self.server.error.count('Incoming peer,Unknown info hash')
+				self.server.server_threads.decrement()
 				return
 
 			# Queue for peer handler
