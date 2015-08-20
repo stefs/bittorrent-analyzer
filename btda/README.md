@@ -115,7 +115,7 @@ Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht is not
 3. `btda/main.py`
 4. Tmux detach with `Ctrl+B` followed by `d`
 
-Logs are saved in `output/`.
+Logs are saved in `output/`. Check if all torrents were imported as expected in the `torrent` table of the database.
 
 ### End bittorrent-analyzer
 1. `tmux attach-session -t btda`
