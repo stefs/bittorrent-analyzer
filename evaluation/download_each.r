@@ -122,7 +122,7 @@ requests$timestamp <- hour_timestamps(requests$timestamp)
 print(head(requests))
 
 # Data per torrent
-outfile = sub(".sqlite", "_download.pdf", args[1])
+outfile = sub(".sqlite", "_download_each.pdf", args[1])
 stopifnot(outfile != args[1])
 pdf(outfile, width=10.5, height=3.7)
 for (torrent in unique(downloads$group_torrent)) {
