@@ -437,7 +437,7 @@ class SwarmAnalyzer:
 			# Write back peer when not finished and add key if necessary
 			if peer.pieces < self.torrents[peer.torrent].complete_threshold:
 				if peer.key is None:
-					peer.key = peer_key
+					peer.key = new_peer_key
 				self.peers.force_put(peer)
 
 			# Allow waiting for all peers to be stored at shutdown
