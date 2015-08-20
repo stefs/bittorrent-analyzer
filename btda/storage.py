@@ -285,7 +285,7 @@ class Database:
 		except OSError:
 			load = None
 		try:
-			memory = resource.getrusage(resource.RUSAGE_BOTH).ru_maxrss / 1000000
+			memory = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1000000
 		except OSError:
 			memory = None
 
