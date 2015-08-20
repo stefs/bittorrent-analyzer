@@ -122,7 +122,7 @@ Logs are saved in `output/`.
 2. Stop program with Ctrl+C
 3. `deactivate`
 
-Results are saved in `output/`.
+Results are saved in `output/<time_host>.sqlite`. Check log file with `grep "ERROR\|CRITICAL" <time_host>.log`. Look for unusual errors in the `<time_host>_error.txt` outfile. Also, check columns `thread_workload`, `load_average` and `memory_mb` of the `statistic` table in the database.
 
 ### End pymdht
 1. `telnet localhost 17001`

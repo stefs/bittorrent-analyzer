@@ -1,12 +1,17 @@
 # Database Evaluation with R
 ## Installation
-    sudo apt-get install r-base r-cran-dbi r-cran-rsqlite
+    sudo apt-get install r-base r-cran-dbi r-cran-rsqlite r-cran-ggplot2
+
+Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version can be installed as follows:
+
+    sudo R
+    install.packages("RSQLite")
 
 ## Usage
-`download.r <file.sqlite>`
+`./download.r <file.sqlite>`
 :   Compile number or confirmed downloads and scrape download numbers from tracker. Threshold is independend from data collection phase.
 
-`source.r <file.sqlite>`
+`./source.r <file.sqlite>`
 :   Plot received peers from DHT network and tracker server, distinguishing unique and duplicate peers. Includes successful evaluated incoming peers.
 
 ## Resources

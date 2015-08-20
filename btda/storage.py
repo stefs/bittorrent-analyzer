@@ -3,6 +3,8 @@ import logging
 import socket
 import datetime
 import ipaddress
+import os
+import resource
 
 # Extern modules
 import sqlalchemy
@@ -80,6 +82,8 @@ class Statistic(Base):
 	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
 	thread_workload = sqlalchemy.Column(sqlalchemy.types.Float)
+	load_average = sqlalchemy.Column(sqlalchemy.types.Float)
+	memory_mb = sqlalchemy.Column(sqlalchemy.types.Float)
 
 ## Handling database access with SQLAlchemy
 class Database:
@@ -271,12 +275,24 @@ class Database:
 		# Get thread-local session
 		session = self.Session()
 
+		# Determine system load
+		try:
+			load = os.getloadavg()[2]
+		except OSError:
+			load = None
+		try:
+			memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1000000
+		except OSError:
+			memory = None
+
 		# Write to database
 		new_statistic = Statistic(timestamp=int(datetime.datetime.now().timestamp()),
 				peer_queue=peer_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,
-				thread_workload=thread_workload)
+				thread_workload=thread_workload,
+				load_average=load,
+				memory_mb=memory)
 		try:
 			session.add(new_statistic)
 			session.commit()
