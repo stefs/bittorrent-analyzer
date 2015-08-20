@@ -144,6 +144,9 @@ class Database:
 			try:
 				session.add(new_peer)
 				session.commit()
+			except sqlalchemy.exc.OperationalError as err:
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during store new peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 			except Exception as err:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
@@ -184,6 +187,9 @@ class Database:
 			try:
 				session.add(database_peer)
 				session.commit()
+			except sqlalchemy.exc.OperationalError as err:
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 			except Exception as err:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
@@ -227,6 +233,9 @@ class Database:
 		try:
 			session.add(new_torrent)
 			session.commit()
+		except sqlalchemy.exc.OperationalError as err:
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during torrent storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		except Exception as err:
 			session.rollback()
 			tb = traceback.format_tb(err.__traceback__)
@@ -261,6 +270,9 @@ class Database:
 		try:
 			session.add(new_request)
 			session.commit()
+		except sqlalchemy.exc.OperationalError as err:
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		except Exception as err:
 			session.rollback()
 			tb = traceback.format_tb(err.__traceback__)
@@ -302,6 +314,9 @@ class Database:
 		try:
 			session.add(new_statistic)
 			session.commit()
+		except sqlalchemy.exc.OperationalError as err:
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during statistic storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		except Exception as err:
 			session.rollback()
 			tb = traceback.format_tb(err.__traceback__)
