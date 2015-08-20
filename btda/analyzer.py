@@ -58,6 +58,8 @@ class SwarmAnalyzer:
 		self.error = DictCounter()
 		if config.rec_dur_analysis:
 			self.eval_timer = list()
+		self.server_threads = SharedCounter()
+		self.evaluator_threads = SharedCounter()
 
 		# Analysis parts, activated via starter methods
 		self.shutdown_request = threading.Event()
@@ -215,6 +217,7 @@ class SwarmAnalyzer:
 
 			# Establish connection
 			# TODO use util.TCPConnection
+			self.evaluator_threads.increase()
 			if peer.key is None:
 				logging.info('Connecting to new peer ...')
 			else:
@@ -262,6 +265,7 @@ class SwarmAnalyzer:
 			revisit_time = time.perf_counter() + delay
 			self.visited_peers.put((peer, result, revisit_time))
 			self.active_success.increment()
+			self.evaluator_threads.decrease()
 
 		# Propagate shutdown finish
 		self.active_shutdown_done.wait()
@@ -359,7 +363,8 @@ class SwarmAnalyzer:
 				torrents=self.torrents,
 				visited_peers=self.visited_peers,
 				error=self.error,
-				dht_enabled=self.dht_started)
+				dht_enabled=self.dht_started,
+				server_threads=self.server_threads)
 		logging.info('Listening on {}:{} for incomming peer connections'.format(*address))
 
 		# Activate the server in it's own thread
@@ -531,7 +536,9 @@ class SwarmAnalyzer:
 						peer_queue=len(self.peers),
 						unique_incoming=len(self.all_incoming_peers),
 						success_active=self.active_success.get(),
-						thread_workload=self.timer.read())
+						thread_workload=self.timer.read(),
+						server_threads=self.server_threads.get(),
+						evaluator_threads=self.evaluator_threads.get())
 			except Exception as err:
 				logging.critical(err)
 
@@ -663,6 +670,7 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		# self.client_address is tuple of incoming client address and port
 		# self.request is incoming connection socket
 		# self.server is own server instance
+		self.server.server_threads.increment()
 		try:
 			self.request.settimeout(config.network_timeout)
 		except OSError as err:
@@ -693,3 +701,4 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			new_peer.torrent = torrent_id
 			revisit_time = time.perf_counter() + config.peer_revisit_delay
 			self.server.visited_peers.put((new_peer, result, revisit_time))
+		self.server.server_threads.decrement()

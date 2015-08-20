@@ -65,6 +65,11 @@ class SharedCounter:
 		with self.lock:
 			self.value += 1
 
+	## Reduce value by one
+	def decrement(self):
+		with self.lock:
+			self.value -= 1
+
 	## Read value
 	#  @return The value
 	def get(self):
