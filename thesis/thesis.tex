@@ -29,6 +29,7 @@
 \let\origunderscore\_
 \renewcommand{\_}{\origunderscore\allowbreak}
 \newcommand{\config}[1]{\texttt{config.\allowbreak #1}}
+\newcommand{\range}{from August 20 9:52 to August 22 10:04 UTC, 2015} % *
 
 \begin{document}
 \pagestyle{empty}
@@ -169,7 +170,7 @@ Africa        & fixed  & \numprint[\%]{28.21} & n/a & \numprint[\%]{13.29} & n/a
 \end{table}
 
 % BitTorrent by Cohen, a decentralized network
-In 2008, \textsc{Bram Cohen} published the specification for a decentralized file sharing protocol called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enable software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to manipulate the content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
+In 2008*, \textsc{Bram Cohen} published the specification for a decentralized file sharing protocol called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enable software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to manipulate the content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
 
 % BitTorrent traffic statistics, other file sharing technologies
 To date BitTorrent still has a remarkable share in private Internet traffic. According to a study \cite{sandvine2014} by networking equipment company \textsc{Sandvine Inc.}, BitTorrent has a downstream traffic share in fixed-line Internet accesses between \numprint[\%]{3} in North America and \numprint[\%]{23} in the Asia-Pacific region, with Europe at \numprint[\%]{10}. In downloaded data per month, this translates to \numprint[GB]{1.4}, \numprint[GB]{7.2} and \numprint[GB]{2.4}, respectively. Even more bandwidth is used for upstream with values ranging from \numprint[\%]{24} in Latin America to \numprint[\%]{56} in the Asia-Pacific region. Detailed numbers are cited in table \ref{traffic}. Other file sharing technologies than BitTorrent are hardly used.
@@ -199,14 +200,27 @@ The download progress is stored in a \textbf{database}, together with a timestam
 
 In the database there is only one record per peer, with two pieces values: one from the first contact with that peer and one from the latest contact. The number of confirmed downloads can now be obtained by filtering for peers with the first value below the threshold and the second one equal or above the threshold. Remaining rows can be aggregated by their latest timestamp to get download numbers per hour.
 
+% Other relevant academic work and how it differs from this work
 \section{Related Work}
 [Other relevant academic work and how it differs from this work]
 
-\begin{itemize}
-  \item \cite{watters2011much}
-  \item \cite{drachen2011distribution}
-  \item \dots
-\end{itemize}
+Scope of BitTorrent
+
+illigality
+
+* 2011 How much material on BitTorrent is infringing content? A case study
+
+scrape method
+
+* 2011 Distribution of Digital Games via BitTorrent
+
+* 2011 Unraveling the BitTorrent Ecosystem
+
+misreporting pieces
+
+* 2008 BitTorrent is an Auction: Analyzing and Improving BitTorrent’s Incentives
+
+* 2006 Free Riding in BitTorrent is Cheap
 
 \section{Results}
 [What has been achieved in this work?]
@@ -221,7 +235,7 @@ In the database there is only one record per peer, with two pieces values: one f
 \section{Acknowledgments}
 [A big thank you for the support to ...]
 
-* Philipp Klein for discussing methods and implementation
+* Philipp Klein for discussing methods and implementation and troubleshooting the virtual machine
 
 * RRZE for providing the VM and probably receiving copyright warning letters
 
@@ -347,14 +361,16 @@ While there are no legal restrictions on using BitTorrent in general, the downlo
 Even more serious is the upload process always involved in BitTorrent. Illegitimate distribution of proprietary content may be sentenced with imprisonment or a fine \cite[art.~106]{urhg}. More common and often abused \cite{abmahnung} is the system of special notifications \cite[art.~97a]{urhg}, sent from right holders to assumed copyright infringers. These warning letters are supposed to settle the controversy extrajudicial in exchange of a fee. Entitlement of right holders to indemnity and expense allowance exists \cite[art.~97]{urhg}.
 
 \subsection{Collecting IP addresses}
-Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means the anonymization of IP addresses is preferable.
+Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means the anonymization of IP addresses is preferable.*
+% they are not collected any more....
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Implementation}
 The software tool written for this thesis was developed using the version control system \emph{Git} \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code was published \cite{btda} under the \emph{GNU General Public License} in version 3.
 
 \section{Dependencies}
-There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} project by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}. In order to run a dedicated DHT node, the tool \emph{pymdht} by \textsc{Raul Jimenez} \cite{pymdht} is used.
+There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} project by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}. In order to run a dedicated DHT node, the tool \emph{pymdht}* by \textsc{Raul Jimenez} \cite{pymdht} is used.
+% cite pymdht thesis
 
 \section{Functionality}
 To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, as they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file.
@@ -466,10 +482,10 @@ The main script, named \texttt{btda.py} can be controlled by using the following
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
-Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed from 11:11 am, August 15* to 11:11 am, August 17*, 2015. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
+Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
 
 \section{Choosing Torrents}
-\begin{table}
+\begin{table}[b!]
 \centering
 \begin{tabular}{rllr}
 \toprule
@@ -500,39 +516,27 @@ Rank & Site name & Domain name & Alexa Rank \\
 
 Due to the distributed nature of BitTorrent, there unfortunately is no complete list or for all torrents currently active. Thus external data about popularity of torrents is needed, even if there is no guarantee of correctness. So to determine most popular torrent directory sites the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
 
-\begin{table}
+\begin{table}[t!]
 \centering
-\begin{tabular}{rllrrr}
+\begin{tabular}{lrlrrr}
 \toprule
-ID & Site name & Torrent name & Size & Leechers & Seeders \\
+Set & ID & Torrent name & Size & Leechers & Seeders \\
 \midrule
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-15 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
-1 & Kickass Torrents & torrent\_name & 3.0\,GB & 42 & 23 \\
+A & 1 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 4 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 8 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 11 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 13 & torrent\_name & 3.0\,GB & 42 & 23 \\
+B & 3 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 6 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 9 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 10 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 14 & torrent\_name & 3.0\,GB & 42 & 23 \\
+C & 5 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 7 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 12 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 15 & torrent\_name & 3.0\,GB & 42 & 23 \\
+& 16 & torrent\_name & 3.0\,GB & 42 & 23 \\
 \bottomrule
 \end{tabular}
 \caption[List of torrent chosen for evaluation]{* List of the 20 most popular torrents according to meta-search engine \textsc{Torrentz} \cite{torrentz}. At the end are five torrents above \numprint[GB]{5} and five recently published torrents . Selection was made on August 42, 2015, 11:00. The \emph{ID} was chosen by the SQLite database used for storage during the analysis.}
@@ -542,9 +546,9 @@ ID & Site name & Torrent name & Size & Leechers & Seeders \\
 Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen:
 
 \begin{itemize}
-  \item Set A: The 8 most popular torrents below \numprint[GB]{1}
-  \item Set B: The 8 most popular torrents above \numprint[GB]{1}
-  \item Set C: The 8 most popular torrents above \numprint[GB]{10}
+  \item Set A: The 8 most popular torrents below \numprint[GB]{1} % (1,4,8,11,13)
+  \item Set B: The 8 most popular torrents above \numprint[GB]{1} % (3,6,9,10,14)
+  \item Set C: The 8 most popular torrents above \numprint[GB]{10} % (5,7,12,15,16)
 \end{itemize}
 
 Popular torrents were chosen regarding leecher numbers, despite the website sorting by the sum of seeders and leechers. Set B only contains only torrent smaller than \numprint[GB]{10} since larger torrents are less pupular in comparision. The 27 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
@@ -565,13 +569,46 @@ Incoming peers & 1 & 2 & 3\,\% \\
 \label{unique-peers}
 \end{table}
 
-Peers from all sources were considered, namely from the tracker server, the DHT network and incoming connections. The number collected peer addresses in regards to their source is shown in table \ref{unique-peers}. Since the \emph{incoming peers} data point only includes peers when their download progress was successfully evaluated, the ratio of \numprint[\%]{95}* new incoming peers implies that $1-\numprint[\%]{95}=\numprint[\%]{5}$* of unique incoming peers contacted us a second time, despite not receiving any torrent data.
+Peers from all sources were considered, namely from the tracker server, the DHT network and incoming connections. The total number collected across all torrents during this analysis in regards to their source is shown in table \ref{unique-peers}. Since the \emph{incoming peers} data point in this table only includes peers when their download progress was successfully evaluated, the ratio of \numprint[\%]{95}* new incoming peers implies that $1-\numprint[\%]{95}=\numprint[\%]{5}$* of unique incoming peers contacted us a second time, despite not receiving any torrent data.
 
-Summary plot
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{graphics/2015-08-19_20-43-43_faui1-246_source_all_torrents}
+\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents, on average. New peers from the tracker server and the DHT network are requested every five minutes. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. The values \emph{incoming-unique} and \emph{incoming-duplicate} only include peers after their download progress was extracted successfully. The analysis lasted \range.}
+\label{request-history}
+\end{figure}
 
-The progression during the analysis period of all peer requests is shown in appendix \ref{request-history}. The ratio between new and duplicate received peer address information settles fairly quickly*. \emph{incoming-duplicate} is actually good.
+The progression of received peer addresses during the analysis period is shown in figure \ref{request-history}. Again, this is a summary for all torrents. The ratio between new and duplicate received peer address information is slightly higher in the first hours*. From the incoming peers, only the ones represented by \emph{incoming-duplicate} are candidates to be counted as confirmed downloads, since the were evaluated at least twice.
 
 \section{Evaluating Peer's Download Progress}
+\begin{table}
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Torrent & Confirmed & Reported & Confirmed/Reported & Unique Peers \\
+\midrule
+Set A & 5 & 2 & 3\,\% \\
+Set B & 10 & 2 & 3\,\% \\
+Set C & 1 & 2 & 3\,\% \\
+\bottomrule
+\end{tabular}
+\caption[Confirmed downloads per torrent set]{Confirmed downloads per torrent set. In comparison, \emph{reported} downloads are responses from scrape requests to the tracker during the analysis. \emph{Unique peers} are all peers successfully evaluated for the torrents in question, although not crossing the confirmed download threshold.}
+\label{confirmed-downloads}
+\end{table}
+
+Table \ref{confirmed-downloads} shows the confirmed download numbers measured during this analysis per torrent set. For comparison, numbers reported by the tracker in scrape requests are given. * [Compare sets and unique peers]
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(1,4,8,11,13)}
+\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(3,6,9,10,14)}
+\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(5,7,12,15,16)}
+\caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported download numbers per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
+\label{download-history}
+\end{figure}
+
+The history of download numbers during the analysis period is shown in figure \ref{download-history}. Server reported numbers
+
 \begin{table}
 \centering
 \begin{tabular}{llrr}
@@ -601,6 +638,8 @@ Incoming peer & Peer speaks unknown protocol & 891 \\
 \caption[Reasons for failed peer evaluation]{Reasons for failed peer valuations during the analysis process. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.}
 \label{connection-failure}
 \end{table}
+
+Plot confirmed downloads per source, or maybe just one table
 
 Define failure
 
@@ -636,31 +675,6 @@ TODO: Table: Examine hostnames by ISP or seedbox provicers
 
 \chapter{Conclusion and Future Work}
 \dots
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\appendix
-\chapter{Collected Data}
-\section{Development of received peer addresses per source}
-\label{request-history}
-\includegraphics[width=\textwidth, page=1]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=2]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=3]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=4]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=5]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=6]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=7]{graphics/2015-07-18_21-57-15_faui1-246_source}\\
-\includegraphics[width=\textwidth, page=8]{graphics/2015-07-18_21-57-15_faui1-246_source}
-
-\section{Confirmed and server reported download numbers}
-\label{downloads}
-\includegraphics[width=\textwidth, page=1]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=2]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=3]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=4]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=5]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=6]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=7]{graphics/2015-07-18_21-57-15_faui1-246_download}\\
-\includegraphics[width=\textwidth, page=8]{graphics/2015-07-18_21-57-15_faui1-246_download}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \printbibliography[heading=bibintoc]

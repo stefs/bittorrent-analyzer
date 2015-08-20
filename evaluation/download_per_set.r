@@ -147,7 +147,7 @@ print(head(total))
 filename = paste("_download_set_", torrent_set, ".pdf", sep="")
 outfile = sub(".sqlite", filename, args[2])
 stopifnot(outfile != args[2])
-pdf(outfile, width=10.5, height=3.7)
+pdf(outfile, width=9, height=4.2)
 
 # Make description
 description <- paste("Torrent Set:", torrent_set)
@@ -158,7 +158,7 @@ print(
 	ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
 	geom_bar(stat="identity", position="dodge") +
 	theme(axis.text.x=element_text(angle=90, hjust=1)) +
-	labs(x="Time UTC (day/hour)", y="Downloads")
+	labs(title=description, x="Time UTC (day/hour)", y="Downloads")
 )
 print(paste("Plot written to", outfile))
 print("*** End ***")
