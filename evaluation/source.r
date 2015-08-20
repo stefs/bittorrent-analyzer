@@ -23,10 +23,14 @@ read_db <- function(path) {
 	return(ret)
 }
 
-aggregate_time <- function(request) {
+aggregate_time <- function(request, all_torrents) {
 	# Aggregate by torrent id and last seen
 	values_df <- data.frame(total=request$received_peers, duplicate=request$duplicate_peers)
-	groups <- list(group_hour=request$timestamp, group_source=request$source, group_torrent=request$torrent)
+	if (all_torrents) {
+		groups <- list(group_hour=request$timestamp, group_source=request$source)
+	} else {
+		groups <- list(group_hour=request$timestamp, group_source=request$source, group_torrent=request$torrent)
+	}
 	ret <- aggregate(values_df, by=groups, FUN=sum)
 	# Return result
 	return(ret)
@@ -50,18 +54,24 @@ new_peers <- function(request) {
 	return(request)
 }
 
-merge_peers <- function(request) {
+merge_peers <- function(request, all_torrents) {
+	# use group_torrent depending on all_peers
+	if (all_torrents) {
+		gt <- rep(NaN, length(request$group_hour))
+	} else {
+		gt <- request$group_torrent
+	}
 	# assemble duplicate part
 	duplicate <- data.frame(
 		group_hour=request$group_hour,
-		group_torrent=request$group_torrent,
+		group_torrent=gt,
 		peers=request$duplicate,
 		category=paste(request$group_source, "duplicate", sep="-")
 	)
 	# assemble new part
 	new <- data.frame(
 		group_hour=request$group_hour,
-		group_torrent=request$group_torrent,
+		group_torrent=gt,
 		peers=request$new,
 		category=paste(request$group_source, "unique", sep="-")
 	)
@@ -80,9 +90,20 @@ merge_peers <- function(request) {
 	return(request)
 }
 
+plot_source <- function(data, description) {
+	# Plot with ggplot2 with bar order according to category
+	print(
+		ggplot(data, aes(factor(group_hour), peers, fill=category, order=as.numeric(category))) +
+		geom_bar(stat="identity", position="stack") +
+		theme(axis.text.x=element_text(angle=90, hjust=1)) +
+		labs(title=description, x="Time UTC (day/hour)", y="Peers")
+	)
+}
+
 # Read database
 args <- commandArgs(trailingOnly=TRUE)
-ret <- read_db(args[1])
+all_torrents <- args[1] == "sum"
+ret <- read_db(args[2])
 request <- ret[[1]]
 torrent <- ret[[2]]
 
@@ -93,36 +114,40 @@ print("*** Parse timesamps ***")
 request$timestamp <- hour_timestamps(request$timestamp)
 print(head(request))
 print("*** Aggregate timestamp ***")
-request <- aggregate_time(request)
+request <- aggregate_time(request, all_torrents)
 print(head(request))
 print("*** Calculate new peers ***")
 request <- new_peers(request)
 print(head(request))
 print("*** Merge peer numbers ***")
-request <- merge_peers(request)
+request <- merge_peers(request, all_torrents)
 print(head(request))
 
 # Data per torrent
-outfile = sub(".sqlite", "_source.pdf", args[1])
-stopifnot(outfile != args[1])
+if (all_torrents) {
+	suffix = "_source_all_torrents.pdf"
+} else {
+	suffix = "_source_per_torrent.pdf"
+}
+outfile = sub(".sqlite", suffix, args[2])
+stopifnot(outfile != args[2])
 pdf(outfile, width=10.5, height=3.7)
-for (id in unique(request$group_torrent)) {
-	# Make description
-	info <- torrent[torrent$id==id,]
-	description <- torrent_description(id, info$display_name, info$gigabyte)
-	print(description)
 
-	# Extract current torrent
-	filtered <- filter_request(request, id)
-	print(head(filtered))
+# Decide if summary of all torrents or plot per torrent
+if (all_torrents) {
+	plot_source(request, NULL)
+} else {
+	for (id in unique(request$group_torrent)) {
+		# Make description
+		info <- torrent[torrent$id==id,]
+		description <- torrent_description(id, info$display_name, info$gigabyte)
+		print(description)
 
-	# Plot with ggplot2 with bar order according to category
-	print(
-		ggplot(filtered, aes(factor(filtered$group_hour), peers, fill=category, order=as.numeric(category))) +
-		geom_bar(stat="identity", position="stack") +
-		theme(axis.text.x=element_text(angle=90, hjust=1)) +
-		labs(title=description, x="Time UTC (day/hour)", y="Peers")
-	)
+		# Plot current torrent
+		filtered <- filter_request(request, id)
+		print(head(filtered))
+		plot_source(filtered, description)
+	}
 }
 print(paste("Plot written to", outfile))
 print("*** End ***")

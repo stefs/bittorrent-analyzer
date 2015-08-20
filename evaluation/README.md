@@ -11,8 +11,8 @@ Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version ca
 `./download.r <file.sqlite>`
 :   Compile number or confirmed downloads and scrape download numbers from tracker. Threshold is independend from data collection phase.
 
-`./source.r <file.sqlite>`
-:   Plot received peers from DHT network and tracker server, distinguishing unique and duplicate peers. Includes successful evaluated incoming peers.
+`./source.r <mode> <file.sqlite>`
+:   Plot received peers from DHT network and tracker server, distinguishing unique and duplicate peers. Includes successful evaluated incoming peers. If *mode* is "sum", a summary for all torrents will be plotted. If *mode* is "torrent", the source is plottet for every single torrent.
 
 ## Resources
 * [ggplot2: Changing the Default Order of Legend Labels and Stacking of Data | Learning R](https://learnr.wordpress.com/2010/03/23/ggplot2-changing-the-default-order-of-legend-labels-and-stacking-of-data/)
