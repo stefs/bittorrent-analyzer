@@ -123,16 +123,17 @@ class Database:
 
 		# Commit timer
 		self.last_peer_commit = 0
+#		self.fake_peer_id = 0 # FIXME
 
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
 	#  @return Database id if peer is new, None else
 	#  @exception DatabaseError
-	def store_peer(self, peer):
+	def store_peer(self, peer): # FIXME too slow
 		# Get thread-local session
 		session = self.Session()
 
-		# Commit if necessary
+		# Commit if necessary # FIXME reduces 30%, not enough
 		now = time.perf_counter()
 		if now - self.last_peer_commit > config.commit_interval:
 			self.last_peer_commit = now
@@ -157,6 +158,8 @@ class Database:
 					last_pieces=None, first_seen=int(timestamp.timestamp()),
 					last_seen=None, max_speed=None, visits=1,
 					source=peer.source.name, torrent=peer.torrent)
+#			self.fake_peer_id += 1 # FIXME
+#			return self.fake_peer_id # FIXME
 			try:
 				session.add(new_peer)
 			except Exception as err:
@@ -164,13 +167,14 @@ class Database:
 				tb = traceback.format_tb(err.__traceback__)
 				raise DatabaseError('{} during store new peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
-			# Return Peer with key
+			# Return database id
 			database_id = new_peer.id
 			logging.info('Stored new peer with database id {}'.format(database_id))
 			return database_id
 
 		# Update former stored peer
 		else:
+			return # FIXME
 			# Get and delete old entry
 			database_peer = session.query(Peer).filter_by(id=peer.key).first()
 			session.delete(database_peer)

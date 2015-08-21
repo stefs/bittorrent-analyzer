@@ -611,13 +611,10 @@ class SwarmAnalyzer:
 			print(' Done.', flush=True)
 		if self.passive_evaluation:
 			print('Shutdown peer evaluation server ...', end='', flush=True)
-			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
+			self.server.shutdown() # TODO Does not wait for current handlers to finish, only stops new ones
 			print(' Done.', flush=True)
 		if self.peer_handler:
 			print('Waiting for peers to be written to database ...', end='', flush=True)
-			# TODO does not wait long enough,
-			# see 2015-04-07_16h03m36s.log,
-			# reason is passive eval threads add peers after shutdown, see above
 			self.visited_peers.join()
 			print(' Done.', flush=True)
 		if self.statistic_started:
