@@ -597,34 +597,34 @@ class SwarmAnalyzer:
 
 		# Wait for termination
 		if self.dht_started:
-			print('Waiting for DHT requests to finish ...', newline='')
+			print('Waiting for DHT requests to finish ...', end='')
 			self.dht_shutdown_done.wait()
 			self.dht_conn.close()
 			print(' Done.')
 		if self.active_evaluation:
-			print('Waiting for current evaluations to finish ...')
+			print('Waiting for current evaluations to finish ...', end='')
 			self.active_shutdown_done.wait()
 			print(' Done.')
 		if self.tracker_requests:
-			print('Waiting for current tracker requests to finish ...')
+			print('Waiting for current tracker requests to finish ...', end='')
 			self.tracker_shutdown_done.wait()
 			print(' Done.')
 		if self.passive_evaluation:
-			print('Shutdown peer evaluation server ...')
+			print('Shutdown peer evaluation server ...', end='')
 			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
 			print(' Done.')
 		if self.peer_handler:
-			print('Waiting for peers to be written to database ...')
+			print('Waiting for peers to be written to database ...', end='')
 			# TODO does not wait long enough,
 			# see 2015-04-07_16h03m36s.log,
 			# reason is passive eval threads add peers after shutdown, see above
 			self.visited_peers.join()
 			print(' Done.')
 		if self.statistic_started:
-			print('Waiting for analysis statistics to be written to database ...')
+			print('Waiting for analysis statistics to be written to database ...', end='')
 			self.statistic_shutdown.wait()
 			print(' Done.')
-		print('Closing database ...')
+		print('Closing database ...', end='')
 		self.database.close()
 		print(' Done.')
 

@@ -5,6 +5,7 @@ import datetime
 import ipaddress
 import os
 import resource
+import time
 
 # Extern modules
 import sqlalchemy
@@ -120,6 +121,9 @@ class Database:
 		# http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html#thread-local-scope
 		self.Session = sqlalchemy.orm.scoped_session(session_factory)
 
+		# Commit timer
+		self.last_peer_commit = 0
+
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
 	#  @return Database id if peer is new, None else
@@ -144,7 +148,6 @@ class Database:
 					source=peer.source.name, torrent=peer.torrent)
 			try:
 				session.add(new_peer)
-				session.commit()
 			except Exception as err:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
@@ -184,12 +187,22 @@ class Database:
 			# Store updated peer
 			try:
 				session.add(database_peer)
-				session.commit()
 			except Exception as err:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
 				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 			logging.debug('Updated peer with database id {}'.format(peer.key))
+
+		# Commit if necessary
+		now = time.perf_counter()
+		if now - self.last_peer_commit > config.commit_interval:
+			self.last_peer_commit = now
+			try:
+				session.commit()
+			except Exception as err:
+				session.rollback()
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question

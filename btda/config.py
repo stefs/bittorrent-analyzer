@@ -40,3 +40,5 @@ statistic_interval = 3 * 60
 evaluator_reaction = 40
 # Write durations of message receival to file for timeout calibration
 rec_dur_analysis = False
+# Database commit interval
+commit_interval = 1 * 60
