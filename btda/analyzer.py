@@ -538,6 +538,7 @@ class SwarmAnalyzer:
 			try:
 				self.database.store_statistic(
 						peer_queue=len(self.peers),
+						visited_queue=len(self.visited_peers),
 						unique_incoming=len(self.all_incoming_peers),
 						success_active=self.active_success.get(),
 						thread_workload=self.timer.read(),
@@ -703,6 +704,5 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			new_peer.port = self.client_address[1]
 			new_peer.source = Source.incoming
 			new_peer.torrent = torrent_id
-			revisit_time = time.perf_counter() + config.peer_revisit_delay
-			self.server.visited_peers.put((new_peer, result, revisit_time))
+			self.server.visited_peers.put((new_peer, result, None))
 		self.server.server_threads.decrement()
