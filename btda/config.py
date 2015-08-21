@@ -35,7 +35,7 @@ input_path = 'input/'
 # Filename for magnet files, relative to input_path, one magnet link per line
 magnet_file = 'magnet.txt'
 # Time delay between logging peer statistics to database
-statistic_interval = 5 * 60
+statistic_interval = 3 * 60
 # Evaluator reaction time on empty queue and delayed peers
 evaluator_reaction = 40
 # Write durations of message receival to file for timeout calibration
