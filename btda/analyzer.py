@@ -532,13 +532,17 @@ class SwarmAnalyzer:
 
 	## Store connection statistics to database
 	def _statistic_logger(self):
+		first = True
 		while not self.shutdown_request.is_set():
-			self.shutdown_request.wait(config.statistic_interval)
+			if first:
+				first = False
+			else:
+				self.shutdown_request.wait(config.statistic_interval)
 			logging.info('Logging analysis statistics to database ...')
 			try:
 				self.database.store_statistic(
 						peer_queue=len(self.peers),
-						visited_queue=len(self.visited_peers),
+						visited_queue=self.visited_peers.qsize(),
 						unique_incoming=len(self.all_incoming_peers),
 						success_active=self.active_success.get(),
 						thread_workload=self.timer.read(),
@@ -593,34 +597,36 @@ class SwarmAnalyzer:
 
 		# Wait for termination
 		if self.dht_started:
-			logging.info('Waiting for DHT requests to finish ...')
+			print('Waiting for DHT requests to finish ...', newline='')
 			self.dht_shutdown_done.wait()
 			self.dht_conn.close()
-			print('DHT requests terminated')
+			print(' Done.')
 		if self.active_evaluation:
-			logging.info('Waiting for current evaluations to finish ...')
+			print('Waiting for current evaluations to finish ...')
 			self.active_shutdown_done.wait()
-			print('Active evaluation terminated')
+			print(' Done.')
 		if self.tracker_requests:
-			logging.info('Waiting for current tracker requests to finish ...')
+			print('Waiting for current tracker requests to finish ...')
 			self.tracker_shutdown_done.wait()
-			print('Tracker requests terminated')
+			print(' Done.')
 		if self.passive_evaluation:
-			logging.info('Shutdown peer evaluation server ...')
+			print('Shutdown peer evaluation server ...')
 			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
-			print('Passive evaluation server terminated')
+			print(' Done.')
 		if self.peer_handler:
-			logging.info('Waiting for peers to be written to database ...')
+			print('Waiting for peers to be written to database ...')
 			# TODO does not wait long enough,
 			# see 2015-04-07_16h03m36s.log,
 			# reason is passive eval threads add peers after shutdown, see above
 			self.visited_peers.join()
-			print('Database thread terminated')
+			print(' Done.')
 		if self.statistic_started:
-			logging.info('Waiting for analysis statistics to be written to database ...')
+			print('Waiting for analysis statistics to be written to database ...')
 			self.statistic_shutdown.wait()
-			print('Statistics thread terminated')
+			print(' Done.')
+		print('Closing database ...')
 		self.database.close()
+		print(' Done.')
 
 		# Do not reraise incoming exceptions, as it is already logged above
 		logging.info('Finished')
