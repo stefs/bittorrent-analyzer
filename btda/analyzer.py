@@ -270,7 +270,6 @@ class SwarmAnalyzer:
 			self.visited_peers.put((peer, result, revisit_time))
 			self.active_success.increment()
 			self.evaluator_threads.decrement()
-			gc.collect()
 
 		# Propagate shutdown finish
 		self.active_shutdown_done.wait()

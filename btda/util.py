@@ -165,7 +165,7 @@ class ActivityTimer:
 		try:
 			workload = sum(workload) / len(workload)
 		except ZeroDivisionError:
-			workload = None
+			workload = 0
 		logging.info('Overall thread workload is {}'.format(workload))
 		return workload
 
