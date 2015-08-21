@@ -123,7 +123,6 @@ class Database:
 
 		# Commit timer
 		self.last_peer_commit = 0
-#		self.fake_peer_id = 0 # FIXME
 
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
@@ -158,8 +157,6 @@ class Database:
 					last_pieces=None, first_seen=int(timestamp.timestamp()),
 					last_seen=None, max_speed=None, visits=1,
 					source=peer.source.name, torrent=peer.torrent)
-#			self.fake_peer_id += 1 # FIXME
-#			return self.fake_peer_id # FIXME
 			try:
 				session.add(new_peer)
 			except Exception as err:
