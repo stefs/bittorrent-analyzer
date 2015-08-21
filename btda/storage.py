@@ -132,6 +132,17 @@ class Database:
 		# Get thread-local session
 		session = self.Session()
 
+		# Commit if necessary
+		now = time.perf_counter()
+		if now - self.last_peer_commit > config.commit_interval:
+			self.last_peer_commit = now
+			try:
+				session.commit()
+			except Exception as err:
+				session.rollback()
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+
 		# Check if this is a new peer
 		if peer.key is None:
 			# Get meta data
@@ -192,17 +203,6 @@ class Database:
 				tb = traceback.format_tb(err.__traceback__)
 				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 			logging.debug('Updated peer with database id {}'.format(peer.key))
-
-		# Commit if necessary
-		now = time.perf_counter()
-		if now - self.last_peer_commit > config.commit_interval:
-			self.last_peer_commit = now
-			try:
-				session.commit()
-			except Exception as err:
-				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 	## Uses a local GeoIP2 database to geolocate an ip address
 	#  @param ip_address The address in question

@@ -597,36 +597,36 @@ class SwarmAnalyzer:
 
 		# Wait for termination
 		if self.dht_started:
-			print('Waiting for DHT requests to finish ...', end='')
+			print('Waiting for DHT requests to finish ...', end='', flush=True)
 			self.dht_shutdown_done.wait()
 			self.dht_conn.close()
-			print(' Done.')
+			print(' Done.', flush=True)
 		if self.active_evaluation:
-			print('Waiting for current evaluations to finish ...', end='')
+			print('Waiting for current evaluations to finish ...', end='', flush=True)
 			self.active_shutdown_done.wait()
-			print(' Done.')
+			print(' Done.', flush=True)
 		if self.tracker_requests:
-			print('Waiting for current tracker requests to finish ...', end='')
+			print('Waiting for current tracker requests to finish ...', end='', flush=True)
 			self.tracker_shutdown_done.wait()
-			print(' Done.')
+			print(' Done.', flush=True)
 		if self.passive_evaluation:
-			print('Shutdown peer evaluation server ...', end='')
+			print('Shutdown peer evaluation server ...', end='', flush=True)
 			self.server.shutdown() # TODO use semaphore, because it does not wait for current handlers to finish. Only in case of previous crash?
-			print(' Done.')
+			print(' Done.', flush=True)
 		if self.peer_handler:
-			print('Waiting for peers to be written to database ...', end='')
+			print('Waiting for peers to be written to database ...', end='', flush=True)
 			# TODO does not wait long enough,
 			# see 2015-04-07_16h03m36s.log,
 			# reason is passive eval threads add peers after shutdown, see above
 			self.visited_peers.join()
-			print(' Done.')
+			print(' Done.', flush=True)
 		if self.statistic_started:
-			print('Waiting for analysis statistics to be written to database ...', end='')
+			print('Waiting for analysis statistics to be written to database ...', end='', flush=True)
 			self.statistic_shutdown.wait()
-			print(' Done.')
-		print('Closing database ...', end='')
+			print(' Done.', flush=True)
+		print('Closing database ...', end='', flush=True)
 		self.database.close()
-		print(' Done.')
+		print(' Done.', flush=True)
 
 		# Do not reraise incoming exceptions, as it is already logged above
 		logging.info('Finished')
