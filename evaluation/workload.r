@@ -2,6 +2,7 @@
 
 library(DBI)
 library(ggplot2)
+library(reshape)
 
 read_db <- function(path) {
 	# Open raw_peersbase connection
@@ -9,7 +10,7 @@ read_db <- function(path) {
 	# Disable auto commit
 	dbBegin(con)
 	# Read peer table
-	sql <- "SELECT timestamp, thread_workload, load_average FROM statistic"
+	sql <- "SELECT timestamp, thread_workload, evaluator_threads, server_threads, memory_mb, load_average  FROM statistic"
 	statistic <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
@@ -26,17 +27,9 @@ parse_timestamps <- function(timestamps) {
 	return(timestamps)
 }
 
-normalize_loadavg <- function(load_average, cores) {
-	# Devide by number of cores
-	return(load_average/cores)
-}
-
 merge_columns <- function(statistic) {
-	# Construct time-value dataframe with type column
-	return(rbind(
-		data.frame(time=statistic$timestamp, value=statistic$thread_workload, type="thread workload"),
-		data.frame(time=statistic$timestamp, value=statistic$load_average, type="load average")
-	))
+	# Construct timestamp-value dataframe with variable column
+	return(melt(statistic, id=c("timestamp")))
 }
 
 # Read database
@@ -46,27 +39,26 @@ statistic <- ret[[1]]
 
 # Prepare data
 print(head(statistic))
-print("*** Parse timesamps ***")
-statistic$timestamp <- parse_timestamps(statistic$timestamp)
-print(head(statistic))
-print("*** Normalize load average ***")
-statistic$load_average <- normalize_loadavg(statistic$load_average, 2)
-print(head(statistic))
 print("*** Merge columns ***")
 statistic <- merge_columns(statistic)
+print(statistic)
+print("*** Parse timesamps ***")
+statistic$timestamp <- parse_timestamps(statistic$timestamp)
 print(head(statistic))
 
 # Create file
 outfile = sub(".sqlite", "_workload.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=3)
+pdf(outfile, width=9, height=7)
 
 # Plot with ggplot2
 print(
-	ggplot(data=statistic, aes(x=time, y=value, group=type, colour=type)) +
+	ggplot(data=statistic, aes(x=timestamp, y=value, group=variable)) +
     geom_line() +
     geom_point() +
-	labs(x="Time UTC", y=NULL)
+    facet_grid(variable ~ ., scales="free_y") +
+	labs(x="Time UTC", y=NULL) +
+	theme(legend.position="none")
 )
 print(paste("Plot written to", outfile))
 print("*** End ***")

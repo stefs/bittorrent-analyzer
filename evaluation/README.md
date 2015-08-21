@@ -1,6 +1,6 @@
 # Database Evaluation with R
 ## Installation
-    sudo apt-get install r-base r-cran-dbi r-cran-rsqlite r-cran-ggplot2
+    sudo apt-get install r-base r-cran-dbi r-cran-rsqlite r-cran-ggplot2 r-cran-reshape
 
 Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version can be installed as follows:
 
