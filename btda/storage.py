@@ -79,6 +79,7 @@ class Statistic(Base):
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
 	timestamp = sqlalchemy.Column(sqlalchemy.types.Integer)
 	peer_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
+	visited_queue = sqlalchemy.Column(sqlalchemy.types.Integer)
 	unique_incoming = sqlalchemy.Column(sqlalchemy.types.Integer)
 	success_active = sqlalchemy.Column(sqlalchemy.types.Integer)
 	thread_workload = sqlalchemy.Column(sqlalchemy.types.Float)
@@ -270,12 +271,13 @@ class Database:
 	## Store statistics about peers
 	#  @param peer_queue Currently number of peers in queue
 	#  @param unique_incoming Seen unique incoming peers
+	#  @param visited_queue Length of the visited peers queue
 	#  @param success_active Active evaluations successful
 	#  @param thread_workload Percentage of active time between 0 and 1
 	#  @param server_threads Number of currently active server threads
 	#  @param evaluator_threads Number of currently active evaluator threads
 	#  @exception DatabaseError
-	def store_statistic(self, peer_queue, unique_incoming, success_active, thread_workload, server_threads, evaluator_threads):
+	def store_statistic(self, peer_queue, visited_queue, unique_incoming, success_active, thread_workload, server_threads, evaluator_threads):
 		# Get thread-local session
 		session = self.Session()
 
@@ -292,6 +294,7 @@ class Database:
 		# Write to database
 		new_statistic = Statistic(timestamp=int(datetime.datetime.now().timestamp()),
 				peer_queue=peer_queue,
+				visited_queue=visited_queue,
 				unique_incoming=unique_incoming,
 				success_active=success_active,
 				thread_workload=thread_workload,
