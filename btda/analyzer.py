@@ -610,8 +610,9 @@ class SwarmAnalyzer:
 			self.tracker_shutdown_done.wait()
 			print(' Done.', flush=True)
 		if self.passive_evaluation:
-			print('Shutdown peer evaluation server ...', end='', flush=True)
-			self.server.shutdown() # TODO Does not wait for current handlers to finish, only stops new ones
+			print('Waiting for server threads to terminate ...', end='', flush=True)
+			self.server.shutdown()
+			self.server_threads.wait()
 			print(' Done.', flush=True)
 		if self.peer_handler:
 			print('Waiting for peers to be written to database ...', end='', flush=True)
@@ -621,9 +622,7 @@ class SwarmAnalyzer:
 			print('Waiting for analysis statistics to be written to database ...', end='', flush=True)
 			self.statistic_shutdown.wait()
 			print(' Done.', flush=True)
-		print('Closing database ...', end='', flush=True)
 		self.database.close()
-		print(' Done.', flush=True)
 
 		# Do not reraise incoming exceptions, as it is already logged above
 		logging.info('Finished')

@@ -59,16 +59,22 @@ class SharedCounter:
 	def __init__(self):
 		self.value = 0
 		self.lock = threading.Lock()
+		self.zero = threading.Event()
 
 	## Increase value by one
 	def increment(self):
 		with self.lock:
 			self.value += 1
+			self.zero.clear()
 
 	## Reduce value by one
 	def decrement(self):
 		with self.lock:
 			self.value -= 1
+			if self.value == 0:
+				self.zero.set()
+			elif self.value < 0:
+				logging.critical('Negative SharedCounter: {}'.format(self.value))
 
 	## Read value
 	#  @return The value
@@ -80,6 +86,10 @@ class SharedCounter:
 	def reset(self):
 		with self.lock:
 			self.value = 0
+
+	## Blocks until counter reaches zero
+	def wait(self):
+		self.zero.wait()
 
 ## Establishes and closes a TCP connection
 class TCPConnection:
