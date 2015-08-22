@@ -415,11 +415,14 @@ class SwarmAnalyzer:
 
 			# Retrieve key for reoccurred incoming peers
 			if peer.source is Source.incoming:
+				self.incoming_total.count(peer.torrent)
 				equality = (peer.ip_address, peer.torrent) # Port differs every time
 				try:
 					peer.key = self.all_incoming_peers[equality]
 				except KeyError:
 					pass
+				else:
+					self.incoming_duplicate.count(peer.torrent)
 
 			# Update peer with results
 			peer.id = rec_peer_id
@@ -435,11 +438,8 @@ class SwarmAnalyzer:
 
 			# Remember equality information of new incoming peers and discard all incoming
 			if peer.source is Source.incoming:
-				self.incoming_total.count(peer.torrent)
 				if peer.key is None:
 					self.all_incoming_peers[equality] = new_peer_key
-				else:
-					self.incoming_duplicate.count(peer.torrent)
 				self.visited_peers.task_done()
 				continue
 
