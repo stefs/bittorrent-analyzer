@@ -1,11 +1,11 @@
 # Number of threads used to contact peers in queue
 peer_evaluation_threads = 1024
 # Amount of downloaded pieces reported to the tracker
-fake_downloaded_stat = 1.0
+fake_downloaded_stat = 0.5
 # Amount of left pieces reported to the tracker
-fake_left_stat = 0.0
+fake_left_stat = 0.5
 # Amount of uploaded pieces reported to the tracker
-fake_uploaded_stat = 0.42
+fake_uploaded_stat = 0.2
 # Consider peers to have completely downloaded the torrent at this pieces amount
 torrent_complete_threshold = 0.98
 # Timeout for network connections in seconds
@@ -17,11 +17,11 @@ dht_control_port = 17001
 # Time delay between asking DHT for new peers in seconds
 dht_request_interval = 5 * 60
 # Time delay between asking the tracker for new peers in seconds
-tracker_request_interval = 10 * 60
+tracker_request_interval = 5 * 60
 # Time delay for revisiting unfinished peers in seconds
 peer_revisit_delay = 5 * 60
 # When collecting all messages from a peer, cancel after this amount
-receive_message_max = 64
+receive_message_max = 100
 # Truncate raw BitTorrent Protocol messages in logs to length
 bittorrent_message_log_length = 80
 # ut_metadata Extension Protocol message id
@@ -40,5 +40,3 @@ statistic_interval = 10 * 60
 evaluator_reaction = 40
 # Write durations of message receival to file for timeout calibration
 rec_dur_analysis = False
-# Database commit interval
-commit_interval = 1 * 60
