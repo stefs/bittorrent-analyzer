@@ -17,7 +17,7 @@ dht_control_port = 17001
 # Time delay between asking DHT for new peers in seconds
 dht_request_interval = 5 * 60
 # Time delay between asking the tracker for new peers in seconds
-tracker_request_interval = 5 * 60
+tracker_request_interval = 10 * 60
 # Time delay for revisiting unfinished peers in seconds
 peer_revisit_delay = 5 * 60
 # When collecting all messages from a peer, cancel after this amount
@@ -35,7 +35,7 @@ input_path = 'input/'
 # Filename for magnet files, relative to input_path, one magnet link per line
 magnet_file = 'magnet.txt'
 # Time delay between logging peer statistics to database
-statistic_interval = 3 * 60
+statistic_interval = 10 * 60
 # Evaluator reaction time on empty queue and delayed peers
 evaluator_reaction = 40
 # Write durations of message receival to file for timeout calibration

@@ -267,6 +267,28 @@ class DictCounter:
 			logging.error('Failed to write error stats: {}'.format(err))
 			logging.info(self.__str__())
 
+class PrintTimer:
+	def __init__(self, name):
+		self.history_pc = list()
+		self.history_pt = list()
+		self.name = name
+
+	def __str__(self):
+		try:
+			mean_pc = sum(self.history_pc) / len(self.history_pc)
+			mean_pt = sum(self.history_pt) / len(self.history_pt)
+		except ZeroDivisionError:
+			return 'NA'
+		return '{}: done: {}, pc: {:.0f}ms, pt: {:.0f}ms'.format(self.name, len(self.history_pc), mean_pc, mean_pt)
+
+	def start(self):
+		self.start_pc = time.perf_counter()
+		self.start_pt = time.process_time()
+
+	def stop(self):
+		self.history_pc.append((time.perf_counter() - self.start_pc) * 1000)
+		self.history_pt.append((time.process_time() - self.start_pt) * 1000)
+
 ### METHODS ###
 
 ## Convert bytes to hex string
