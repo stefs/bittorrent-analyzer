@@ -353,8 +353,14 @@ def evaluate_peer(sock, own_peer_id, dht_enabled, info_hash=None):
 		except PeerError as err:
 			logging.warning('Could not send PORT message: {}'.format(err))
 
+	# Check host name
+	try:
+		host = get_short_hostname(sock.getpeername()[0])
+	except OSError:
+		host = None
+
 	# Return results
-	return rec_peer_id, rec_info_hash, messages, duration
+	return rec_peer_id, rec_info_hash, messages, duration, host
 
 ## Get pieces count and pieces size of an info hash form peer using BEP 9 and BEP 10
 #  @param info_hash Info hash of desired torrent

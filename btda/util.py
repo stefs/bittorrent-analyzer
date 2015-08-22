@@ -363,3 +363,20 @@ def plot_receive_duration(data, outfile):
 		filename = outfile + '_timeout.pdf',
 		bbox_inches = 'tight')
 	matplotlib.pyplot.close()
+
+## Get the host via reverse DNS
+#  @param ip_address The address in question
+#  @return Hostname with TLD and SLD or empty string or None
+def get_short_hostname(ip_address):
+	try:
+		long_host = socket.gethostbyaddr(ip_address)[0]
+	except OSError as err:
+		return None
+	host_list = long_host.split('.')
+	try:
+		return host_list[-2] + '.' + host_list[-1]
+	except IndexError:
+		try:
+			return host_list[-1]
+		except IndexError:
+			return None
