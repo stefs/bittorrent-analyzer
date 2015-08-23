@@ -18,7 +18,7 @@
 
 \usepackage{csquotes} % Recommended addition for biblatex
 
-\usepackage[style=numeric,backend=biber,defernumbers=true]{biblatex} % TODO maybe simplify bib again
+\usepackage[style=numeric,backend=biber,defernumbers=true,backref]{biblatex} % TODO maybe simplify bib again
 \addbibresource{thesis.bib}
 
 \usepackage{caption}
@@ -194,7 +194,7 @@ File sharing such as BitTorrent is reported by music as well as film industry to
 
 % Specific motivation for the problem at hand
 \section{Motivation}
-When assessing popularity or peer numbers, previous studies \cite{drachen2011distribution, watters2011much, zhang2011unraveling} often relied on numbers reported by tracker servers using so called \emph{scrape requests}. These requests allow clients to ask for statistics about one, multiple or even all torrents a tracker is managing. When successful, servers answer with the number of current downloaders, current uploaders and finished downloads since the torrent was registered with the server. These values may be either to their best knowledge or flawed and misleading, it can even be manipulated by peers by sending false download confirmations to the tracker. There is no possibility for a client to verify these numbers.
+When assessing popularity or peer numbers, previous studies relied on information reported by tracker servers. So called \emph{scrape requests} allow to ask for statistics about one, multiple, and often all torrents a tracker is managing. When successful, servers answer with the torrent-identifying info hash together with the number of current downloaders, current uploaders and finished downloads since the torrent was registered with the server. In a second step, one use the info hashes to crawl peer addresses from tracker servers for further analysis. This data may be to their best knowledge, but there is no possibility for verification.
 
 This thesis will make an attempt to collect confirmed download numbers by contacting every peer of the BitTorrent swarm for a given set of torrents and learning his download progress form first-hand. The download progress is extracted using the standard BitTorrent protocol with various common extensions thereof. This is done repeatedly for all peers over a time period, while a confirmed download is recorded when the peer crosses a certain threshold. This method has flaws which will be discussed later*, but it gives a fix lower bound for download numbers.
 
@@ -208,7 +208,7 @@ The process of analyzing a torrent should be completely automated. As the most c
 
 Secondly, addresses of \textbf{peers} participating in the relevant torrents are needed. They are collected by sending appropriate requests to the torrent's tracker servers using either the TCP or the UDP tracker protocol. Likewise requests for peers of the given torrent are issued on the DHT network. The collection of peers is performed continuously during the analysis to include newly participating clients. Additionally a TCP server is listening for incoming connections in order to include peers behind a NAT and hence are not reachable otherwise. Incoming peer will be evaluated equally, but only can be counted when connecting once with progress below and once with progress above the threshold. Statistics about duplicate versus unique received address-port tuples are recorded.
 
-Reading a peer's download \textbf{progress} is the core part. After exchanging BitTorrent protocol handshakes, all further messages from the remote peer are received and recorded until no more message is received for certain period. These messages specify which pieces are available for download, and analog which pieces the peer has downloaded. There is research whether or not peers can gain an advantage for misreporting this data \cite{levin2008bittorrent, locher2006free}, but until now it has not surfaced as a problem at large. Before closing the connection, a message announcing the port of my own DHT node is sent to the peer in order to popularize the node's routing table.
+Reading a peer's download \textbf{progress} is the core part. After exchanging BitTorrent protocol handshakes, all further messages from the remote peer are received and recorded until no more message is received for certain period. These messages specify which pieces are available for download, and analog which pieces the peer has downloaded. There is research whether or not peers can gain an advantage for misreporting this data \cite{levin2008bittorrent}, but until now it has not surfaced as a problem at large. Before closing the connection, a message announcing the port of my own DHT node is sent to the peer in order to popularize the node's routing table.
 
 The download progress is stored in a \textbf{database}, together with a timestamp of the contact. When contacting a peer later another time, a decision can be made if the peer has crossed the threshold. This threshold is below \numprint[\%]{100} to compensate for peers disconnecting immediately after they finished the download. For additional analysis, the peer's download speed is derivated. Also, a lookup in a IP geolocation database is performed, and the peer's location, host name and client program is recorded.
 
@@ -216,31 +216,13 @@ In the database there is only one record per peer, with two pieces values: one f
 
 % Other relevant academic work and how it differs from this work
 \section{Related Work}
-[Other relevant academic work and how it differs from this work]
+There is numerous research about the scope of BitTorrent. Like mentioned before, analysis relies on information crawled from tracker servers. \textcite{watters2011much}, emphasizing the copyright infringing use of BitTorrent, relied solely on information from scrape requests, examining the number of seeders.
 
-Scope of BitTorrent
+More detailed results can be obtained by assembling a dataset of real peers, by looking up peer addresses on tracker servers. This approach was taken by \textcite{drachen2011distribution} in 2011. While focusing on a sample of \numprint{173} video games, they found an average of \numprint{537} thousand unique peers per game among the top ten games over a three month period. These top \numprint{10} games occupied \numprint[\%]{41.8} of all peers observed.
 
-* 2009 Internet Study 2008 2009: declining
+The same approach was taken by \textcite{zhang2011unraveling}, also in 2011. The study \emph{Unraveling the BitTorrent Ecosystem} published by the IEEE associated research group claims to include ``the large majority of torrents in the public (English-language) ecosystem''. With detailed description of the used methodology, in a \numprint{12} hour window they counted \numprint{5.1} million unique peers in \numprint{1.2} million active torrents and \numprint{728} active trackers. Only \numprint[\%]{1} of these torrents had over \numprint{100} peers and \numprint[\%]{44} of peers were found to be active in multiple torrents. Coverage achieved in this thesis is not comparable by far. Instead, the concept of counting confirmed downloads will be demonstrated and examined based on a small set of popular torrents.
 
-* 2006 An Empirical Study of Seeders in BitTorrent
-
-* 2009 Public and private BitTorrent communities: A measurement study
-
-illigality
-
-* 2011 How much material on BitTorrent is infringing content? A case study
-
-scrape method
-
-* 2011 Distribution of Digital Games via BitTorrent
-
-* 2011 Unraveling the BitTorrent Ecosystem
-
-misreporting pieces
-
-* 2008 BitTorrent is an Auction: Analyzing and Improving BitTorrent’s Incentives
-
-* 2006 Free Riding in BitTorrent is Cheap
+Other notable research areas concentrate on extent \cite{locher2006free} and punishment \cite{levin2008bittorrent, bhakuni} of free-riders, describing peers who do not upload any data after downloading from other peer or the special implications of private BitTorrent communities \cite{meulpolder2010public}, which promise higher download speeds by enforcing upload to download ratios.
 
 \section{Results}
 [What has been achieved in this work?]
@@ -632,6 +614,8 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 
 [Note all things in the plots, even the obvious] Scrape is higher than confirmed.
 
+[downloaded (event=complete) vs complete (seeders), \cite{watters2011much} uses seeders]
+
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(1,4,8,11,13)}
@@ -689,6 +673,10 @@ The search for more fundamental explanations for errors merely speculation. Peer
 
 \section{Peers Analysis}
 \subsection{Download Speed}
+filter peers for visits
+
+filter countries for peers
+
 TODO: Graph of speed per country with standard derivation indicators, n>=10 per country
 
 todo: Map of Distribution of download speeds
