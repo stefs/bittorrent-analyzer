@@ -18,7 +18,7 @@
 
 \usepackage{csquotes} % Recommended addition for biblatex
 
-\usepackage[style=numeric,backend=biber]{biblatex}
+\usepackage[style=numeric,backend=biber,defernumbers=true]{biblatex} % TODO maybe simplify bib again
 \addbibresource{thesis.bib}
 
 \usepackage{caption}
@@ -41,10 +41,16 @@
 \pagenumbering{alph}
 \begin{titlepage}
 \begin{center}
-\large{Lehrstuhl für IT-Sicherheitsinfrastrukturen, Informatik 1\\
-Friedrich-Alexander-Universität Erlangen-Nürnberg}
+\begin{tabularx}{\textwidth}{lXr}
+\parbox{2.5cm}{\includegraphics[width=2.5cm]{graphics/fau-logo}} &
+\parbox{8.5cm}{\centering
+\large{Lehrstuhl für Informatik 1} \\
+\large{Friedrich-Alexander-Universität} \\
+\large{Erlangen-Nürnberg}} &
+\parbox{2.5cm}{\includegraphics[width=2.5cm]{graphics/i1-logo}}
+\end{tabularx}
 
-\vspace{2cm}
+\vspace{3cm}
 \textbf{\Large{Bachelor Thesis}}
 
 \vspace{1cm}
@@ -54,14 +60,17 @@ Friedrich-Alexander-Universität Erlangen-Nürnberg}
 \textbf{\textsf{\LARGE{Counting Confirmed Downloads in BitTorrent}}}
 
 \vspace{1cm}
-\Large{Stefan Schindler\footnote{Email: stefan@kaloix.de, Student number: 21676746}}
+\Large{Stefan Schindler}
 
 \vspace{1cm}
 \Large{Erlangen, \today}
 
 \vspace{6cm}
-\large{Examiner: Prof. Dr.-Ing. Felix Freiling\\
-Advisor: Philipp Klein, M. Sc. and Michael Gruhn}
+\begin{tabular}{rl}
+\large{Examiner:} & \large{Prof. Dr.-Ing. Felix Freiling} \\
+\large{Advisor:} & \large{Philipp Klein, M.\,Sc.} \\
+& \large{and Michael Gruhn, M.\,Sc.}
+\end{tabular}
 
 \vspace{2cm}
 \large{This work is licensed under the\\
@@ -150,6 +159,9 @@ Zusammenfassung auf Englisch
 \chapter{Introduction}
 \pagestyle{headings}
 \pagenumbering{arabic}
+% BitTorrent by Cohen, a decentralized network
+In 2008*, \textsc{Bram Cohen} published the specification for a decentralized file sharing protocol called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enable software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to manipulate the content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
+
 \begin{table}
 \centering
 \begin{tabular}{llrrrr}
@@ -173,9 +185,6 @@ Africa        & fixed  & \numprint[\%]{28.21} & n/a & \numprint[\%]{13.29} & n/a
 \caption[BitTorrent traffic per household, from \textsc{Sandvine}]{Share and volume per month of BitTorrent traffic per household, from \textsc{Sandvine} study \emph{Global Internet Phenomena Report 2H 2014} \cite{sandvine2014}. \emph{Share} percentages were determined by \textsc{Sandvine} and reportedly measured during ``peak period traffic'', see ``Top 10 Peak Period Applications''. \emph{Volume} values given above are an estimation based on BitTorrent's share in peak traffic and \textsc{Sandvine}'s mean value for overall ``Monthly Consumption'' per household. \emph{n/a} indicates BitTorrent is not among the top ten applications. No traffic volume is stated for Africa.}
 \label{traffic}
 \end{table}
-
-% BitTorrent by Cohen, a decentralized network
-In 2008*, \textsc{Bram Cohen} published the specification for a decentralized file sharing protocol called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enable software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to manipulate the content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
 
 % BitTorrent traffic statistics, other file sharing technologies
 To date BitTorrent still has a remarkable share in private Internet traffic. According to a study \cite{sandvine2014} by networking equipment company \textsc{Sandvine Inc.}, BitTorrent has a downstream traffic share in fixed-line Internet accesses between \numprint[\%]{3} in North America and \numprint[\%]{23} in the Asia-Pacific region, with Europe at \numprint[\%]{10}. In downloaded data per month, this translates to \numprint[GB]{1.4}, \numprint[GB]{7.2} and \numprint[GB]{2.4}, respectively. Even more bandwidth is used for upstream with values ranging from \numprint[\%]{24} in Latin America to \numprint[\%]{56} in the Asia-Pacific region. Detailed numbers are cited in table \ref{traffic}. Other file sharing technologies than BitTorrent are hardly used.
@@ -210,6 +219,12 @@ In the database there is only one record per peer, with two pieces values: one f
 [Other relevant academic work and how it differs from this work]
 
 Scope of BitTorrent
+
+* 2009 Internet Study 2008 2009: declining
+
+* 2006 An Empirical Study of Seeders in BitTorrent
+
+* 2009 Public and private BitTorrent communities: A measurement study
 
 illigality
 

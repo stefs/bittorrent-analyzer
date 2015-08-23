@@ -39,6 +39,7 @@ Chapter | Progress
 * https://wiki.creativecommons.org/wiki/Marking_your_work_with_a_CC_license#Example:_Offline_document
 - thanks section unpassend?
 - github history ok?
+- cite bep 20, bep 29
 
 # Begriffserklärung or in place erklärung
 * Dictionary
