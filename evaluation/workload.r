@@ -10,7 +10,7 @@ read_db <- function(path) {
 	# Disable auto commit
 	dbBegin(con)
 	# Read peer table
-	sql <- "SELECT timestamp, thread_workload, evaluator_threads, server_threads, memory_mb, load_average, peer_queue, visited_queue FROM statistic"
+	sql <- "SELECT timestamp, thread_workload, evaluator_threads, server_threads, peer_queue, visited_queue, memory_mb, load_average FROM statistic"
 	statistic <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
@@ -49,7 +49,7 @@ print(head(statistic))
 # Create file
 outfile = sub(".sqlite", "_workload.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=9)
+pdf(outfile, width=8.5, height=10)
 
 # Plot with ggplot2
 print(

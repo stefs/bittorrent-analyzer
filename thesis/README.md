@@ -36,6 +36,9 @@ Chapter | Progress
 * Degree/title of Michael Gruhn
 * table scheme
 * Quantify incoming peers in table `unique-peers` and request history plots
+* https://wiki.creativecommons.org/wiki/Marking_your_work_with_a_CC_license#Example:_Offline_document
+- thanks section unpassend?
+- github history ok?
 
 # Begriffserklärung or in place erklärung
 * Dictionary

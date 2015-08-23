@@ -17,6 +17,7 @@
 %\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \usepackage{csquotes} % Recommended addition for biblatex
+
 \usepackage[style=numeric,backend=biber]{biblatex}
 \addbibresource{thesis.bib}
 
@@ -25,6 +26,10 @@
 
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
+
+%\usepackage[section]{placeins} % TODO use maybe
+\usepackage[noheads]{endfloat} % TODO temporary
+\renewcommand{\efloatseparator}{\mbox{}}
 
 \let\origunderscore\_
 \renewcommand{\_}{\origunderscore\allowbreak}
@@ -455,7 +460,7 @@ TODO: Number of threads: workload plot
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_workload}
+%\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_workload}
 \caption[Load parameters during the analysis]{a and b}
 \label{load}
 \end{figure}
@@ -686,5 +691,13 @@ TODO: Table: Examine hostnames by ISP or seedbox provicers
 \dots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\printbibliography[heading=bibintoc]
+\printbibheading[heading=bibintoc]
+\begingroup
+\setlength\labelnumberwidth{0.57cm}
+\printbibliography[heading=subbibintoc, title={Research}, keyword=science]
+\printbibliography[heading=subbibintoc, title={Software}, keyword=software]
+\printbibliography[heading=subbibintoc, title={Online}, keyword=online]
+\printbibliography[heading=subbibintoc, title={Other}, notkeyword=science, notkeyword=standard, notkeyword=software, notkeyword=online] % TODO: remove, should be empty *
+\endgroup
+\printbibliography[heading=subbibintoc, title={Standards}, keyword=standard]
 \end{document}
