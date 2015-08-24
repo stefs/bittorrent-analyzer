@@ -11,9 +11,14 @@ Chapter | Progress
 – 1.3 Related Work | ★★★
 – 1.4 Results |
 – 1.5 Outline |
-– 1.6 Acknowledgments |
-2 Background |
-– 2.1 BitTorrent Protocol +5 | ★
+– 1.6 Acknowledgments | ★★★
+2 Background | ★★
+– 2.1 BitTorrent Protocol | ★★
+– 2.1.1 Bencoding | ★
+– 2.1.2 Metainfo File | ★
+– 2.1.3 Tracker Server | ★
+– 2.1.4 UDP Tracker Protocol | ★
+– 2.1.5 Peer Wire Protocol | ★
 – 2.2 DHT Protocol | ★
 – 2.3 Magnet Link +2 | ★
 – 2.4 BitTorrent and German Law +2 | ★★
@@ -33,11 +38,9 @@ Chapter | Progress
 
 # Todo
 * Compare length with [other](https://www1.cs.fau.de/staff/gruhn)
-* Degree/title of Michael Gruhn
 * table scheme
 * Quantify incoming peers in table `unique-peers` and request history plots
-* https://wiki.creativecommons.org/wiki/Marking_your_work_with_a_CC_license#Example:_Offline_document
-- thanks section unpassend?
+- change the title to subtitle?
 - github history ok?
 - cite bep 20, bep 29
 - add or remove links from bibliography

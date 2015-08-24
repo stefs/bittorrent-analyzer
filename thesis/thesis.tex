@@ -226,28 +226,26 @@ Further notable related research areas concentrate on extent \cite{locher2006fre
 
 \dots
 
+% A big thank you for the support to
 \section{Acknowledgments}
-[A big thank you for the support to ...]
-
-* Philipp Klein for discussing methods and implementation and troubleshooting the virtual machine
-
-* RRZE for providing the VM and probably receiving copyright warning letters
-
-* Michael Gruhn for discussing ideas
-
-* Felix Freiling for extending the deadline
-
-\dots
+I want to thank Philipp Klein for discussing methods and implementation as well as troubleshooting the virtual machine, Michael Gruhn for discussing ideas, and the RRZE for providing the virtual machine and handling any unjustified copyright warning letters.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Background}
-This chapter explaines technologies and specifications utilized during this research project.
+This chapter explaines technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed regarding relevant German copyright and privacy laws in section \ref{law}.
 
 \section{BitTorrent Protocol}
-Besides several extensions, BitTorrent still works as designed by \textsc{Bram Cohen} in January 10, 2008, in the \emph{BitTorrent Enhancement Proposal} number 3 \cite{bep3}. It establishes a method to distribute a predefined set of files among an arbitrary number of recipients without overwhelming load on a central entity. This is achieved by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process: The BitTorrent file format containing identifying metadata about the file set, the communication procedure with a tracker server where peers can learn Internet Protocol addresses of other peers, and the peer wire protocol spoken between peers.
+\label{bittorrent}
+BitTorrent is specified in currently \numprint{42} \emph{BitTorrent Enhancement Proposals} (BEP), most of them being extensions for various use cases. A comprehensive overview of these is given in a wiki provided by \textcite{theoryorg}. The initial concept is described in \cite{bep3}, where a method for distribution of a predefined set of files among an arbitrary number of recipients is established. Overwhelming load on a central entity is avoided by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process:
+
+\begin{enumerate}
+  \item The BitTorrent file format containing identifying metadata about the file set
+  \item The communication with a tracker server, where peers can learn IP addresses and port numbers of other peers
+  \item The Peer Wire Protocol, spoken between peers
+\end{enumerate}
 
 \subsection{Bencoding}
-In order to store common data structures as well as transmit them over TCP, encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported data types are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
+In order to store and transmit common data structures like lists and dictionaries, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported data types are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
 
 \subsection{Metainfo File}
 \begin{table}
@@ -321,6 +319,7 @@ The peer protocol is spoken between peers and allows bidirectional communication
 The so called \texttt{bitfield} message may be sent immediately after the handshake to indicate which pieces were already downloaded and verified by the peer. With same intentions \texttt{have} messages are sent to all connected clients, if a peer has successfully downloaded a new piece. These are the only two message types relevant in the scope of this work; for completeness, the meanings of further message types are as follows: \texttt{choke} and \texttt{unchoke} express the willingness and possibility to fulfill requests for pieces. Similarly \texttt{interested} and \texttt{not interested} indicate whether a peer would start downloading if unchoked. A bulk of missing pieces can be requested using a \texttt{request} message with begin and end indices, a single piece can be requested using \texttt{piece}. When requests were sent to multiple clients to increase download speed, a \texttt{cancel} message is used to revoke a pieces request.
 
 \section{DHT Protocol}
+\label{dht}
 Despite the complete file payload being transmitted from client to client, still a central server keeping track of all peers is needed. However, the mandatory tracker server contradicts the concept of a decentralized file distribution network and, in addition, has to be maintained financially. The \emph{DHT Protocol} \cite{bep5} solves this issue, as it stores peer contact information in a distributed hash table. Participating peers run a separate DHT \emph{node}, which communicate sending bencoded messages over the User Datagram Protocol. The distributed hash table follows the Kademlia design as described by \textsc{Maymounkov} and \textsc{Mazières} in 2002 \cite{kademlia}.
 
 \paragraph{Nodes}
@@ -336,6 +335,7 @@ When a peer downloads a torrent, it should announce the info hash and BitTorrent
 The presence of DHT support is advertised in the standard BitTorrent handshake of the Peer Wire Protocol using the last bit of the eight reserved bytes. Peers receiving this indicator should send a \texttt{port} message, containing their own UDP node port number. This technique helps populate routing tables, especially on newly installed systems with an empty table. *[try to get own ip from dht query]
 
 \section{Magnet Link}
+\label{magnet}
 The concept of a \emph{magnet link} described in BEP 9 \cite{bep9} is used to create a uniform resource identifier for torrents of minimal size, in comparison to the metainfo file format. Its only mandatory component is the info hash, the SHA-1 value of the info dictionary. The link uses the \texttt{magnet:} URI scheme and stores info hash, a display name and tracker announce URLs in the query string. The emerging problem is the loss of the info dictionary's content. Since a tracker URL is optional, the metadata must be obtained from other peers.
 
 \subsection{Extension Protocol}
@@ -349,6 +349,7 @@ The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} with identifie
 To gather initial contact information of peers to be asked for metadata, the DHT protocol may be used. Then every piece must be requested separately from these peers, using a \texttt{request} message. These are answered by the same number of \texttt{data} or \texttt{reject} messages, depending on whether the opposing client is able to deliver the piece. When all pieces are present, they can be composed and checked against the info hash value.
 
 \section{BitTorrent and German Law}
+\label{law}
 \subsection{Illegal Content}
 While there are no legal restrictions on using BitTorrent in general, the download of content without permission of the author or right holder is considered an illegitimate reproduction according to the German Copyright Act \cite[art.~15\,(1),~16]{urhg}. The common exception of private copying \cite[art.~53]{urhg} is not applicable here, since the source is ``obviously unlawfully-produced''.
 
