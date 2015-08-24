@@ -14,7 +14,7 @@ Chapter | Progress
 – 1.6 Acknowledgments | ★★★
 2 Background | ★★
 – 2.1 BitTorrent Protocol | ★★
-– 2.1.1 Bencoding | ★
+– 2.1.1 Bencoding | ★★
 – 2.1.2 Metainfo File | ★
 – 2.1.3 Tracker Server | ★
 – 2.1.4 UDP Tracker Protocol | ★

@@ -199,6 +199,7 @@ To observe the law in every way, it was important to neither download nor upload
 % Concrete task to be solved
 \section{Task}
 Since there is no client or framework for peer communication on BitTorrent protocol level, and every other task is very specific to the requirements of this project, the whole code base used here was written from scratch. The need for communicating with peers without downloading any torrent payload disqualifies other related projects like \emph{libtorrent}. Only exception is the mainline DHT node, which is a foreign project.
+% * and the bencodepy module TODO
 
 The process of analyzing a torrent should be completely automated. As the most convenient method, input of torrents via \texttt{.torrent} files and magnet links is supported. They must be parsed beforehand and are stored in a SQL database for later reference. Metadata for magnet links is retrieved from other peers using the \emph{Extension for Peers to Send Metadata Files} \cite{bep9}.
 
@@ -245,7 +246,22 @@ BitTorrent is specified in currently \numprint{42} \emph{BitTorrent Enhancement 
 \end{enumerate}
 
 \subsection{Bencoding}
-In order to store and transmit common data structures like lists and dictionaries, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, \textsc{Cohen} came up with \emph{bencoding} to annotate data appropriately. Any integers and length information is encoded in base 10 ASCII format. All types but strings have specific beginning and ending delimiter characters. Basic supported data types are byte strings and integers, saved as \texttt{<length>:<string>} and \texttt{i<integer>e} respectively. Composite types include lists stored as \texttt{l<value1><value2>e} and dictionaries alike \texttt{d<key1><value1><key2><value2>e}. Note that only strings can be used as dictionary keys.
+In order to store and transmit common data structures, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, Cohen came up with \emph{bencoding} to annotate data appropriately. When bencoded, a value's length is detectable by specific beginning and ending delimiter characters: Integers, lists and dictionary are prefixed with small letters \texttt{i}, \texttt{l} and \texttt{d} respectively and closed with an \texttt{e}. Strings have a length prefix. Any integers and length information is encoded in base 10 ASCII format. Examples are provided below.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Type & Encoding & Example \\
+\midrule
+String & \texttt{<length>:<string>} & \texttt{3:abc} = \texttt{'abc'} \\
+Integer & \texttt{i<integer>e} & \texttt{i23e} = \texttt{23} \\
+List & \texttt{l<val1><val2>e} & \texttt{l3:abci23ee} = \texttt{["abc", 23]} \\
+Dictionary & \texttt{d<key1><val1><key2><val2>e} & \texttt{d3:abci23ee} = \texttt{\{"abc": 23\}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Lists and dictionaries are composite data types, which can contain any other bencoded values, which allows nested dictionaries or lists. Note that only strings can be used as dictionary keys.
 
 \subsection{Metainfo File}
 \begin{table}
