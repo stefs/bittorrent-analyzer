@@ -336,16 +336,54 @@ The tracker's response message should contain a bencoded dictionary in the messa
 % TODO example
 
 \subsection{UDP Tracker Protocol}
-Tracker servers are the only centralized infrastructure required in the traditional implementation of BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As BEP 23 demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by 50\,\% \cite{bep15}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards.
+\begin{table}
+\centering
+\begin{tabular}[t]{ll}
+\toprule
+\multicolumn{2}{c}{connect} \\
+\cmidrule{1-2}
+Request & Response \\
+\midrule
+\texttt{connection\_id} & \texttt{action} \\
+\texttt{action} & \texttt{transaction\_id} \\
+\texttt{transaction\_id} & \texttt{connection\_id} \\
+\bottomrule
+\end{tabular}
+\begin{tabular}[t]{ll}
+\toprule
+\multicolumn{2}{c}{announce} \\
+\cmidrule{1-2}
+Request & Response \\
+\midrule
+\texttt{connection\_id} & \texttt{action} \\
+\texttt{action} & \texttt{transaction\_id} \\
+\texttt{transaction\_id} & \texttt{interval} \\
+\texttt{info\_hash} & \texttt{leechers} \\
+\texttt{peer\_id} & \texttt{seeders} \\
+\texttt{downloaded} & \texttt{IP address} \\
+\texttt{left} & \texttt{TCP port} \\
+\texttt{uploaded} & \texttt{IP address} \\
+\texttt{event} & \texttt{TCP port} \\
+\texttt{IP address} & \dots \\
+\texttt{key} & \\
+\texttt{num\_want} & \\
+\texttt{port} & \\
+\bottomrule
+\end{tabular}
+\caption[Communication in the UDP tracker protocol]{Request and response packages for the actions \emph{connect} and \emph{announce} in the UDP tracker protocol as specified in \cite{bep15}. On the initial \emph{connect request}, the constant \numprint{41727101980} is used as a \texttt{connection\_id}. This ID is used for later request like the \emph{announce request}. Numerical values for the \texttt{action} parameter are \numprint{0} during \emph{connect} and \numprint{1} during \emph{announce}. IP addresses and ports in the \emph{announce response} are all concatenated and use six bytes per tuple.}
+\label{udp-tracker}
+\end{table}
+
+Tracker servers are the only centralized infrastructure required in the traditional implementation of BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As \cite{bep15} demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by \numprint[\%]{50}. The protocol defines three different types of requests a client can send to the server: connect, announce and scrape. Each of these requests is answered by the server with a specific response. Transmitted values of the connect request and response, as well as the announce request and response are shown in table \ref{udp-tracker}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards. The three types of requests work as follows.
 
 \paragraph{connect}
-The first step in the UDP tracker protocol is a connect request. A connection ID is sent in return by the server, which must be included in following requests. As it is possible to spoof an UDP packet's source IP address, the server could be abused for a denial-of-service amplification attack against a third party. The need for a connection ID on other requests, which trigger larger responses, renders this impossible. The connection ID is valid within the next minute.
+The first step in the UDP tracker protocol is a connect request. It is used to obtain a connection ID from the server, which must be included in following requests. As it is possible to spoof an UDP packet's source IP address, the server could be abused for a denial-of-service amplification attack against a third party. The need for a connection ID on other requests, which trigger larger responses, renders this impossible. The connection ID is valid within the next minute.
 
 \paragraph{announce}
-This announce request includes the same parameters as the HTTP communication described above. Additional parameters are an unused \texttt{key} value and the \texttt{num\_want} value, allowing to specify the amount of returned peers. The announce response again includes a desired request interval as well as a number of active leechers and seeders. Peer's IPv4 addresses and port numbers are included using six bytes each.
+The announce request includes the same parameters as the HTTP announce request described above. Additional parameters are an unused \texttt{key} value and the \texttt{num\_want} value, allowing to specify the amount of returned peers. The announce response now includes the number of active leechers and seeders in addition to the peer data.
 
 \paragraph{scrape}
-Finally a scrape request is defined, giving clients access to the numbers of leechers, seeders and completed downloads as reported by the server. There is no guarantee of validity for these values, since they may be manipulated or chosen by the server freely. An error response package containing a human-readable message may be sent by the server at any time.
+Finally a scrape request is defined. Its setup is similar to the announce request, but now shown in table \ref{udp-tracker}. The scrape response gives clients access to the numbers of leechers, seeders and completed downloads as reported by the server. There is no guarantee of validity for these values, since they may be manipulated or chosen by the server freely. An error response package containing a human-readable message may be sent by the server at any time.
 
 \subsection{Peer Wire Protocol}
 The peer protocol is spoken between peers and allows bidirectional communication with predefined messages. At first an initial handshake is exchanged, containing a protocol string, eight bytes reserved for alternate protocol behavior and extensions, as well as the torrent's info hash and the peer's ID. The connecting client sends its handshake message first. All following messages begin with an overall length prefix, followed by a type identifier and the payload, if appropriate.

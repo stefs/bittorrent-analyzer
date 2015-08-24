@@ -17,7 +17,7 @@ Chapter | Progress
 – 2.1.1 Bencoding | ★★
 – 2.1.2 Metainfo File | ★ (example)
 – 2.1.3 Tracker Server | ★ (2 examples)
-– 2.1.4 UDP Tracker Protocol | ★
+– 2.1.4 UDP Tracker Protocol | ★★
 – 2.1.5 Peer Wire Protocol | ★
 – 2.2 DHT Protocol | ★
 – 2.3 Magnet Link +2 | ★
