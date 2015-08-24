@@ -246,22 +246,23 @@ BitTorrent is specified in currently \numprint{42} \emph{BitTorrent Enhancement 
 \end{enumerate}
 
 \subsection{Bencoding}
-In order to store and transmit common data structures, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, Cohen came up with \emph{bencoding} to annotate data appropriately. When bencoded, a value's length is detectable by specific beginning and ending delimiter characters: Integers, lists and dictionary are prefixed with small letters \texttt{i}, \texttt{l} and \texttt{d} respectively and closed with an \texttt{e}. Strings have a length prefix. Any integers and length information is encoded in base 10 ASCII format. Examples are provided below.
-
-\begin{center}
+\begin{table}
+\centering
 \begin{tabular}{lll}
 \toprule
 Type & Encoding & Example \\
 \midrule
-String & \texttt{<length>:<string>} & \texttt{3:abc} = \texttt{'abc'} \\
+String & \texttt{<length>:<string>} & \texttt{3:abc} = \texttt{"abc"} \\
 Integer & \texttt{i<integer>e} & \texttt{i23e} = \texttt{23} \\
 List & \texttt{l<val1><val2>e} & \texttt{l3:abci23ee} = \texttt{["abc", 23]} \\
 Dictionary & \texttt{d<key1><val1><key2><val2>e} & \texttt{d3:abci23ee} = \texttt{\{"abc": 23\}} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\caption[Data types and their encoding in Bencoding]{Data types of Bencoding with examples. Any integers and length information is encoded in base 10 ASCII format. Lists and dictionaries are composite data types, so they can contain any other bencoded values. This allows nested dictionaries or lists. Note that only strings can be used as dictionary keys.}
+\label{bencode}
+\end{table}
 
-Lists and dictionaries are composite data types, which can contain any other bencoded values, which allows nested dictionaries or lists. Note that only strings can be used as dictionary keys.
+In order to store and transmit common data structures, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, Cohen came up with \emph{bencoding} to annotate data appropriately. When bencoded, a value's length is detectable by specific beginning and ending delimiter characters: Integers, lists and dictionary are prefixed with small letters \texttt{i}, \texttt{l} and \texttt{d} respectively and closed with an \texttt{e}. Strings have a length prefix. Examples are provided in table \ref{bencode}.
 
 \subsection{Metainfo File}
 \begin{table}
@@ -281,44 +282,61 @@ Key & Explanation \\
 \texttt{info/files/path} & This is the file's path and name, represented as a list of strings. All but the last item are directory names, the last item is the file name. \\
 \bottomrule
 \end{tabularx}
-\caption{Structure of nested dictionaries in the bencoded metainfo file format}
+\caption[Structure of the metainfo file format]{Structure of nested dictionaries in the bencoded metainfo file format.}
 \label{metainfo-file}
 \end{table}
 
 A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files allow users to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file.
+% TODO example
 
 \subsection{Tracker Server}
-The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of the Hypertext Transfer Protocol. The request is sent with the following parameters, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}.
+\begin{table}
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Key & Explanation \\
+\midrule
+\texttt{info\_hash} & This is the SHA-1 hash of the bencoded info dictionary from the metainfo file. \\
+\texttt{peer\_id} & A string of 20 bytes is chosen by each peer. It contains client software information by convention, see section \ref{clients}. \\
+\texttt{ip} & In case the client uses a proxy, the peer's original routable IP address can be submitted in this optional parameter. \\
+\texttt{port} & The port number this peer is listening on for connections from other peers. \cite{bep3} recommend port between 6881 and 6889. \\
+\texttt{uploaded} & Amount of pieces this peer has uploaded so far. \\
+\texttt{downloaded} & Amount of pieces this peer has downloaded so far. \\
+\texttt{left} & Amount of pieces this peer has left to download. \\
+\texttt{event} & The current download status can be communicated in this optional key. Valid values are \texttt{started}, \texttt{completed} or \texttt{stopped}. \\
+\texttt{compact} & Indicates weather or not the tracker should respond with a normal or compact peer list, as described in \cite{bep23} to save bandwidth. Allowed are \texttt{0} or \texttt{1}. \\
+\bottomrule
+\end{tabularx}
+\caption[Structure of a HTTP announce request]{Structure of a HTTP announce request from a peer to a tracker server. Some trackers dismiss the \texttt{compact} key and always send compact peer lists.}
+\label{announce}
+\end{table}
 
-\begin{description}
-  \item[info\_hash] SHA-1 hash of the bencoded info dictionary from the metainfo file
-  \item[peer\_id] String of 20 bytes self chosen by each peer; contains client software information by convention
-  \item[ip] Optional parameter with the peer's own IP address
-  \item[port] Port number this peer is listening on for connections from other peers; recommended ports are 6881 to 6889
-  \item[uploaded] Amount of uploaded pieces so far
-  \item[downloaded] Amount of downloaded pieces so far
-  \item[left] Amount of pieces left to download
-  \item[event] Optional key about the circumstances of this request; is \texttt{started}, \texttt{completed} or \texttt{stopped}
-  \item[compact] To save bandwidth, a compact list of peers can be requested \cite{bep23}; is \texttt{0} or \texttt{1}
-\end{description}
+The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of standard HTTP. The request is sent with the parameters shown in table \ref{announce}, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}. An exemplary request would be: \nolinkurl{http://todo.todo/announce?todo=todo&todo=todo&todo=todo}
+% TODO example
 
-The tracker's response message should contain a bencoded dictionary in the message body. Following keys are defined:
+\begin{table}
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Key & Explanation \\
+\midrule
+\texttt{failure reason} & In case of failure, this human-readable error message explains why the request could not be fulfilled. \\
+\texttt{interval} & A suggested interval in seconds the client should wait between tracker requests. \\
+\texttt{peers} & Normally this is a list of dictionaries, one per peer. Its keys are described below. In case of a compact peer list, this is a single byte string instead, and further keys are not used. In compact mode six bytes per peer are used, four for the IPv4 address and a two for the port. \\
+\texttt{peers/peer id} & The self-selected peer ID, as described in table \ref{announce}. \\
+\texttt{peers/ip} & The peer's IP address. \\
+\texttt{peers/port} & The peer's port number. \\
+\bottomrule
+\end{tabularx}
+\caption[A tracker's response to an announce request]{Structure of a bencoded response from a tracker to a peer's announce request. The values are structured in a dictionary.}
+\label{announce-response}
+\end{table}
 
-\begin{description}
-  \item[failure reason] In case of failure, human-readable error message explaining why the request could not be fulfilled
-  \item[interval] Suggested interval in seconds the client should wait between tracker requests
-  \item[peers] List of dictionaries, one per peer
-  \begin{description}
-    \item[peer id] Self-selected ID
-    \item[ip] IP address
-    \item[port] Port number
-  \end{description}
-
-  In case of a compact peer list, this is a single byte string instead of a list of dictionaries. 6 bytes per peer are used containing 4 bytes for the IPv4 address and 2 byte representing the port number.
-\end{description}
+The tracker's response message should contain a bencoded dictionary in the message body with keys as explained in table \ref{announce-response}.
+% TODO example
 
 \subsection{UDP Tracker Protocol}
-Tracker servers are the only centralized infrastructure required by traditional BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As BEP 23 demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by 50\,\% \cite{bep15}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards.
+Tracker servers are the only centralized infrastructure required in the traditional implementation of BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As BEP 23 demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by 50\,\% \cite{bep15}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards.
 
 \paragraph{connect}
 The first step in the UDP tracker protocol is a connect request. A connection ID is sent in return by the server, which must be included in following requests. As it is possible to spoof an UDP packet's source IP address, the server could be abused for a denial-of-service amplification attack against a third party. The need for a connection ID on other requests, which trigger larger responses, renders this impossible. The connection ID is valid within the next minute.
@@ -693,6 +711,7 @@ todo: Map of Distribution of download speeds
 Map: Distribution of downloads (TODO)
 
 \subsection{BitTorrent Clients}
+\label{clients}
 TODO: Table of frequency of BT clients
 
 \subsection{Peer's Host Names}
