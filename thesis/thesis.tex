@@ -31,6 +31,8 @@
 \usepackage[noheads]{endfloat} % TODO temporary
 \renewcommand{\efloatseparator}{\mbox{}}
 
+\usepackage{pgf-umlsd}
+
 \let\origunderscore\_
 \renewcommand{\_}{\origunderscore\allowbreak}
 \newcommand{\config}[1]{\texttt{config.\allowbreak #1}}
@@ -394,19 +396,42 @@ These are the only two message types relevant in the scope of this work. For com
 
 \section{DHT Protocol}
 \label{dht}
-Despite the complete file payload being transmitted from client to client, still a central server keeping track of all peers is needed. However, the mandatory tracker server contradicts the concept of a decentralized file distribution network and, in addition, has to be maintained financially. The \emph{DHT Protocol} \cite{bep5} solves this issue, as it stores peer contact information in a distributed hash table. Participating peers run a separate DHT \emph{node}, which communicate sending bencoded messages over the User Datagram Protocol. The distributed hash table follows the Kademlia design as described by \textsc{Maymounkov} and \textsc{Mazières} in 2002 \cite{kademlia}.
+Despite the complete file payload being transmitted from client to client, a central server keeping track of all peers is still needed in the setup described until now. However, the mandatory tracker server contradicts the concept of a decentralized file distribution network and, in addition, has to be maintained financially. The \emph{DHT Protocol} \cite{bep5} solves this issue, as it stores peer contact information in a distributed hash table. Participating peers run a separate DHT \emph{node}, which communicates by sending bencoded messages over UDP. The distributed hash table follows the Kademlia design as described by \textcite{kademlia} in 2002.
 
 \paragraph{Nodes}
-First, a node generates his own random 20 byte identifier, called node ID. The distance between two node IDs is defined as the bitwise exclusive disjunction interpreted as an unsigned integer. Each node maintains a routing table, which maps node IDs to their corresponding node's IP address and UDP port number. The closer node IDs are to the node's own ID, the more nodes are stored in the routing table. Therefore, nodes only know about a limited number of other nodes, with greater detail close to their own identifier.
+First, a node generates his own random 20 byte identifier, called node ID. Each node maintains a routing table, which maps IDs of other nodes to their corresponding IP address and UDP port number. The closer these node IDs are to the node's own ID, the more nodes are stored in the routing table. For this measurement, the distance between two node IDs is defined as the bitwise exclusive disjunction interpreted as an unsigned integer. Therefore, most entries in the routing table have close proximity to the node's own ID. Similarly, a separate table is maintained, where info hashes with close proximity to the own node ID are mapped to IP addresses and TCP ports of peers known to download this torrent. This second table is part of the distributed hash table.
+% TODO graphic about nodes and routing tables?
+
+\begin{figure}
+\centering
+\begin{sequencediagram}
+\newthread{0}{:BTClient}
+\newinst[3]{1}{:DHTNode}
+\newinst[3]{2}{:Node1}
+\newinst[1]{3}{:Node2}
+\begin{call}{0}{get(info\_hash)}{1}{values}
+\begin{call}{1}{get\_peers(id, info\_hash)}{2}{id, nodes, token}
+\end{call}
+\begin{call}{1}{get\_peers(id, info\_hash)}{3}{id, values, token}
+\end{call}
+\end{call}
+\begin{messcall}{0}{announce(info\_hash, port)}{1}
+\begin{call}{1}{annonce\_peer(id, info\_hash, port, token)}{3}{id}
+\end{call}
+\end{messcall}
+\end{sequencediagram}
+\caption[Requesting peers in the DHT network]{A sequence diagram of a request for peers in the DHT network as described in \cite{bep5}. \emph{BTClient} asks its own \emph{DHTNode} for peers for a specific info hash. The DHT node issues a request to remote \emph{Node1}, wich does not know any peers and answers with information about other nodes, including \emph{Node2}, instead. \emph{Node2} knows about peers and delivers the desired information to \emph{DHTNode}. Finally, the participation in downloading the torrent is announced to \emph{Node2}. The variable \emph{values} refers to a list of IP addresses and TCP ports of peers.}
+\label{dht-sequence}
+\end{figure}
 
 \paragraph{Lookup}
-The process of extracting peers for a given info hash proceeds iteratively. The same distance metric as used between node IDs is used to identify nodes in the routing table with IDs close to the info hash in question. Due to the routing table's structure, contacted peers can return IDs and addresses of even closer nodes. Eventually, nodes will be able to return actual peer contact information, since peers known to download a torrent are stored in a second table, the hash table. Following the same scheme used on the routing table, peers with info hashes close to the own node ID are stored preferably.
+The process of extracting peers from the DHT network for a given info hash proceeds iteratively. The same distance metric as described above, is now used to identify nodes in the routing table with IDs close to the info hash in question. Due to the routing table's structure, contacted peers can return IDs and addresses of even closer nodes. Eventually, nodes will be able to return contact information from peers participating in this torrent, since this information is stored in the second table. An example of an request for peers is given in figure \ref{dht-sequence}, where the querying node finds peer information on the second iteration.
 
 \paragraph{Announcing}
-When a peer downloads a torrent, it should announce the info hash and BitTorrent port to multiple other nodes in order to be included in the distributed hash table. Again, the problem of IP address spoofing exists, allowing malicious hosts to register third parties for a torrent. This is why a token system is used. On every successful request for peers, the response includes the SHA-1 hash of both the source IP address and a secret value. The recipient's IP address and the IP address included in the hash are now guaranteed to be equal. When announcing download participation, a node must include this token, allowing the contacted node to verify the announce request's source IP address and updating its hash table.
+When a peer downloads a torrent, it should announce this fact to multiple other nodes with ID close to the info hash, in order to be included in the distributed hash table. This is also shown in figure \ref{dht-sequence}. Again, the problem of IP address spoofing exists here, allowing malicious hosts to register third parties for a torrent. This is why a token system is used. On every request for peers, the response includes the SHA-1 hash of both the querying node's IP address and a secret value as chosen by the queried node. When announcing download participation, a node must include this token, allowing the contacted node to verify the announce request's source IP address and updating its hash table.
 
 \paragraph{Integration}
-The presence of DHT support is advertised in the standard BitTorrent handshake of the Peer Wire Protocol using the last bit of the eight reserved bytes. Peers receiving this indicator should send a \texttt{port} message, containing their own UDP node port number. This technique helps populate routing tables, especially on newly installed systems with an empty table. *[try to get own ip from dht query]
+The presence of DHT support is advertised in the standard BitTorrent handshake of the Peer Wire Protocol using the last bit of the eight reserved bytes. Peers receiving this indicator should send a \texttt{port} message, containing their own UDP node port number. This way the remote peer can include the DHT node in its routing table.
 
 \section{Magnet Link}
 \label{magnet}

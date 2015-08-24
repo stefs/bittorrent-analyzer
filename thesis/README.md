@@ -44,6 +44,7 @@ Chapter | Progress
 - github history ok?
 - cite bep 20, bep 29
 - add or remove links from bibliography
+- http scrape in chapter 2?
 
 # Begriffserklärung or in place erklärung
 * Dictionary
