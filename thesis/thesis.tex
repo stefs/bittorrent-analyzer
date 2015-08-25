@@ -6,9 +6,8 @@
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
 \usepackage[vmargin=3.4cm,hmargin=3cm]{geometry}
 %\usepackage{graphicx} % Grafiken
-%\usepackage{listings} % Quelltext
 \usepackage[hidelinks]{hyperref} % Hyperlinks
-%\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
+\usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
 \usepackage[autolanguage]{numprint} % Zahlen
@@ -32,6 +31,31 @@
 \renewcommand{\efloatseparator}{\mbox{}}
 
 \usepackage{pgf-umlsd}
+
+\usepackage{listings}
+\lstset{
+	%language=, % https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings#Supported_languages
+	basicstyle=\ttfamily,
+	columns=flexible,
+	breaklines=true,
+	numbers=left,
+	tabsize=4,
+	% Black-white
+% 	numberstyle=\scriptsize,
+% 	stringstyle=\color{darkgray},
+% 	commentstyle=\color{gray},
+% 	frame=single,
+	% Colour
+	numberstyle=\scriptsize\color{gray},
+	stringstyle=\color{orange},
+	commentstyle=\color{teal},
+	keywordstyle=\bfseries\color{Blue},
+	backgroundcolor=\color{black!02},
+	% Special
+	breakindent=0cm,
+  moredelim=[is][\bfseries\color{Red}]{@}{@},
+  showspaces=true,
+}
 
 \let\origunderscore\_
 \renewcommand{\_}{\origunderscore\allowbreak}
@@ -239,12 +263,12 @@ This chapter explaines technologies and specifications utilized during this rese
 
 \section{BitTorrent Protocol}
 \label{bittorrent}
-BitTorrent is specified in currently \numprint{42} \emph{BitTorrent Enhancement Proposals} (BEP), most of them being extensions for various use cases. A comprehensive overview of these is given in a wiki provided by \textcite{theoryorg}. The initial concept is described in \cite{bep3}, where a method for distribution of a predefined set of files among an arbitrary number of recipients is established. Overwhelming load on a central entity is avoided by splitting the file set in pieces and let peers send them to each other. Three main parts are defined to enable the process:
+BitTorrent is specified in currently \numprint{42} BitTorrent Enhancement Proposals (BEP), most of them being extensions for special use cases. A comprehensive overview of the basics is given in a wiki provided by \textcite{theoryorg}. The following sections describe the essential parts, which are defined in \cite{bep3}. Now, the goal of BitTorrent is the distribution of a predefined set of files among an arbitrary number of recipients. Overwhelming load on a central entity is avoided by splitting the file set in pieces and let peers send them to each other. Three main parts are necessary to enable the process:
 
 \begin{enumerate}
-  \item The BitTorrent file format containing identifying metadata about the file set
-  \item The communication with a tracker server, where peers can learn IP addresses and port numbers of other peers
-  \item The Peer Wire Protocol, spoken between peers
+  \item The BitTorrent file, which contains identifying metadata about the file set.
+  \item The tracker server, where peers can learn IP addresses and port numbers of other peers.
+  \item The Peer Wire Protocol, which is spoken between peers.
 \end{enumerate}
 
 \subsection{Bencoding}
@@ -288,8 +312,11 @@ Key & Explanation \\
 \label{metainfo-file}
 \end{table}
 
-A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files allow users to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file.
-% TODO example
+A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files allow users to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file. An authentic torrent file of Debian without the hashes looks as follows, dictionary keys are highlighted:
+
+\begin{lstlisting}
+d@8:announce@41:http://bttracker.debian.org:6969/announce@7:comment@35:"Debian CD from cdimage.debian.org"@13:creation date@i1429970901e@9:httpseeds@l84:http://cdimage.debian.org/cdimage/release/8.0.0/iso-dvd/debian-8.0.0-amd64-DVD-1.iso84:http://cdimage.debian.org/cdimage/archive/8.0.0/iso-dvd/debian-8.0.0-amd64-DVD-1.isoe@4:info@d@6:length@i3976200192e@4:name@28:debian-8.0.0-amd64-DVD-1.iso@12:piece length@i1048576e@6:pieces@75840:<hashes>ee
+\end{lstlisting}
 
 \subsection{Tracker Server}
 \begin{table}
@@ -313,8 +340,11 @@ Key & Explanation \\
 \label{announce}
 \end{table}
 
-The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of standard HTTP. The request is sent with the parameters shown in table \ref{announce}, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}. An exemplary request would be: \nolinkurl{http://todo.todo/announce?todo=todo&todo=todo&todo=todo}
-% TODO example
+The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of standard HTTP. The request is sent with the parameters shown in table \ref{announce}, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}. An exemplary request would be:
+
+\begin{lstlisting}
+http://bttracker.debian.org:6969/announce?port=6881&uploaded=758&info_hash=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6&peer_id=hNsfr5PYlFtWO73yvSGX&compact=1&event=started&left=1896&downloaded=1896
+\end{lstlisting}
 
 \begin{table}
 \centering
@@ -335,7 +365,6 @@ Key & Explanation \\
 \end{table}
 
 The tracker's response message should contain a bencoded dictionary in the message body with keys as explained in table \ref{announce-response}.
-% TODO example
 
 \subsection{UDP Tracker Protocol}
 \begin{table}
@@ -707,6 +736,8 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 [Note all things in the plots, even the obvious] Scrape is higher than confirmed.
 
 [downloaded (event=complete) vs complete (seeders), \cite{watters2011much} uses seeders]
+
+[try different thresholds]
 
 \begin{figure}
 \centering

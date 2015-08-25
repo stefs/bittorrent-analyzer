@@ -16,12 +16,16 @@ Chapter | Progress
 – 2.1 BitTorrent Protocol | ★★
 – 2.1.1 Bencoding | ★★
 – 2.1.2 Metainfo File | ★ (example)
-– 2.1.3 Tracker Server | ★ (2 examples)
+– 2.1.3 Tracker Server | ★★
 – 2.1.4 UDP Tracker Protocol | ★★
 – 2.1.5 Peer Wire Protocol | ★★
 – 2.2 DHT Protocol | ★
-– 2.3 Magnet Link +2 | ★
-– 2.4 BitTorrent and German Law +2 | ★★
+– 2.3 Magnet Link | ★
+– 2.3.1 Extension Protocol | ★
+– 2.3.2 Extension for Peers to Send Metadata Files | ★
+– 2.4 BitTorrent and German Law | ★★
+– 2.4.1 Illegal Content | ★★
+– 2.4.2 Collecting IP addresses | ★★
 3 Implementation | ★★
 – 3.1 Dependencies | ★★
 – 3.2 Functionality | ★★
