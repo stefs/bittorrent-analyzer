@@ -259,7 +259,7 @@ I want to thank Philipp Klein for discussing methods and implementation as well 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Background}
-This chapter explaines technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed regarding relevant German copyright and privacy laws in section \ref{law}.
+This chapter explaines technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} file to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed concerning relevant German copyright and privacy laws in section \ref{law}.
 
 \section{BitTorrent Protocol}
 \label{bittorrent}
@@ -415,11 +415,35 @@ The announce request includes the same parameters as the HTTP announce request d
 Finally a scrape request is defined. Its setup is similar to the announce request, but now shown in table \ref{udp-tracker}. The scrape response gives clients access to the numbers of leechers, seeders and completed downloads as reported by the server. There is no guarantee of validity for these values, since they may be manipulated or chosen by the server freely. For all requests, an error response package containing a human-readable message may be sent by the server at any time.
 
 \subsection{Peer Wire Protocol}
-The peer protocol is spoken between peers and allows bidirectional communication with predefined messages. At first, an initial handshake is exchanged, containing a protocol description string, eight reserved bytes for alternate protocol behavior and extensions, as well as the torrent's info hash and the sending peer's ID. The connecting client sends its handshake message first. All messages begin with an overall length prefix, followed by a numerical type identifier and the payload, if appropriate.
+\begin{table}
+\centering
+\begin{tabularx}{\textwidth}{lrX}
+\toprule
+Type & ID & Contents \\
+\midrule
+handshake & --- & length prefix, length of protocol string, protocol string, eight reserved bytes, info hash, peer id \\
+choke & 0 & --- \\
+unchoke & 1 & --- \\
+interested & 2 & --- \\
+not interested & 3 & --- \\
+have & 4 & piece index \\
+bitfield & 5 & bitfield of present pieces \\
+request & 6 & piece index, begin offset within the piece, length offset \\
+piece & 7 & piece index, begin offset within the piece, block of piece data \\
+cancel & 8 & piece index, begin offset within the piece, length offset \\
+port & 9 & UDP DHT port \\
+extended & 20 & extension id, payload \\
+\bottomrule
+\end{tabularx}
+\caption[]{Messages of the Peer Wire Protocol as defined in \cite{bep3}. Port messages are part of the DHT protocol, see section \ref{dht}. Extended messages are described later in section \ref{ep}.}
+\label{pwp}
+\end{table}
+
+The Peer Wire Protocol is spoken between peers and allows bidirectional communication with predefined messages. At first, an initial handshake is exchanged, containing a protocol description string, eight reserved bytes for alternate protocol behavior and extensions, as well as the torrent's info hash and the sending peer's ID. The connecting client sends its handshake message first. All messages but the handshake are sent with an overall length prefix, followed by a numerical type identifier and the payload, if appropriate. An overview about defined messages is given in table \ref{pwp}.
 
 Following the Tit-for-Tat principle of BitTorrent, a peer should try to appear interesting to the remote peer, to encourage him not to close the connection but to deliver pieces of content. This can be done by offering pieces himself, with the \emph{bitfield} message. It is sent immediately after the handshake to indicate which pieces a peer has already downloaded and verified. When a peer has downloaded additional pieces while the connection was alive, \emph{have} messages are sent to all connected clients to update the catalog of available pieces.
 
-These are the only two message types relevant in the scope of this work. For completeness, the meanings of further message types are as follows: \emph{choke} and \emph{unchoke} express the willingness of a peer to fulfill requests for pieces of a remote peer, for instance for bandwidth management. Similarly \emph{interested} and \emph{not interested} indicate whether a peer would start downloading if unchoked, to allow the remote peer to unchoke the right peers. And lastly, the \emph{request} and \emph{piece} messages, used to request data pieces from the remote peer either within a range or just a single piece, respectively. When requests were sent to multiple clients beforehand to increase download speed, a \emph{cancel} message is used to revoke a request.
+These are the only two message types relevant in the scope of this work. For completeness, the meanings of further message types are as follows: \emph{choke} and \emph{unchoke} express the willingness of a peer to fulfill requests for pieces of a remote peer, for instance for bandwidth management. Similarly \emph{interested} and \emph{not interested} indicate whether a peer would start downloading if unchoked, to allow the remote peer to unchoke the right peers. To demand a piece which is present at the remote peer, the \emph{request} message is used and answered with the requested data within a \emph{piece} message. When requests were sent to multiple clients beforehand to increase download speed, a \emph{cancel} message is used to revoke a request.
 
 \section{DHT Protocol}
 \label{dht}
@@ -468,15 +492,21 @@ magnet:?@xt@=urn:btih:57e159a58261c8d2f42a64980d2b808e3901fcf6&@dn@=debian-8.0.0
 The emerging problem of a magnet link substituting a torrent file, is the loss of the info dictionary's content. Since a tracker URL is optional, the metadata must be obtained from other peers. This is possible thanks to the \emph{Extension for Peers to Send Metadata Files} as described below in section \ref{ext-meta}.
 
 \subsection{Extension Protocol}
-To expand the functionality of the BitTorrent Protocol, the \emph{Extension Protocol} was defined \cite{bep10}. It introduces the generic \texttt{extended} message to the Peer Wire Protocol, which itself can have various subtypes depending on which extensions are actually used. Extension Protocol support is indicated in the standard Peer Wire Protocol handshake by setting the 20th bit from the right of the eight reserved bytes.
+\label{ep}
+To expand the functionality of the BitTorrent protocol, the \emph{Extension Protocol} \cite{bep10} was defined. It introduces an additional message type as previously indicated in table \ref{pwp}. The generic \texttt{extended} message can have various subtypes depending on which extensions are actually used. Extension Protocol support is indicated in the standard Peer Wire Protocol handshake by setting the 20th bit from the right of the eight reserved bytes.
 
-When both peers ascertain support for the Extension Protocol, extended messages containing a second handshake are exchanged. The handshakes contain a dictionary with one or multiple keys: First, a bencoded dictionary \texttt{m} with names of supported extensions together with randomly assigned extension IDs and secondly, additional keys depending on the used extensions. This setup allows for an arbitrary number of extensions with dynamic IDs, without the need for a global registry of extensions. Further extended messages contain the extension ID and payload as defined by the respective extension.
+When both peers ascertain support for the Extension Protocol, extended messages containing a second handshake are exchanged. These handshakes include a bencoded dictionary with information about the actually used extensions and assign IDs for every extension dynamically. Additional values as defined by the used extensions are also included. This setup allows for an arbitrary number of extensions with dynamic IDs, without the need for a global registry of extensions. Further extended messages have three parts:
+\begin{enumerate}
+  \item The type ID \numprint{20}, indicating that it is an extended message,
+  \item The extension ID, indicating the corresponding extension for this message as defined in the handshake, and
+  \item the payload of the message.
+\end{enumerate}
 
 \subsection{Extension for Peers to Send Metadata Files}
 \label{ext-meta}
-The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} with identifier \texttt{ut\_metadata} is the first and only extension described here to make use of the Extension Protocol. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containing the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is divided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
+The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} is the first and only extension to make use of the Extension Protocol described here. It enables peers to exchange metadata about torrents in the form of the info dictionary of a torrent. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containing the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is divided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
 
-To gather initial contact information of peers to be asked for metadata, the DHT protocol may be used. Then every piece must be requested separately from these peers, using a \texttt{request} message. These are answered by the same number of \texttt{data} or \texttt{reject} messages, depending on whether the opposing client is able to deliver the piece. When all pieces are present, they can be composed and checked against the info hash value.
+In order for a peer to ask another peer for metadata about a torrent, first the address of another peer is needed. It can be obtained using the DHT network. After establishing a peer connection with both the normal and extended handshakes, every piece must be requested separately from this peer. These \emph{request} messages are answered by the same number of \emph{data} or \emph{reject} messages, depending on whether the opposing client is able to deliver the piece. When all pieces are present, they can be combined and checked against the info hash.
 
 \section{BitTorrent and German Law}
 \label{law}
@@ -620,7 +650,7 @@ Data collection with the BitTorrent Download Analyzer tool was performed on a vi
 [Thread workload and system load were normal as described earlier*.]
 
 \section{Choosing Torrents}
-\begin{table}[b!]
+\begin{table}
 \centering
 \begin{tabular}{rllr}
 \toprule
@@ -651,7 +681,7 @@ Rank & Site name & Domain name & Alexa Rank \\
 
 Due to the distributed nature of BitTorrent, there unfortunately is no complete list or for all torrents currently active. Thus external data about popularity of torrents is needed, even if there is no guarantee of correctness. So to determine most popular torrent directory sites the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
 
-\begin{table}[t!]
+\begin{table}
 \centering
 \begin{tabular}{lrlrrr}
 \toprule
