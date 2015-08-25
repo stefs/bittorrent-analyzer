@@ -205,6 +205,8 @@ class SwarmAnalyzer:
 				self.shutdown_request.wait(config.evaluator_reaction)
 				self.timer.active(thread)
 				continue
+			if peer.source is Source.incoming:
+				logging.critical('Trying to visit incoming peer')
 
 			# Delay evaluation
 			delay = peer.revisit - time.perf_counter()
@@ -712,5 +714,5 @@ class PeerHandler(socketserver.BaseRequestHandler):
 			new_peer.port = self.client_address[1]
 			new_peer.source = Source.incoming
 			new_peer.torrent = torrent_id
-			self.server.visited_peers.put((new_peer, result, None))
+			self.server.visited_peers.put((new_peer, result))
 		self.server.server_threads.decrement()

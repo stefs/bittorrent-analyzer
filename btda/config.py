@@ -27,7 +27,7 @@ bittorrent_message_log_length = 80
 # ut_metadata Extension Protocol message id
 extension_ut_metadata_id = 4
 # Evaluate incoming peers at the specified port number
-bittorrent_listen_port = 6881
+bittorrent_listen_port = 6882
 # Output path for log and database, with trailing slash
 output_path = 'output/'
 # Input path for torrent files and magnet file, with trailing slash
@@ -35,7 +35,7 @@ input_path = 'input/'
 # Filename for magnet files, relative to input_path, one magnet link per line
 magnet_file = 'magnet.txt'
 # Time delay between logging peer statistics to database
-statistic_interval = 10 * 60
+statistic_interval = 5 * 60
 # Evaluator reaction time on empty queue and delayed peers
 evaluator_reaction = 40
 # Write durations of message receival to file for timeout calibration
