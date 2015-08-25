@@ -113,9 +113,8 @@ class TrackerCommunicator:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		sock.settimeout(config.network_timeout)
 		parsed_tracker = urllib.parse.urlparse(self.announce_url)
-		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
-		if None in conn:
-			logging.warning('Bad tracker connection on UDP request: {}'.format(conn))
+		port = parsed_tracker.port if parsed_tracker.port else 80
+		conn = (socket.gethostbyname(parsed_tracker.hostname), port)
 
 		# Send connect request
 		connection_id = 0x41727101980
@@ -165,6 +164,7 @@ class TrackerCommunicator:
 			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {}, got {}'.format(
 					transaction_id, res_transaction_id))
 		if action == 0x3:
+			error = struct.unpack_from('!s', buf, 8)
 			raise TrackerError('Error while trying to get a connection response: {}'.format(error))
 		elif action != 0x1:
 			raise TrackerError('Wrong action received after announce request: {}'.format(action))
@@ -258,9 +258,8 @@ class TrackerCommunicator:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		sock.settimeout(config.network_timeout)
 		parsed_tracker = urllib.parse.urlparse(scrape_url)
-		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
-		if None in conn:
-			logging.warning('Bad tracker connection on UDP scrape: {}'.format(conn))
+		port = parsed_tracker.port if parsed_tracker.port else 80
+		conn = (socket.gethostbyname(parsed_tracker.hostname), port)
 
 		# Send connect request
 		connection_id = 0x41727101980
