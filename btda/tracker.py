@@ -85,7 +85,7 @@ class TrackerCommunicator:
 			raise TrackerError('Unable to decode response: {}'.format(err))
 		logging.debug('Tracker response: {}'.format(response))
 		if b'failure reason' in response:
-			failure_reason = response[b'failure reason'].decode()
+			failure_reason = response[b'failure reason']
 			raise TrackerError('Tracker responded with failure reason: {}'.format(failure_reason))
 
 		# Extract request interval
@@ -225,7 +225,7 @@ class TrackerCommunicator:
 			raise TrackerError('Unable to decode response: {}'.format(err))
 		logging.debug('Tracker response: {}'.format(response))
 		if b'failure reason' in response:
-			failure_reason = response[b'failure reason'].decode()
+			failure_reason = response[b'failure reason']
 			raise TrackerError('Tracker responded with failure reason: {}'.format(failure_reason))
 
 		# Extract file item
