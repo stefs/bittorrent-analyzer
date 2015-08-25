@@ -5,7 +5,6 @@ import datetime
 import ipaddress
 import os
 import resource
-import time
 
 # Extern modules
 import sqlalchemy
@@ -121,9 +120,6 @@ class Database:
 		# http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html#thread-local-scope
 		self.Session = sqlalchemy.orm.scoped_session(session_factory)
 
-		# Commit timer
-		self.last_peer_commit = 0
-
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
 	#  @param host Host name of peer
@@ -132,17 +128,6 @@ class Database:
 	def store_peer(self, peer, host):
 		# Get thread-local session
 		session = self.Session()
-
-		# Commit if necessary
-		now = time.perf_counter()
-		if now - self.last_peer_commit > 10:
-			self.last_peer_commit = now
-			try:
-				session.commit()
-			except Exception as err:
-				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 		# Check if this is a new peer
 		if peer.key is None:
@@ -159,6 +144,7 @@ class Database:
 					source=peer.source.name, torrent=peer.torrent)
 			try:
 				session.add(new_peer)
+				session.commit()
 			except Exception as err:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
@@ -198,6 +184,7 @@ class Database:
 			# Store updated peer
 			try:
 				session.add(database_peer)
+				session.commit()
 			except Exception as err:
 				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)

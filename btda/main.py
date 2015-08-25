@@ -50,5 +50,3 @@ with analyzer.SwarmAnalyzer(args.debug) as app:
 	# Wait for termination
 	print('Evaluation running, end with Ctrl+C')
 	app.wait_for_sigint()
-	print('Please wait for termination ...')
-print('THE END')

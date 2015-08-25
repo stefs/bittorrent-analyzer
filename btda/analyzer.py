@@ -435,6 +435,8 @@ class SwarmAnalyzer:
 				self.visited_peers.task_done()
 				logging.critical(err)
 				continue
+			if peer.key is None and new_peer_key is None:
+				logging.critical('No peer id from database')
 
 			# Remember equality information of new incoming peers and discard all incoming
 			if peer.source is Source.incoming:
@@ -502,6 +504,10 @@ class SwarmAnalyzer:
 							None, None, None, end-start, key)
 				except Exception as err:
 					logging.critical(err)
+
+				# Break out on termination
+				if self.shutdown_request.is_set():
+					break
 
 			# Print stats at DHT node # TODO receive instead of print
 			try:
