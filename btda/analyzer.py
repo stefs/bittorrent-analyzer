@@ -266,8 +266,8 @@ class SwarmAnalyzer:
 				logging.debug('Connection closed')
 
 			# Put in visited queue
-			revisit_time = time.perf_counter() + delay
-			self.visited_peers.put((peer, result, revisit_time))
+			peer.revisit = time.perf_counter() + config.peer_revisit_delay
+			self.visited_peers.put((peer, result))
 			self.active_success.increment()
 			self.evaluator_threads.decrement()
 
@@ -397,7 +397,7 @@ class SwarmAnalyzer:
 
 		while True:
 			# Get new peer to store
-			peer, result, revisit = self.visited_peers.get()
+			peer, result = self.visited_peers.get()
 			rec_peer_id, rec_info_hash, messages, duration, host = result
 
 			# Store duration
