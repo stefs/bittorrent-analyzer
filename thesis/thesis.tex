@@ -26,9 +26,9 @@
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
 
-%\usepackage[section]{placeins} % TODO use maybe
-\usepackage[noheads]{endfloat} % TODO temporary
-\renewcommand{\efloatseparator}{\mbox{}}
+%\usepackage[section, above, below]{placeins} % TODO use maybe
+%\usepackage[noheads]{endfloat} % TODO temporary
+%\renewcommand{\efloatseparator}{\mbox{}}
 
 \usepackage{pgf-umlsd}
 
@@ -263,10 +263,10 @@ This chapter explaines technologies and specifications utilized during this rese
 
 \section{BitTorrent Protocol}
 \label{bittorrent}
-BitTorrent is specified in currently \numprint{42} BitTorrent Enhancement Proposals (BEP), most of them being extensions for special use cases. A comprehensive overview of the basics is given in a wiki provided by \textcite{theoryorg}. The following sections describe the essential parts, which are defined in \cite{bep3}. Now, the goal of BitTorrent is the distribution of a predefined set of files among an arbitrary number of recipients. Overwhelming load on a central entity is avoided by splitting the file set in pieces and let peers send them to each other. Three main parts are necessary to enable the process:
+BitTorrent is specified in currently \numprint{42} BitTorrent Enhancement Proposals (BEP), most of them being extensions for special use cases. A comprehensive overview of the basics is also given in a wiki provided by \textcite{theoryorg}. The following sections describe the essential parts based on the definitions of \cite{bep3}. Now, the goal of BitTorrent is the distribution of a predefined set of files among an arbitrary number of recipients. Overwhelming load on a central entity is avoided by splitting the file set in pieces and let peers send them to each other. Three main parts are necessary to enable the process:
 
 \begin{enumerate}
-  \item The BitTorrent file, which contains identifying metadata about the file set.
+  \item The BitTorrent file, which contains identifying metadata about the file set. It is usually distributed via torrent indexing websites or between users directly.
   \item The tracker server, where peers can learn IP addresses and port numbers of other peers.
   \item The Peer Wire Protocol, which is spoken between peers.
 \end{enumerate}
@@ -288,7 +288,7 @@ Dictionary & \texttt{d<key1><val1><key2><val2>e} & \texttt{d3:abci23ee} = \textt
 \label{bencode}
 \end{table}
 
-In order to store and transmit common data structures, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, Cohen came up with \emph{bencoding} to annotate data appropriately. When bencoded, a value's length is detectable by specific beginning and ending delimiter characters: Integers, lists and dictionary are prefixed with small letters \texttt{i}, \texttt{l} and \texttt{d} respectively and closed with an \texttt{e}. Strings have a length prefix. Examples are provided in table \ref{bencode}.
+In order to store and transmit common data structures, an encoding is required to preserve the data's type and semantic. To realize BitTorrent, Cohen came up with \emph{bencoding} to annotate data appropriately. When bencoded, a value's length is detectable by specific beginning and ending delimiter characters: Integers, lists and dictionary are prefixed with small letters \texttt{i}, \texttt{l} and \texttt{d} respectively and closed with an \texttt{e}. Strings have a length prefix. Details and examples are provided in table \ref{bencode}.
 
 \subsection{Metainfo File}
 \begin{table}
@@ -312,13 +312,14 @@ Key & Explanation \\
 \label{metainfo-file}
 \end{table}
 
-A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files allow users to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file. An authentic torrent file of Debian without the hashes looks as follows, dictionary keys are highlighted:
+A torrent's payload may be either a single file or a directory with subdirectories and multiple files. The metadata of such a downloadable file set is stored in a bencoded file, called \emph{metainfo file}, which is using the \texttt{.torrent} file name extension. For easy reference, values are grouped in dictionaries as listed in table \ref{metainfo-file}. These files can easily shared between users and allow them to identify torrents, since they contain a human readable description as well as cryptographic hash values on the torrent's pieces. Additionally, the URL of a tracker server is stored, allowing BitTorrent clients to gain information about other peer's addresses and participate in the network. The \emph{info hash} used to identify a torrent as a whole is calculated as the SHA-1 hash of the bencoded \texttt{info} dictionary, which is part of the metainfo file. An authentic torrent file of a Debian image is printed below. It contains some additional keys like a comment and a creation date. The hashes of the \texttt{info/pieces} key were removed and dictionary keys were highlighted:
 
 \begin{lstlisting}
 d@8:announce@41:http://bttracker.debian.org:6969/announce@7:comment@35:"Debian CD from cdimage.debian.org"@13:creation date@i1429970901e@9:httpseeds@l84:http://cdimage.debian.org/cdimage/release/8.0.0/iso-dvd/debian-8.0.0-amd64-DVD-1.iso84:http://cdimage.debian.org/cdimage/archive/8.0.0/iso-dvd/debian-8.0.0-amd64-DVD-1.isoe@4:info@d@6:length@i3976200192e@4:name@28:debian-8.0.0-amd64-DVD-1.iso@12:piece length@i1048576e@6:pieces@75840:<hashes>ee
 \end{lstlisting}
 
 \subsection{Tracker Server}
+\label{tracker-server}
 \begin{table}
 \centering
 \begin{tabularx}{\textwidth}{lX}
@@ -328,22 +329,22 @@ Key & Explanation \\
 \texttt{info\_hash} & This is the SHA-1 hash of the bencoded info dictionary from the metainfo file. \\
 \texttt{peer\_id} & A string of 20 bytes is chosen by each peer. It contains client software information by convention, see section \ref{clients}. \\
 \texttt{ip} & In case the client uses a proxy, the peer's original routable IP address can be submitted in this optional parameter. \\
-\texttt{port} & The port number this peer is listening on for connections from other peers. \cite{bep3} recommend port between 6881 and 6889. \\
+\texttt{port} & This is the port number the peer is listening on for connections from other peers. \cite{bep3} recommends a port between 6881 and 6889. \\
 \texttt{uploaded} & Amount of pieces this peer has uploaded so far. \\
 \texttt{downloaded} & Amount of pieces this peer has downloaded so far. \\
 \texttt{left} & Amount of pieces this peer has left to download. \\
 \texttt{event} & The current download status can be communicated in this optional key. Valid values are \texttt{started}, \texttt{completed} or \texttt{stopped}. \\
-\texttt{compact} & Indicates weather or not the tracker should respond with a normal or compact peer list, as described in \cite{bep23} to save bandwidth. Allowed are \texttt{0} or \texttt{1}. \\
+\texttt{compact} & Indicates weather or not the tracker should respond with a normal or compact peer list to save bandwidth. Allowed are \texttt{0} or \texttt{1}. \\
 \bottomrule
 \end{tabularx}
-\caption[Structure of a HTTP announce request]{Structure of a HTTP announce request from a peer to a tracker server. Some trackers dismiss the \texttt{compact} key and always send compact peer lists.}
+\caption[Structure of a HTTP announce request]{Structure of a HTTP announce request from a peer to a tracker server. A compact peer list is defined in \cite{bep23}: Addresses are all concatenated, while six bytes per peer are used, four for the IPv4 address and a two for the port. Some trackers dismiss the \texttt{compact} key and always send compact peer lists.}
 \label{announce}
 \end{table}
 
 The biggest problem of BitTorrent is to learn about the contact information of fellow peers. The traditional solution is a tracker server, where peers announce their participation in the torrent swarm and receive a list of other peer's IP addresses and port numbers in one step. Communication with the tracker server is done via the GET request method of standard HTTP. The request is sent with the parameters shown in table \ref{announce}, whereby keys and values must be quoted using percent-encoding \cite[§~2.1]{percent}. An exemplary request would be:
 
 \begin{lstlisting}
-http://bttracker.debian.org:6969/announce?port=6881&uploaded=758&info_hash=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6&peer_id=hNsfr5PYlFtWO73yvSGX&compact=1&event=started&left=1896&downloaded=1896
+http://bttracker.debian.org:6969/announce?@port@=6881&@uploaded@=758&@info_hash@=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6&@peer_id@=hNsfr5PYlFtWO73yvSGX&@compact@=1&@event@=started&@left@=1896&@downloaded@=1896
 \end{lstlisting}
 
 \begin{table}
@@ -354,7 +355,7 @@ Key & Explanation \\
 \midrule
 \texttt{failure reason} & In case of failure, this human-readable error message explains why the request could not be fulfilled. \\
 \texttt{interval} & A suggested interval in seconds the client should wait between tracker requests. \\
-\texttt{peers} & Normally this is a list of dictionaries, one per peer. Its keys are described below. In case of a compact peer list, this is a single byte string instead, and further keys are not used. In compact mode six bytes per peer are used, four for the IPv4 address and a two for the port. \\
+\texttt{peers} & Normally this is a list of dictionaries, one per peer. Its keys are described below. In case of a compact peer list as described in table \ref{announce}, this is a single byte string instead, and further keys are not used. \\
 \texttt{peers/peer id} & The self-selected peer ID, as described in table \ref{announce}. \\
 \texttt{peers/ip} & The peer's IP address. \\
 \texttt{peers/port} & The peer's port number. \\
@@ -364,7 +365,7 @@ Key & Explanation \\
 \label{announce-response}
 \end{table}
 
-The tracker's response message should contain a bencoded dictionary in the message body with keys as explained in table \ref{announce-response}.
+In the HTTP message body of the tracker's response, the list of peers is returned in a bencoded dictionary with keys as explained in table \ref{announce-response}.
 
 \subsection{UDP Tracker Protocol}
 \begin{table}
@@ -401,27 +402,27 @@ Request & Response \\
 \texttt{port} & \\
 \bottomrule
 \end{tabular}
-\caption[Communication in the UDP tracker protocol]{Request and response packages for the actions \emph{connect} and \emph{announce} in the UDP tracker protocol as specified in \cite{bep15}. On the initial \emph{connect request}, the constant \numprint{41727101980} is used as a \texttt{connection\_id}. This ID is used for later request like the \emph{announce request}. Numerical values for the \texttt{action} parameter are \numprint{0} during \emph{connect} and \numprint{1} during \emph{announce}. IP addresses and ports in the \emph{announce response} are all concatenated and use six bytes per tuple.}
+\caption[Communication in the UDP tracker protocol]{Request and response packages for the actions \emph{connect} and \emph{announce} in the UDP tracker protocol as specified in \cite{bep15}. On the initial \emph{connect request}, the constant \numprint{41727101980} is used as a \texttt{connection\_id}. The \texttt{connection\_id} returned by the server in the \emph{connect response} is used for later request like the \emph{announce request}. Numerical values for the \texttt{action} parameter are \numprint{0} during \emph{connect} and \numprint{1} during \emph{announce}. IP addresses and ports in the \emph{announce response} are all concatenated and use six bytes per tuple.}
 \label{udp-tracker}
 \end{table}
 
-Tracker servers are the only centralized infrastructure required in the traditional implementation of BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As \cite{bep15} demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by \numprint[\%]{50}. The protocol defines three different types of requests a client can send to the server: connect, announce and scrape. Each of these requests is answered by the server with a specific response. Transmitted values of the connect request and response, as well as the announce request and response are shown in table \ref{udp-tracker}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards. The three types of requests work as follows.
+Tracker servers are the only centralized infrastructure required in the traditional implementation of BitTorrent. Hence it is advisable to reduce bandwidth during tracker requests as much as possible. As \cite{bep15} demonstrates, using the \emph{UDP tracker protocol} instead of HTTP over TCP can reduce traffic by \numprint[\%]{50}. The protocol defines three different types of requests a client can send to the server: connect, announce and scrape. When communicating with a tracker server, first of all a connect request must be sent. Each of these requests is answered by the server with a specific response. Transmitted values of the connect request and response, as well as the announce request and response are shown in table \ref{udp-tracker}. Since UDP datagrams may arrive out of order, the client sends a randomly chosen transaction ID with every request to identify the matching server response afterwards. The three types of requests work as follows.
 
 \paragraph{connect}
 The first step in the UDP tracker protocol is a connect request. It is used to obtain a connection ID from the server, which must be included in following requests. As it is possible to spoof an UDP packet's source IP address, the server could be abused for a denial-of-service amplification attack against a third party. The need for a connection ID on other requests, which trigger larger responses, renders this impossible. The connection ID is valid within the next minute.
 
 \paragraph{announce}
-The announce request includes the same parameters as the HTTP announce request described above. Additional parameters are an unused \texttt{key} value and the \texttt{num\_want} value, allowing to specify the amount of returned peers. The announce response now includes the number of active leechers and seeders in addition to the peer data.
+The announce request includes the same parameters as the HTTP announce request described in section \ref{tracker-server}. Additional parameters are an unused \texttt{key} value and the \texttt{num\_want} value, allowing to specify the amount of returned peers. The announce response now includes the number of active leechers and seeders in addition to the peer data.
 
 \paragraph{scrape}
-Finally a scrape request is defined. Its setup is similar to the announce request, but now shown in table \ref{udp-tracker}. The scrape response gives clients access to the numbers of leechers, seeders and completed downloads as reported by the server. There is no guarantee of validity for these values, since they may be manipulated or chosen by the server freely. An error response package containing a human-readable message may be sent by the server at any time.
+Finally a scrape request is defined. Its setup is similar to the announce request, but now shown in table \ref{udp-tracker}. The scrape response gives clients access to the numbers of leechers, seeders and completed downloads as reported by the server. There is no guarantee of validity for these values, since they may be manipulated or chosen by the server freely. For all requests, an error response package containing a human-readable message may be sent by the server at any time.
 
 \subsection{Peer Wire Protocol}
-The peer protocol is spoken between peers and allows bidirectional communication with predefined messages. At first an initial handshake is exchanged, containing a protocol string, eight bytes reserved for alternate protocol behavior and extensions, as well as the torrent's info hash and the sending peer's ID. The connecting client sends its handshake message first. All following messages begin with an overall length prefix, followed by a type identifier and the payload, if appropriate.
+The peer protocol is spoken between peers and allows bidirectional communication with predefined messages. At first, an initial handshake is exchanged, containing a protocol description string, eight reserved bytes for alternate protocol behavior and extensions, as well as the torrent's info hash and the sending peer's ID. The connecting client sends its handshake message first. All messages begin with an overall length prefix, followed by a numerical type identifier and the payload, if appropriate.
 
-Following the Tit-for-Tat principle of BitTorrent, a peer should try to appear interesting to the remote peer, to encourage him not to close the connection but to deliver pieces of content. This can be done by offering pieces himself, with the \texttt{bitfield} message. It is sent immediately after the handshake to indicate which pieces were already downloaded and verified. When a peer has downloaded additional pieces while the connection was alive, \texttt{have} messages are sent to all connected clients to update the catalog of available pieces.
+Following the Tit-for-Tat principle of BitTorrent, a peer should try to appear interesting to the remote peer, to encourage him not to close the connection but to deliver pieces of content. This can be done by offering pieces himself, with the \emph{bitfield} message. It is sent immediately after the handshake to indicate which pieces a peer has already downloaded and verified. When a peer has downloaded additional pieces while the connection was alive, \emph{have} messages are sent to all connected clients to update the catalog of available pieces.
 
-These are the only two message types relevant in the scope of this work. For completeness, the meanings of further message types are as follows: \texttt{choke} and \texttt{unchoke} express the willingness of a peer to fulfill requests for pieces of a remote peer, for instance for bandwidth management. Similarly \texttt{interested} and \texttt{not interested} indicate whether a peer would start downloading if unchoked, to allow the remote peer to unchoke the right peers. And lastly, the \texttt{request} and \texttt{piece} message, used to request data pieces from the remote peer either within a range or just a single piece, respectively. When requests were sent to multiple clients beforehand to increase download speed, a \texttt{cancel} message is used to revoke a request.
+These are the only two message types relevant in the scope of this work. For completeness, the meanings of further message types are as follows: \emph{choke} and \emph{unchoke} express the willingness of a peer to fulfill requests for pieces of a remote peer, for instance for bandwidth management. Similarly \emph{interested} and \emph{not interested} indicate whether a peer would start downloading if unchoked, to allow the remote peer to unchoke the right peers. And lastly, the \emph{request} and \emph{piece} messages, used to request data pieces from the remote peer either within a range or just a single piece, respectively. When requests were sent to multiple clients beforehand to increase download speed, a \emph{cancel} message is used to revoke a request.
 
 \section{DHT Protocol}
 \label{dht}
