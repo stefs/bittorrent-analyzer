@@ -61,6 +61,7 @@ class SwarmAnalyzer:
 			self.eval_timer = list()
 		self.server_threads = SharedCounter()
 		self.evaluator_threads = SharedCounter()
+		self.tracker_request = DictCounter()
 
 		# Analysis parts, activated via starter methods
 		self.shutdown_request = threading.Event()
@@ -232,7 +233,6 @@ class SwarmAnalyzer:
 					self.error.count('First contact,{}'.format(err))
 				else:
 					self.error.count('Later contact,{}'.format(err))
-				logging.warning('Connection establishment failed: {}'.format(err))
 				self.evaluator_threads.decrement()
 				continue
 			logging.debug('Connection established')
@@ -248,7 +248,6 @@ class SwarmAnalyzer:
 					self.error.count('First contact,{}'.format(err))
 				else:
 					self.error.count('Later contact,{}'.format(err))
-				logging.warning('Peer evaluation failed: {}'.format(err))
 				self.evaluator_threads.decrement()
 				continue
 
@@ -312,9 +311,10 @@ class SwarmAnalyzer:
 					is_first_announce_url = False
 					try:
 						seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
+						self.tracker_request.count('{},{},scrape success,'.format(torrent_key, announce_url))
 					except TrackerError as err:
-						logging.warning('Scrape request failed on torrent {}: {}'.format(torrent_key, err))
 						seeders = completed = leechers = None
+						self.tracker_request.count('{},{},scrape fail,{}'.format(torrent_key, announce_url, err))
 				else:
 					seeders = completed = leechers = None
 
@@ -324,8 +324,9 @@ class SwarmAnalyzer:
 					start = time.perf_counter()
 					tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
 					end = time.perf_counter()
+					self.tracker_request.count('{},{},announce success,'.format(torrent_key, announce_url))
 				except TrackerError as err:
-					logging.warning('Could not receive peers from tracker on torrent {}: {}'.format(torrent_key, err))
+					self.tracker_request.count('{},{},announce fail,{}'.format(torrent_key, announce_url, err))
 				else:
 					# Log recommended interval
 					if config.tracker_request_interval > tracker_interval:
@@ -560,7 +561,8 @@ class SwarmAnalyzer:
 				logging.critical(err)
 
 			# Store peer connection errors
-			self.error.write_csv(self.outfile)
+			self.error.write_csv(self.outfile+'_peer-error.txt')
+			self.tracker_request.write_csv(self.outfile+'_tracker-error.txt')
 
 			# Store incoming peer statistics
 			for id in self.torrents:

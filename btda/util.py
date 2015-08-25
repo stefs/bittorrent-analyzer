@@ -271,7 +271,7 @@ class DictCounter:
 
 	def write_csv(self, name):
 		try:
-			with open(name+'_error.txt', mode='w') as file:
+			with open(name, mode='w') as file:
 				file.write(self.__str__())
 		except OSError as err:
 			logging.error('Failed to write error stats: {}'.format(err))

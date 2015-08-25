@@ -114,6 +114,8 @@ class TrackerCommunicator:
 		sock.settimeout(config.network_timeout)
 		parsed_tracker = urllib.parse.urlparse(self.announce_url)
 		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
+		if None in conn:
+			logging.warning('Bad tracker connection on UDP request: {}'.format(conn))
 
 		# Send connect request
 		connection_id = 0x41727101980
@@ -257,6 +259,8 @@ class TrackerCommunicator:
 		sock.settimeout(config.network_timeout)
 		parsed_tracker = urllib.parse.urlparse(scrape_url)
 		conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
+		if None in conn:
+			logging.warning('Bad tracker connection on UDP scrape: {}'.format(conn))
 
 		# Send connect request
 		connection_id = 0x41727101980
