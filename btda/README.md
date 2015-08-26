@@ -110,7 +110,7 @@ to increase per-user limits. After rebooting, check success with
 Logs are saved in `~/.pymdht/`. If this step is skipped, make sure pymdht is not crashed meanwhile!
 
 ### Start bittorrent-analyzer peer evaluation
-Beware of server overload caused by incoming peers from earlier evaluations. To prevent this, change the used BitTorrent port in the configuration file. The limit of the virtual machine used in this project was about 2,800 simultaneous server threads.
+Beware, that peers from earlier evaluations with other torrents may cause unnecessary load on the server. To prevent this, change the used BitTorrent port in the configuration file. The limit of the virtual machine used in this project was about 2,800 simultaneous server threads.
 
 1. `tmux new-session -s btda`
 2. `source ve/bin/activate`

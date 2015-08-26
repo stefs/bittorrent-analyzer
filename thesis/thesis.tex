@@ -27,8 +27,8 @@
 \SetWatermarkLightness{0.9}
 
 %\usepackage[section, above, below]{placeins} % TODO use maybe
-%\usepackage[noheads]{endfloat} % TODO temporary
-%\renewcommand{\efloatseparator}{\mbox{}}
+\usepackage[noheads]{endfloat} % TODO temporary
+%\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
 
 \usepackage{pgf-umlsd}
 
@@ -527,7 +527,9 @@ The software tool written for this thesis was developed using the version contro
 \section{Dependencies}
 There are a few external dependencies, which are all free and open-source software. The Python module \emph{BencodePy} by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoded messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the Creative Commons Attribution-ShareAlike 3.0 Unported License. In order to run a dedicated DHT node, the tool \emph{pymdht} by \textcite{pymdht} is used.
 
-\section{Functionality}
+\section{Architecture}
+To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, as they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification, these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file.
+
 \begin{figure}
 \centering
 \begin{sequencediagram}
@@ -622,12 +624,45 @@ There are a few external dependencies, which are all free and open-source softwa
   \end{sdblock}
 \end{messcall}
 \end{sequencediagram}
-\caption[Sequence diagram of the BitTorrent Download Analyzer, part 2]{Second part of the sequence diagram of the BitTorrent Download Analyzer.}
+\caption[Sequence diagram of the BitTorrent Download Analyzer, part 2]{Second part of the sequence diagram of the BitTorrent Download Analyzer. Modules are identical to part one in figure \ref{analyzer1}, the diagram was split due to the lack of space on one page.}
 \label{analyzer2}
 \end{figure}
 
-To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, as they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file.
+The BitTorrent Download Analyzer, or BTDA* for short, is structured in the main script, an application module, five helper modules and an utility module. An overview about core tasks is given in the sequence diagrams of figures \ref{analyzer1} and \ref{analyzer2}. To give an overview, first the roles of the modules will be explained.
 
+\paragraph{main.py} This is the main script to be invoked when performing the analysis. It starts the worker threads of the analyzer module. Three main analysis components can be enabled separately with command line options. It uses the following syntax.
+\begin{lstlisting}
+./main.py <options>
+\end{lstlisting}
+\begin{description}
+\item[\texttt{-{}-active}] Actively contact and evaluate peers using the number of threads specified in \config{peer\_evaluation\_threads}.
+\item[\texttt{-{}-passive}] Listen on the port specified in \config{bittorrent\_listen\_port} for incoming peer connections and evaluate these peers.
+\item[\texttt{-{}-dht}] Integrate and control an already running \emph{pymdht} DHT node using Telnet. The UDP port on which the node is running and the localhost Telnet port where \emph{pymdht} can be controlled are set in \config{dht\_node\_port} and \config{dht\_control\_port}, respectively.
+\item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages. It is advised to decrease \config{peer\_evaluation\_threads} to reduce the amount of log output.
+\item[\texttt{-{}-help}] Show this help message and exit.
+\end{description}
+
+\paragraph{analyzer.py} This is an application module which contains the main program logic. It defines all initialization and analysis routines. An coordinated shutdown procedure between all threads is realized with multi-threading lock mechanisms.
+
+\paragraph{torrent.py} The torrent module defines parsers for torrent files and magnet links. It will be uses initially when starting the analysis.
+
+\paragraph{tracker.py} This module provides communication methods with tracker serves. It is able to perform announce and scrape requests using standard HTTP Tracker Protocol as well as the UDP Tracker Protocol. Announce statistics from scrape responses and peer lists from announce responses are parsed and returned.
+
+\paragraph{dht.py} The \emph{pymdht} DHT node has to be started separately and is controlled by this module using a localhost Telnet connection. As \emph{pymdt} is written in Python 2, it could not be integrated directly. The support for control via Telnet is a feature of \emph{pymdt}. The UDP node port and the Telnet control port must be given as arguments when starting \emph{pymdt} and should reflect the values as written in \config{dht\_node\_port} and \config{dht\_control\_port}. The command used in this work to start a \emph{pymdht} node was:
+\begin{lstlisting}
+./run_pymdht_node.py --port=17000 --telnet-port=17001
+\end{lstlisting}
+
+\paragraph{protocol.py} All communication with other peers is handled in the protocol module. It defines methods for sending and receiving bytes using standard socket programming. Methods for sending and receiving handshakes and messages of the Peer Wire Protocol built upon these. Support for the Extension Protocol as well as the Extension for Peers to Send Metadata Files is also established. Finally routines are defined for evaluating a peers download progress and requesting metadata peers with the mentioned extension.
+
+\paragraph{storage.py} The possibility to write results to a SQL database is given with this module. It defines table schemata for a torrent table, a request table, a peer table and a statistics table and provides an API for these tables.
+
+\paragraph{util.py} The util file provides utility methods which are used in all other modules. They are not specific for the application in this software.
+
+\paragraph{config.py} The config file provides detailed parameters for the performed analysis.
+
+\section{Functionality}
+\label{func}
 The main task is to count confirmed downloads by peers of a given torrent. A download is considered as confirmed, when a peer crosses a threshold of downloaded pieces as defined in \config{torrent\_complete\_threshold}. Thus there must be contact with a peer at least twice -- with the amount of downloaded pieces once below and once equal or above the threshold -- in order to be counted. To determine the download progress of as many peers as possible, two tasks have to be done: First, establish contact to peers from every possible source. Second, receive continuous and reliable information about the download progress of every peer.
 
 For reference, a scrape request is sent to the tracker server every few minutes in order to compare our own counting of peer downloads with numbers as reported by the tracker server.
@@ -667,23 +702,6 @@ In order to enable and proof validity of test results some statistics are logged
 Explain implementation of the features:
 
 See btda/README.md/Features
-
-\section{Architecture}
-It is structured in the main script, an application module, five helper modules and an utility module, which will be described in detail.
-
-They have the following roles:
-
-\begin{description}
-  \item[\texttt{main.py}] This is the main script to be invoked when performing the analysis.
-  \item[\texttt{analyzer.py}]
-  \item[\texttt{torrent.py}]
-  \item[\texttt{tracker.py}]
-  \item[\texttt{dht.py}]
-  \item[\texttt{protocol.py}]
-  \item[\texttt{storage.py}]
-  \item[\texttt{util.py}]
-  \item[\texttt{config.py}]
-\end{description}
 
 \section{Justification of Configuration Values}
 \paragraph{\config{network\_timeout}}
@@ -726,20 +744,6 @@ Restrictions and why this does not invalidate the results (hopefully, TBD):
   \item No BitTrorrent Protocol support for getting download progress info
   \item Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol
 \end{itemize}
-
-
-\section{Usage}
-pymdht: It must me started seperately and is controlled automatically using a localhost Telnet connection. It could not be integrated directly, since it is written in Python version 2. The desired UDP node port and the Telnet control port must be given as arguments and should reflect the values written in the \emph{BitTorrent Download Analyzer's} configuration file. The typical command used here is \texttt{run\_pymdht\_node.py -{}-port=17000 -{}-telnet-port=17001}. It is sensible to check whether \emph{pymdht} has crashed before and after each analysis run to ensure complete results.
-
-The main script, named \texttt{btda.py} can be controlled by using the following command line options.
-
-\begin{description}
-  \item[\texttt{-{}-active <threads>}] Actively contact and evaluate peers using the specified number of threads.
-  \item[\texttt{-{}-passive}] Listen on the port specified in the configuration file for incoming connections and evaluate these peers.
-  \item[\texttt{-{}-dht}] Integrate and control an already running \emph{pymdht} \cite{pymdht} DHT node using Telnet. The UDP port on which the node is running and the localhost Telnet port where \emph{pymdht} can be controlled are given via \config{dht\_node\_port} and \config{dht\_control\_port} respectively.
-  \item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages.
-  \item[\texttt{-{}-help}] Show a help message and exit.
-\end{description}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
