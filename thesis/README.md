@@ -26,8 +26,8 @@ Chapter | Progress
 – 2.4 BitTorrent and German Law | ★★★
 – 2.4.1 Illegal Content | ★★★
 – 2.4.2 Collecting IP addresses | ★★★
-3 Implementation | ★★
-– 3.1 Dependencies | ★★
+3 Implementation | ★★★
+– 3.1 Dependencies | ★★★
 – 3.2 Functionality | ★★
 – 3.3 Architecture |
 – 3.4 Justification of Configuration Values |
@@ -35,9 +35,13 @@ Chapter | Progress
 – 3.6 Usage |
 4 Evaluation | ★
 – 4.1 Choosing Torrents | ★★
-– 4.2 Getting Addresses of Peers +1 | ★
-– 4.3 Counting Confirmed Downloads +1 |
-– 4.4 Peer Analysis |
+– 4.2 Getting Addresses of Peers | ★
+– 4.3 Counting Confirmed Downloads |
+– 4.3.1 Problems of this Method |
+– 4.4 Further Analysis of Peers |
+– 4.4.1 Download Speed |
+– 4.4.2 BitTorrent Clients |
+– 4.4.3 Peer's Host Names |
 5 Conclusion and Future Work |
 
 # Todo

@@ -504,7 +504,7 @@ When both peers ascertain support for the Extension Protocol, extended messages 
 
 \subsection{Extension for Peers to Send Metadata Files}
 \label{ext-meta}
-The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} is the first and only extension to make use of the Extension Protocol described here. It enables peers to exchange metadata about torrents in the form of the info dictionary of a torrent. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containing the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is divided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
+The \emph{Extension for Peers to Send Metadata Files} \cite{bep9} is the first and only extension to make use of the Extension Protocol used in this work. It enables peers to exchange metadata about torrents in the form of the info dictionary of a torrent. It places one additional item in the handshake dictionary, namely \texttt{metadata\_size}, containing the size of the bencoded info dictionary in bytes. For transmission, the bencoded info dictionary is divided in pieces of 16 kibibytes. The number of metadata pieces follows from the \texttt{metadata\_size} parameter.
 
 In order for a peer to ask another peer for metadata about a torrent, first the address of another peer is needed. It can be obtained using the DHT network. After establishing a peer connection with both the normal and extended handshakes, every piece must be requested separately from this peer. These \emph{request} messages are answered by the same number of \emph{data} or \emph{reject} messages, depending on whether the opposing client is able to deliver the piece. When all pieces are present, they can be combined and checked against the info hash.
 
@@ -522,13 +522,110 @@ Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Implementation}
-The software tool written for this thesis was developed using the version control system \emph{Git} \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code was published \cite{btda} under the \emph{GNU General Public License} in version 3.
+The software tool written for this thesis was developed using the version control system \emph{Git} \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code will be published \cite{btda} under the license GNU GPLv3 on a later date.
 
 \section{Dependencies}
-There are a few external dependencies, which are all free and open-source software. The \emph{BencodePy} project by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoding messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the \emph{Creative Commons Attribution-ShareAlike 3.0 Unported License}. In order to run a dedicated DHT node, the tool \emph{pymdht}* by \textsc{Raul Jimenez} \cite{pymdht} is used.
-% cite pymdht thesis
+There are a few external dependencies, which are all free and open-source software. The Python module \emph{BencodePy} by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoded messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the Creative Commons Attribution-ShareAlike 3.0 Unported License. In order to run a dedicated DHT node, the tool \emph{pymdht} by \textcite{pymdht} is used.
 
 \section{Functionality}
+\begin{figure}
+\centering
+\begin{sequencediagram}
+\newthread{m}{main}
+\newinst[1.3]{a}{analyzer}
+\newinst[1.1]{t}{torrent}
+\newinst{r}{tracker}
+\newinst{d}{dht}
+\newinst{s}{storage}
+\newinst{p}{protocol}
+\begin{messcall}{m}{import torrents}{a}
+  \begin{call}{a}{read torrents}{t}{torrent data}
+  \end{call}
+\end{messcall}
+\prelevel
+\begin{messcall}{m}{import magnets}{a}
+  \begin{call}{a}{read magnets}{t}{magnets}
+  \end{call}
+  \begin{call}{a}{get peers}{d}{peers}
+  \end{call}
+  \begin{call}{a}{get torrent metadata}{p}{torrent data}
+  \end{call}
+\end{messcall}
+\prelevel
+\begin{messcall}{m}{tracker requests}{a}
+  \begin{sdblock}{Loop}{one thread per torrent}
+    \begin{call}{a}{get peers}{r}{peers}
+    \end{call}
+    \begin{call}{a}{put in peer queue}{a}{}
+    \end{call}
+    \begin{call}{a}{scrape request}{r}{statistics}
+    \end{call}
+    \begin{messcall}{a}{store request and scrape statistics}{s}
+    \end{messcall}
+    \prelevel
+  \end{sdblock}
+\end{messcall}
+\prelevel
+\begin{messcall}{m}{dht requests}{a}
+  \begin{sdblock}{Loop}{in new thread}
+    \begin{call}{a}{get peers}{d}{peers}
+    \end{call}
+    \begin{call}{a}{put in peer queue}{a}{}
+    \end{call}
+    \begin{messcall}{a}{store request statistics}{s}
+    \end{messcall}
+    \prelevel
+  \end{sdblock}
+\end{messcall}
+\end{sequencediagram}
+\caption[Sequence diagram of the BitTorrent Download Analyzer, part 1]{First part of the sequence diagram of the BitTorrent Download Analyzer. One additional threads which is not shown here writes monitoring statistics such as system load, memory consumption and queue lengths to the database.}
+\label{analyzer1}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{sequencediagram}
+\newthread{m}{main}
+\newinst[2]{a}{analyzer}
+\newinst[3]{p}{protocol}
+\newinst{s}{storage}
+\begin{messcall}{m}{peer contacts}{a}
+  \begin{sdblock}{Loop}{in multiple threads}
+    \begin{call}{a}{take from peer queue}{a}{}
+    \end{call}
+    \begin{call}{a}{get progress}{p}{progress}
+    \end{call}
+    \begin{call}{a}{put in visited queue}{a}{}
+    \end{call}
+  \end{sdblock}
+\end{messcall}
+\prelevel
+\begin{messcall}{m}{peer server}{a}
+  \begin{sdblock}{Loop}{in multiple threads}
+    \begin{call}{a}{get progress}{p}{progress}
+    \end{call}
+    \begin{call}{a}{put in visited queue}{a}{}
+    \end{call}
+  \end{sdblock}
+\end{messcall}
+\prelevel
+\begin{messcall}{m}{peer handler}{a}
+  \begin{sdblock}{Loop}{in new thread}
+    \begin{call}{a}{take from visited queue}{a}{}
+    \end{call}
+    \begin{call}{a}{store or update peer}{s}{database id}
+    \end{call}
+    \begin{sdblock}{If}{not from server}
+      \begin{call}{a}{put in peer queue}{a}{}
+      \end{call}
+    \end{sdblock}
+  \end{sdblock}
+\end{messcall}
+\end{sequencediagram}
+\caption[Sequence diagram of the BitTorrent Download Analyzer, part 2]{Second part of the sequence diagram of the BitTorrent Download Analyzer.}
+\label{analyzer2}
+\end{figure}
+
 To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, as they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file.
 
 The main task is to count confirmed downloads by peers of a given torrent. A download is considered as confirmed, when a peer crosses a threshold of downloaded pieces as defined in \config{torrent\_complete\_threshold}. Thus there must be contact with a peer at least twice -- with the amount of downloaded pieces once below and once equal or above the threshold -- in order to be counted. To determine the download progress of as many peers as possible, two tasks have to be done: First, establish contact to peers from every possible source. Second, receive continuous and reliable information about the download progress of every peer.
@@ -545,7 +642,7 @@ Sources for peer's IP addresses and port numbers include announce requests to th
 
 Every peer in the queue has a timestamp assigned and must not be contacted prior to this time. When placed in the queue first, the timestamp is set to the current time. Peers in the queue are visited in parallel, whereby the number of threads can be set in \config{peer\_evaluation\_threads}. The queue is sorted ascending, so if timestamps lie in the past the peer which is due the longest time is chosen, if timestamps lie in the future the thread will wait until the attached time is reached. For threads to be able to react to new peers, waiting is capped to \config{evaluator\_reaction}. When the limit is reached, the peer is put back in queue and another one will be chosen.
 
-When a peer with permitted timestamp is picked, a TCP connection is established and the download progress evaluation initiated. Additionally, incoming connections from peers trying to download pieces are used to gather their download status. Therefore a TCP server is listening on the the port defined in \config{bittorrent\_listen\_port}. On successful download progress extraction results are written to the database and IP address port tuples are linked to their database ID in internal memory for later database updates. Failed contacts or peers with unknown info hashes are ignored.
+When a peer with permitted* timestamp is picked, a TCP connection is established and the download progress evaluation initiated. Additionally, incoming connections from peers trying to download pieces are used to gather their download status. Therefore a TCP server is listening on the the port defined in \config{bittorrent\_listen\_port}. On successful download progress extraction results are written to the database and IP address port tuples are linked to their database ID in internal memory for later database updates. Failed contacts or peers with unknown info hashes are ignored.
 
 \paragraph{Evaluate Download Progress}
 \label{peer-evaluation}
@@ -554,7 +651,7 @@ Once a connection is established with a peer, its download progress must be dete
 Now the only possible approach to acquire the download progress is to compile a combined bitfield from these messages and count the present pieces. The number of total torrent pieces from in the info dictionary helps validating the results.
 
 \paragraph{Peer Database}
-With reference to the peer's database identifier, the IP address and port number are saved in the internal memory in order to update an already stored peer entry in the database at later contact. Time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. Additionally the download speed is calculated between each two consecutive contacts, whereby only an overall maximum is kept.
+With reference to the peer's database identifier, the IP address and port number are saved in the internal memory in order to update an already stored peer entry in the database at later contact. Time and pieces count only of the first* and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. Additionally the download speed is calculated between each two consecutive contacts, whereby only an overall maximum is kept.
 
 Other information about peers stored in the database include an anonymized IP address, the BitTorrent Protocol peer ID, top and second level domain of the hostname, IP geolocation with city, country and continent as determined by the \emph{GeoIP2 API} \cite{geoip2-api}, number of contacts and the original source of the peer's IP address. Afterwards the peer's queue timestamp is updated with the current time plus \config{peer\_revisit\_delay} and it is returned to the queue if \config{torrent\_complete\_threshold} is not reached.
 
@@ -827,7 +924,7 @@ The Evaluation of a peer's download progress was described in section \ref{peer-
 
 The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
 
-\section{Peers Analysis}
+\section{Further Analysis of Peers}
 \subsection{Download Speed}
 filter peers for visits
 
@@ -854,7 +951,7 @@ TODO: Table: Examine hostnames by ISP or seedbox provicers
 \printbibheading[heading=bibintoc]
 \begingroup
 \setlength\labelnumberwidth{0.57cm}
-\printbibliography[heading=subbibintoc, title={Research}, keyword=science]
+\printbibliography[heading=subbibintoc, title={Literature}, keyword=science]
 \printbibliography[heading=subbibintoc, title={Software}, keyword=software]
 \printbibliography[heading=subbibintoc, title={Online}, keyword=online]
 \printbibliography[heading=subbibintoc, title={Other}, notkeyword=science, notkeyword=standard, notkeyword=software, notkeyword=online] % TODO: remove, should be empty *
