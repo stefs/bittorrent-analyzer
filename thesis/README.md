@@ -28,8 +28,13 @@ Chapter | Progress
 – 2.4.2 Collecting IP addresses | ★★★
 3 Implementation | ★★★
 – 3.1 Dependencies | ★★★
-– 3.2 Architecture | ★
-– 3.3 Functionality | ★
+– 3.2 Architecture | ★★ (read)
+– 3.3 Functionality | ★★
+– 3.3.1 Import Torrents | ★
+– 3.3.2 Contact Peers | ★
+– 3.3.3 Evaluate Download Progress | ★
+– 3.3.4 Peer Database| ★
+– 3.3.5 Secondary Statistics | ★
 – 3.4 Justification of Configuration Values |
 – 3.5 Restrictions |
 4 Evaluation | ★
