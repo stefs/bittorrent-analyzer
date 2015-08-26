@@ -57,47 +57,25 @@ Chapter | Progress
 - cite bep 20, bep 29
 - add or remove links from bibliography
 - http scrape in chapter 2?
+- Roter faden/ einfaches lesen.
+* Alle Abkürzungne einführen, evtl. Abkverzeichnis
+* wherby komisch
+* Min 24 h laufzeit
 
 # Begriffserklärung or in place erklärung
 * Dictionary
 * Cryptographic hash
 * Leecher / Seeder / Peer
 
-## Hinweise 2015-07-17
-→ Siehe gedruckte PDF-Notizen!
-
-Mündliche Hinweise:
-
-> revisit delay verkleinern --> veränderung
-> gb in diagramm --> verhältnis scrape vs confirmed
->
-> michael mit drauf
-> keine ein-Zeien Absätze--> Roter Fadden
->
-> Bencode bsp
-> grafik /bsp torent file
-> Alle Abkürzungne einführen, evtl. Abkverzeichnis
-> self weglassen
-> wherby komisch
-> Absatz zwischen tracker Antwort geht unter
-> Aprupter übergang UDP connect, vllt Diagramm oder Ankündigung
->
-> dht protocol graphiken
->
-> torrent ominimal size nicht uri
->
-> Ausführlicher, mehr Text für einfachem Folgen, BitTorrent Kapitel besonders wirr
->
-> Warum Verwendung von Schwellwert? Erklären begründen oder verweisen auf Auswertung (negative Differenz)
->
-> Plots: Karten
->
-> Mehr Torrents
->
-> Min 24 h laufzeit
->
-> scrape values am Ende
-> Abstract
+# Time Table
+* **27.8.:** Test Auswergung, Sec Architecture +++, sec Config ++
+* **28.8.:** Config +++, Restrictions ++, Auswertung
+* **29.8.:** Restrictions +++, Evaluation ++
+* **30.8.:** Evaluation +++, Results++, Conclusion++
+* **31.8.:** Results+++, Conclusion++ Abstract ++, Outline ++
+* **1.9.:** Abstract +++, Outline +++, Todos
+* **2.9.:** Tidy readme, Print thesis, burn CD
+* **3.9.:** (unklar)
 
 ## Resourcces BitTorrent
 * http://www.bittorrent.org/beps/bep_0000.html
