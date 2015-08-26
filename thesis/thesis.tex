@@ -510,14 +510,15 @@ In order for a peer to ask another peer for metadata about a torrent, first the 
 
 \section{BitTorrent and German Law}
 \label{law}
+In the following sections, a short overview is given about the legal situation in Germany regarding topics relevant to this thesis.
+
 \subsection{Illegal Content}
 While there are no legal restrictions on using BitTorrent in general, the download of content without permission of the author or right holder is considered an illegitimate reproduction according to the German Copyright Act \cite[art.~15\,(1),~16]{urhg}. The common exception of private copying \cite[art.~53]{urhg} is not applicable here, since the source is ``obviously unlawfully-produced''.
 
 Even more serious is the upload process always involved in BitTorrent. Illegitimate distribution of proprietary content may be sentenced with imprisonment or a fine \cite[art.~106]{urhg}. More common and often abused \cite{abmahnung} is the system of special notifications \cite[art.~97a]{urhg}, sent from right holders to assumed copyright infringers. These warning letters are supposed to settle the controversy extrajudicial in exchange of a fee. Entitlement of right holders to indemnity and expense allowance exists \cite[art.~97]{urhg}.
 
 \subsection{Collecting IP addresses}
-Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means the anonymization of IP addresses is preferable.*
-% they are not collected any more....
+Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means, the IP addresses of peers were not collected during this work.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Implementation}
