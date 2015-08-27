@@ -372,7 +372,8 @@ class SwarmAnalyzer:
 				visited_peers=self.visited_peers,
 				error=self.error,
 				dht_enabled=self.dht_started,
-				server_threads=self.server_threads)
+				server_threads=self.server_threads,
+				all_outgoing_ips=self.all_outgoing_ips)
 		logging.info('Listening on {}:{} for incomming peer connections'.format(*address))
 
 		# Activate the server in it's own thread
@@ -420,12 +421,6 @@ class SwarmAnalyzer:
 			# Recognize reconnecting peers, port may differ
 			equality = (peer.ip_address, peer.torrent)
 			if peer.source is Source.incoming:
-				# Discard incoming peers, when they were actively contacted before, to prevent double counting
-				if equality in self.all_outgoing_ips:
-					self.visited_peers.task_done()
-					continue
-
-				# Retrieve key for reoccurred incoming peers
 				self.incoming_total.count(peer.torrent)
 				try:
 					peer.key = self.all_incoming_ips[equality]
@@ -447,6 +442,7 @@ class SwarmAnalyzer:
 				continue
 			if peer.key is None and new_peer_key is None:
 				logging.critical('No peer id from database')
+
 
 			# Remember equality information of new incoming peers
 			if new_peer_key:
@@ -710,6 +706,13 @@ class PeerHandler(socketserver.BaseRequestHandler):
 					torrent_id = key
 			if torrent_id is None:
 				self.server.error.count('Incoming peer,Unknown info hash')
+				self.server.server_threads.decrement()
+				return
+
+			# Discard incoming peers, when they were actively contacted before, to prevent double counting
+			equality = (self.client_address[0], torrent_id)
+			if equality in self.server.all_outgoing_ips:
+				self.server.error.count('Incoming peer,Already in outgoing')
 				self.server.server_threads.decrement()
 				return
 
