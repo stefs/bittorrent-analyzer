@@ -119,7 +119,6 @@ class Database:
 		# Create scoped session factory class according to
 		# http://docs.sqlalchemy.org/en/rel_0_9/orm/contextual.html#thread-local-scope
 		self.Session = sqlalchemy.orm.scoped_session(session_factory)
-		self.session_mutex = threading.Lock() # FIXME getting "database is locked" error despite using scoped session
 
 		# Commit timer
 		self.last_peer_commit = 0
@@ -136,13 +135,12 @@ class Database:
 		now = time.perf_counter()
 		if now - self.last_peer_commit > 10:
 			self.last_peer_commit = now
-			with self.session_mutex:
-				try:
-					session.commit()
-				except Exception as err:
-					session.rollback()
-					tb = traceback.format_tb(err.__traceback__)
-					raise DatabaseError('{} during 10 sec peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+			try:
+				session.commit()
+			except Exception as err:
+				session.rollback()
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during 10 sec peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 		# Check if this is a new peer
 		if peer.key is None:
@@ -157,14 +155,13 @@ class Database:
 					last_pieces=None, first_seen=int(timestamp.timestamp()),
 					last_seen=None, max_speed=None, visits=1,
 					source=peer.source.name, torrent=peer.torrent)
-			with self.session_mutex:
-				try:
-					session.add(new_peer)
-					session.commit()
-				except Exception as err:
-					session.rollback()
-					tb = traceback.format_tb(err.__traceback__)
-					raise DatabaseError('{} during store new peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+			try:
+				session.add(new_peer)
+				session.commit()
+			except Exception as err:
+				session.rollback()
+				tb = traceback.format_tb(err.__traceback__)
+				raise DatabaseError('{} during store new peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 			# Return database id
 			database_id = new_peer.id
@@ -201,8 +198,7 @@ class Database:
 			try:
 				session.add(database_peer)
 			except Exception as err:
-				with self.session_mutex:
-					session.rollback()
+				session.rollback()
 				tb = traceback.format_tb(err.__traceback__)
 				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 			logging.debug('Updated peer with database id {}'.format(peer.key))
@@ -241,14 +237,13 @@ class Database:
 				info_hash_hex=torrent.info_hash_hex, pieces_count=torrent.pieces_count,
 				piece_size=torrent.piece_size, complete_threshold=torrent.complete_threshold,
 				filepath=path, display_name=dn, gigabyte=gb)
-		with self.session_mutex:
-			try:
-				session.add(new_torrent)
-				session.commit()
-			except Exception as err:
-				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during torrent storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+		try:
+			session.add(new_torrent)
+			session.commit()
+		except Exception as err:
+			session.rollback()
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during torrent storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 
 		# Return Torrent with key
 		database_id = new_torrent.id
@@ -276,14 +271,13 @@ class Database:
 				leechers=leechers,
 				duration_sec=duration,
 				torrent=torrent)
-		with self.session_mutex:
-			try:
-				session.add(new_request)
-				session.commit()
-			except Exception as err:
-				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+		try:
+			session.add(new_request)
+			session.commit()
+		except Exception as err:
+			session.rollback()
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		logging.info('Stored {} request: {} peers received, {} duplicates, took {} seconds'.format(source.name, received_peers, duplicate_peers, duration))
 
 	## Store statistics about peers
@@ -320,14 +314,13 @@ class Database:
 				memory_mb=memory,
 				server_threads=server_threads,
 				evaluator_threads=evaluator_threads)
-		with self.session_mutex:
-			try:
-				session.add(new_statistic)
-				session.commit()
-			except Exception as err:
-				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during statistic storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+		try:
+			session.add(new_statistic)
+			session.commit()
+		except Exception as err:
+			session.rollback()
+			tb = traceback.format_tb(err.__traceback__)
+			raise DatabaseError('{} during statistic storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
 		logging.info('Stored peer statistic')
 
 	## Relase resources
