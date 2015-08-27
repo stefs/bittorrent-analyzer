@@ -512,13 +512,6 @@ class SwarmAnalyzer:
 				if self.shutdown_request.is_set():
 					break
 
-			# Print stats at DHT node # TODO receive instead of print
-			try:
-				self.dht_conn.print_stats()
-			except Exception as err:
-				tb = traceback.format_tb(err.__traceback__)
-				logging.critical('{} during DHT stats printing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
-
 			# Wait interval
 			logging.info('Waiting {} minutes until next DHT request ...'.format(config.dht_request_interval/60))
 			self.shutdown_request.wait(config.dht_request_interval)
