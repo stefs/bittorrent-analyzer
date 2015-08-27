@@ -27,7 +27,7 @@
 \SetWatermarkLightness{0.9}
 
 %\usepackage[section, above, below]{placeins} % TODO use maybe
-\usepackage[noheads]{endfloat} % TODO temporary
+%\usepackage[noheads]{endfloat} % TODO temporary
 %\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
 
 \usepackage{pgf-umlsd}
@@ -676,7 +676,7 @@ Equally, peers are collected from the DHT network, although only in a single thr
 \subsection{Contact Peers}
 In \config{peer\_revisit\_delay} the time between active visits of a peer from the \emph{peer queue} is specified. To observe this delay, every peer in the \emph{peer queue} has a timestamp assigned to it and must not be contacted prior to this time. When a peer is placed in the queue first, the timestamp is set to zero. After a peer was visited and is put back in the \emph{peer queue}, it is set to the according time in the future. The \emph{peer queue} is sorted ascending according to the timestamp, so peers with small timestamps are evaluated first. The peers of this queue are contacted in parallel in a number of threads as set in \config{peer\_evaluation\_threads}. If one thread gets a peer with a timestamp in the future despite the ascending timestamps, it sleeps until the attached time is reached. For threads to be able to react to new unique peers from tracker or DHT requests, the sleep duration is capped in \config{evaluator\_reaction}. When this limit is reached, the peer is put back in queue and the next one will be chosen.
 
-When a peer is chosen for evaluation, a TCP connection is established and the download progress evaluation initiated. The same download progress evaluation is performed on peers who connect to \config{bittorrent\_listen\_port}, where a TCP server is listening for connections. Incoming peers who send a handshake with an unknown info hash are ignored. All errors from failed peer evaluations, incoming or outgoing, are counted and noted in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory to monitor overall success rates.
+When a peer is chosen for evaluation, a TCP connection is established and the download progress evaluation initiated. The same download progress evaluation is performed on peers who connect to \config{bittorrent\_listen\_port}, where a TCP server is listening for connections. Incoming peers who send a handshake with an unknown info hash are ignored. *[Also, an incoming peer from an IP address which was successfully actively contacted before is ignored, to not count this peer twice.] All errors from failed peer evaluations, incoming or outgoing, are counted and noted in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory to monitor overall success rates.
 
 \subsection{Extracting the Download Progress}
 \label{peer-evaluation}
