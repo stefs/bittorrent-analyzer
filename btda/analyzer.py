@@ -62,7 +62,7 @@ class SwarmAnalyzer:
 		self.server_threads = SharedCounter()
 		self.evaluator_threads = SharedCounter()
 		self.peer_error = DictCounter()
-		self.tracker_request = DictCounter()
+		self.tracker_error = DictCounter()
 
 		# Analysis parts, activated via starter methods
 		self.shutdown_request = threading.Event()
