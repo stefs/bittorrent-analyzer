@@ -28,7 +28,6 @@ class Peer(Base):
 
 	# Types according to http://docs.sqlalchemy.org/en/rel_0_9/core/type_basics.html#generic-types
 	id = sqlalchemy.Column(sqlalchemy.types.Integer, primary_key=True)
-	host = sqlalchemy.Column(sqlalchemy.types.String)
 	client = sqlalchemy.Column(sqlalchemy.types.String)
 	continent = sqlalchemy.Column(sqlalchemy.types.String)
 	country = sqlalchemy.Column(sqlalchemy.types.String)
@@ -126,10 +125,9 @@ class Database:
 
 	## Store a peer's statistic
 	#  @param peer Peer named tuple
-	#  @param host Host name of peer
 	#  @return Database id if peer is new, None else
 	#  @exception DatabaseError
-	def store_peer(self, peer, host):
+	def store_peer(self, peer):
 		# Get thread-local session
 		session = self.Session()
 
@@ -152,7 +150,7 @@ class Database:
 			client = client_from_peerid(peer.id)
 
 			# Write to database
-			new_peer = Peer(host=host, client=client, continent=location[0], country=location[1],
+			new_peer = Peer(client=client, continent=location[0], country=location[1],
 					latitude=location[2], longitude=location[3], first_pieces=peer.pieces,
 					last_pieces=None, first_seen=int(timestamp.timestamp()),
 					last_seen=None, max_speed=None, visits=1,

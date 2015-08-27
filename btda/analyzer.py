@@ -401,7 +401,7 @@ class SwarmAnalyzer:
 		while True:
 			# Get new peer to store
 			peer, result = self.visited_peers.get()
-			rec_peer_id, rec_info_hash, messages, duration, host = result
+			rec_peer_id, rec_info_hash, messages, duration = result
 
 			# Store duration
 			if config.rec_dur_analysis and duration:
@@ -433,7 +433,7 @@ class SwarmAnalyzer:
 
 			# Store evaluated peer and receive database key
 			try:
-				new_peer_key = self.database.store_peer(peer, host)
+				new_peer_key = self.database.store_peer(peer)
 			except Exception as err:
 				self.visited_peers.task_done()
 				logging.critical(err)
