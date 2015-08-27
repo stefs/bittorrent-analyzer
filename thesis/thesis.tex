@@ -689,14 +689,31 @@ The peer contact data and the list of messages and the peer's ID are placed in a
 Finally, the peer is returned to the peer queue. If \config{torrent\_complete\_threshold} is reached the peer will be discarded and not further contacted. Incoming peers, which were placed in the \emph{visited queue} by the server, are not written to the peer queue, as their BitTorrent port is not known.
 
 \subsection{Database}
- On successful download progress extraction results are written to the database and IP address port tuples are linked to their database ID in internal memory for later database updates. 
+\begin{lstlisting}[float, language=SQL, caption={[Schema of the peer table]Schema of the peer table in SQL.}, captionpos=b, label=peer-table]
+CREATE TABLE peer (
+	id INTEGER NOT NULL,
+	host VARCHAR,
+	client VARCHAR,
+	continent VARCHAR,
+	country VARCHAR,
+	latitude FLOAT,
+	longitude FLOAT,
+	first_pieces INTEGER,
+	last_pieces INTEGER,
+	first_seen INTEGER,
+	last_seen INTEGER,
+	max_speed FLOAT,
+	visits INTEGER,
+	source VARCHAR(8),
+	torrent INTEGER,
+	PRIMARY KEY (id),
+	CHECK (source IN ('tracker', 'incoming', 'dht'))
+);
+\end{lstlisting}
 
-With reference to the peer's database identifier, the IP address and port number are saved in the internal memory in order to update an already stored peer entry in the database at later contact. Time and pieces count only of the first* and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. Additionally the download speed is calculated between each two consecutive contacts, whereby only an overall maximum is kept.
+When a peer is first stored to the database, an IP address based geolocation lookup is performed using the \emph{GeoLite2 City Database} mentioned in section \ref{dep}. A country and continent codes, and latitude and longitude coordinates are determined. Then a reverse DNS lookup is performed on the peer's IP address to get information about used hosting providers or ISPs. Also the client identifying part of the peer ID is recorded, as defined in \cite{bep20}. Regarding relevant data to count confirmed downloads, time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. The download speed of peers is calculated between each two consecutive contacts, while only the maximum of speeds measured between two contacts is saved. The SQL table schema of the peer database if given in listing \ref{peer-table}.
 
-Other information about peers stored in the database include an anonymized IP address, the BitTorrent Protocol peer ID, top and second level domain of the hostname, IP geolocation with city, country and continent as determined by the \emph{GeoIP2 API} \cite{geoip2-api}, number of contacts and the original source of the peer's IP address.
-
-
-nonono Afterwards the peer's queue timestamp is updated with the current time plus \config{peer\_revisit\_delay} and it is
+The database ID as returned by SQLite is used for later reference to the peer by the analyzer module, to enable updates of the entry without storing any IP address or peer IP data. When the program is shut down, there is no way to connect a peer in the database to the original person.
 
 \subsection{Secondary Statistics}
 TODO probably out of date
