@@ -13,7 +13,6 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 import geoip2.database
 import maxminddb.errors
-import traceback
 
 # Project modules
 import config
@@ -139,8 +138,7 @@ class Database:
 				session.commit()
 			except Exception as err:
 				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during 10 sec peer commit: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				raise DatabaseError('{} during 10 sec peer commit: {}'.format(type(err).__name__, err))
 
 		# Check if this is a new peer
 		if peer.key is None:
@@ -160,8 +158,7 @@ class Database:
 				session.commit()
 			except Exception as err:
 				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during store new peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				raise DatabaseError('{} during store new peer: {}'.format(type(err).__name__, err))
 
 			# Return database id
 			database_id = new_peer.id
@@ -199,8 +196,7 @@ class Database:
 				session.add(database_peer)
 			except Exception as err:
 				session.rollback()
-				tb = traceback.format_tb(err.__traceback__)
-				raise DatabaseError('{} during update peer: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+				raise DatabaseError('{} during update peer: {}'.format(type(err).__name__, err))
 			logging.debug('Updated peer with database id {}'.format(peer.key))
 
 	## Uses a local GeoIP2 database to geolocate an ip address
@@ -242,8 +238,7 @@ class Database:
 			session.commit()
 		except Exception as err:
 			session.rollback()
-			tb = traceback.format_tb(err.__traceback__)
-			raise DatabaseError('{} during torrent storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+			raise DatabaseError('{} during torrent storing: {}'.format(type(err).__name__, err))
 
 		# Return Torrent with key
 		database_id = new_torrent.id
@@ -276,8 +271,7 @@ class Database:
 			session.commit()
 		except Exception as err:
 			session.rollback()
-			tb = traceback.format_tb(err.__traceback__)
-			raise DatabaseError('{} during request storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+			raise DatabaseError('{} during request storing: {}'.format(type(err).__name__, err))
 		logging.info('Stored {} request: {} peers received, {} duplicates, took {} seconds'.format(source.name, received_peers, duplicate_peers, duration))
 
 	## Store statistics about peers
@@ -319,8 +313,7 @@ class Database:
 			session.commit()
 		except Exception as err:
 			session.rollback()
-			tb = traceback.format_tb(err.__traceback__)
-			raise DatabaseError('{} during statistic storing: {}\n{}'.format(type(err).__name__, err, ''.join(tb)))
+			raise DatabaseError('{} during statistic storing: {}'.format(type(err).__name__, err))
 		logging.info('Stored peer statistic')
 
 	## Relase resources
