@@ -57,11 +57,11 @@ class SwarmAnalyzer:
 		self.active_success = SharedCounter()
 		self.incoming_total = DictCounter()
 		self.incoming_duplicate = DictCounter()
-		self.error = DictCounter()
 		if config.rec_dur_analysis:
 			self.eval_timer = list()
 		self.server_threads = SharedCounter()
 		self.evaluator_threads = SharedCounter()
+		self.peer_error = DictCounter()
 		self.tracker_request = DictCounter()
 
 		# Analysis parts, activated via starter methods
@@ -231,9 +231,9 @@ class SwarmAnalyzer:
 				sock = socket.create_connection((peer.ip_address, peer.port), config.network_timeout)
 			except OSError as err:
 				if peer.key is None:
-					self.error.count('First contact,{}'.format(err))
+					self.peer_error.count('First contact,{}'.format(err))
 				else:
-					self.error.count('Later contact,{}'.format(err))
+					self.peer_error.count('Later contact,{}'.format(err))
 				self.evaluator_threads.decrement()
 				continue
 			logging.debug('Connection established')
@@ -246,9 +246,9 @@ class SwarmAnalyzer:
 			# Handle bad peers
 			except PeerError as err:
 				if peer.key is None:
-					self.error.count('First contact,{}'.format(err))
+					self.peer_error.count('First contact,{}'.format(err))
 				else:
-					self.error.count('Later contact,{}'.format(err))
+					self.peer_error.count('Later contact,{}'.format(err))
 				self.evaluator_threads.decrement()
 				continue
 
@@ -312,10 +312,10 @@ class SwarmAnalyzer:
 					is_first_announce_url = False
 					try:
 						seeders, completed, leechers = tracker_conn.scrape_request(self.torrents[torrent_key].info_hash)
-						self.tracker_request.count('{},{},scrape success,'.format(torrent_key, announce_url))
+						self.tracker_error.count('{},{},scrape success,'.format(torrent_key, announce_url))
 					except TrackerError as err:
 						seeders = completed = leechers = None
-						self.tracker_request.count('{},{},scrape fail,{}'.format(torrent_key, announce_url, err))
+						self.tracker_error.count('{},{},scrape fail,{}'.format(torrent_key, announce_url, err))
 				else:
 					seeders = completed = leechers = None
 
@@ -325,9 +325,9 @@ class SwarmAnalyzer:
 					start = time.perf_counter()
 					tracker_interval, peer_ips = tracker_conn.announce_request(self.torrents[torrent_key].info_hash)
 					end = time.perf_counter()
-					self.tracker_request.count('{},{},announce success,'.format(torrent_key, announce_url))
+					self.tracker_error.count('{},{},announce success,'.format(torrent_key, announce_url))
 				except TrackerError as err:
-					self.tracker_request.count('{},{},announce fail,{}'.format(torrent_key, announce_url, err))
+					self.tracker_error.count('{},{},announce fail,{}'.format(torrent_key, announce_url, err))
 				else:
 					# Log recommended interval
 					if config.tracker_request_interval > tracker_interval:
@@ -370,7 +370,7 @@ class SwarmAnalyzer:
 				own_peer_id=self.own_peer_id,
 				torrents=self.torrents,
 				visited_peers=self.visited_peers,
-				error=self.error,
+				peer_error=self.peer_error,
 				dht_enabled=self.dht_started,
 				server_threads=self.server_threads,
 				all_outgoing_ips=self.all_outgoing_ips)
@@ -562,8 +562,8 @@ class SwarmAnalyzer:
 				logging.critical(err)
 
 			# Store peer connection errors
-			self.error.write_csv(self.outfile+'_peer-error.txt')
-			self.tracker_request.write_csv(self.outfile+'_tracker-error.txt')
+			self.peer_error.write_csv(self.outfile+'_peer-error.txt')
+			self.tracker_error.write_csv(self.outfile+'_tracker-error.txt')
 
 			# Store incoming peer statistics
 			for id in self.torrents:
@@ -690,14 +690,14 @@ class PeerHandler(socketserver.BaseRequestHandler):
 		try:
 			self.request.settimeout(config.network_timeout)
 		except OSError as err:
-			self.server.error.count('Incoming peer,Failed to set timeout')
+			self.server.peer_error.count('Incoming peer,Failed to set timeout')
 			self.server.server_threads.decrement()
 			return
 		logging.info('Evaluating an incoming peer ...')
 		try:
 			result = protocol.evaluate_peer(self.request, self.server.own_peer_id, self.server.dht_enabled)
 		except PeerError as err:
-			self.server.error.count('Incoming peer,{}'.format(err))
+			self.server.peer_error.count('Incoming peer,{}'.format(err))
 		else:
 			# Search received info hash in torrents dict
 			torrent_id = None
@@ -705,14 +705,14 @@ class PeerHandler(socketserver.BaseRequestHandler):
 				if result[1] == self.server.torrents[key].info_hash:
 					torrent_id = key
 			if torrent_id is None:
-				self.server.error.count('Incoming peer,Unknown info hash')
+				self.server.peer_error.count('Incoming peer,Unknown info hash')
 				self.server.server_threads.decrement()
 				return
 
 			# Discard incoming peers, when they were actively contacted before, to prevent double counting
 			equality = (self.client_address[0], torrent_id)
 			if equality in self.server.all_outgoing_ips:
-				self.server.error.count('Incoming peer,Already in outgoing')
+				self.server.peer_error.count('Incoming peer,Already in outgoing')
 				self.server.server_threads.decrement()
 				return
 
