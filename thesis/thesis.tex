@@ -528,7 +528,7 @@ The software tool written for this thesis was developed using the version contro
 There are a few external dependencies, which are all free and open-source software. The Python module \emph{BencodePy} by \textsc{Eric Weast} \cite{bencodepy} provides an encoder and decoder for bencoded messages and values. The \emph{Object Relational Mapper} of \emph{SQLAlchemy} \cite{sqlalchemy} is used to store evaluation results in the \emph{SQLite} database format \cite{sqlite}. The \emph{GeoIP2 API} \cite{geoip2-api} is used to perform IP geolocation lookups in the \emph{GeoLite2 City Database} \cite{geolite2-db}. This database is provided by \textsc{MaxMind, Inc.} under the Creative Commons Attribution-ShareAlike 3.0 Unported License. In order to run a dedicated DHT node, the tool \emph{pymdht} by \textcite{pymdht} is used.
 
 \section{Architecture}
-To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, as they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification, these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file. The input and output directory are defined in \config{input\_path} and \config{output\_path} respectively.
+To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. Torrents and all configuration parameters have to be provided at start, since they cannot be changed later. The program stores results in a SQLite database and runs until manual termination. A configuration file with several variables named \texttt{config.py} is provided. For simplification, these variables will be referred to with the prefix ``\texttt{config.}'' in the following, so \config{x} translates to variable \texttt{x} in the configuration file. The input and output directories are defined in \config{input\_path} and \config{output\_path} respectively.
 
 \begin{figure}
 \centering
@@ -580,7 +580,7 @@ To count confirmed downloads by peers of one or multiple given torrents over a t
   \end{sdblock}
 \end{messcall}
 \end{sequencediagram}
-\caption[Sequence diagram of the BitTorrent Download Analyzer, part 1]{First part of the sequence diagram of the BitTorrent Download Analyzer. All loops are actually running in parallel. One additional thread, which is not shown here, writes monitoring statistics such as system load, memory consumption and queue lengths to the database. Only new unique peers are placed in the peer queue, others are discarded.}
+\caption[Sequence diagram of the BitTorrent Download Analyzer, part 1]{First part of the sequence diagram of the BitTorrent Download Analyzer. All loops are actually running in parallel. One additional thread, which is not shown here, writes monitoring statistics such as system load, memory consumption and queue lengths to the database. Only new unique peers are placed in the \emph{peer queue}, others are discarded.}
 \label{analyzer1}
 \end{figure}
 
@@ -624,11 +624,11 @@ To count confirmed downloads by peers of one or multiple given torrents over a t
   \end{sdblock}
 \end{messcall}
 \end{sequencediagram}
-\caption[Sequence diagram of the BitTorrent Download Analyzer, part 2]{Second part of the sequence diagram of the BitTorrent Download Analyzer. Modules are identical to part one in figure \ref{analyzer1}, the diagram was split due to the lack of space on one page.}
+\caption[Sequence diagram of the BitTorrent Download Analyzer, part 2]{Second part of the sequence diagram of the BitTorrent Download Analyzer. Modules are identical to part one in figure \ref{analyzer1}, the diagram was split due to the lack of space on one page. Information about a peer's download progress is put in the \emph{visited queue} together with the corresponding peer.}
 \label{analyzer2}
 \end{figure}
 
-The BitTorrent Download Analyzer, or BTDA* for short, is structured in the main script, an application module, five helper modules and an utility module. An overview about core tasks is given in the sequence diagrams of figures \ref{analyzer1} and \ref{analyzer2}. To give an overview, first the roles of the modules will be explained. A detailed look on the functionality is given in section \ref{func}.
+The BitTorrent Download Analyzer is structured in a main script, an application module, five helper modules and an utility module. An overview about core tasks is given in the sequence diagrams of figures \ref{analyzer1} and \ref{analyzer2}. To give an overview, first the roles of the modules will be explained. A detailed look on the functionality is given in section \ref{func}.
 
 \paragraph{main.py} This is the main script to be invoked when performing the analysis. It starts the worker threads of the analyzer module. Three main analysis components can be enabled separately with command line options. It uses the following syntax.
 \begin{lstlisting}
@@ -638,28 +638,26 @@ The BitTorrent Download Analyzer, or BTDA* for short, is structured in the main 
 \item[\texttt{-{}-active}] Actively contact and evaluate peers using the number of threads specified in \config{peer\_evaluation\_threads}.
 \item[\texttt{-{}-passive}] Listen on the port specified in \config{bittorrent\_listen\_port} for incoming peer connections and evaluate these peers.
 \item[\texttt{-{}-dht}] Integrate and control an already running \emph{pymdht} DHT node using Telnet. The UDP port on which the node is running and the localhost Telnet port where \emph{pymdht} can be controlled are set in \config{dht\_node\_port} and \config{dht\_control\_port}, respectively.
-\item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages. It is advised to decrease \config{peer\_evaluation\_threads} to reduce the amount of log output.
+\item[\texttt{-{}-debug}] Write log messages to the console instead of a file and include debug messages. When using this flag, it is advised to decrease \config{peer\_evaluation\_threads} to reduce the amount of log output.
 \item[\texttt{-{}-help}] Show this help message and exit.
 \end{description}
 
 \paragraph{analyzer.py} This is an application module which contains the main program logic. It defines all initialization and analysis routines. An coordinated shutdown procedure between all threads is realized with multi-threading lock mechanisms.
 
-\paragraph{torrent.py} The torrent module defines parsers for torrent files and magnet links. It will be uses initially when starting the analysis.
+\paragraph{torrent.py} The torrent module defines parsers for torrent files and magnet links. It is used initially after the analysis is started.
 
 \paragraph{tracker.py} This module provides communication methods with tracker serves. It is able to perform announce and scrape requests using standard HTTP Tracker Protocol as well as the UDP Tracker Protocol. Announce statistics from scrape responses and peer lists from announce responses are parsed and returned.
 
-\paragraph{dht.py} The \emph{pymdht} DHT node has to be started separately and is controlled by this module using a localhost Telnet connection. As \emph{pymdt} is written in Python 2, it could not be integrated directly. The support for control via Telnet is a feature of \emph{pymdt}. The UDP node port and the Telnet control port must be given as arguments when starting \emph{pymdt} and should reflect the values as written in \config{dht\_node\_port} and \config{dht\_control\_port}. The command used in this work to start a \emph{pymdht} node was:
+\paragraph{dht.py} The \emph{pymdht} DHT node has to be started separately and is controlled by this module using a localhost Telnet connection. As \emph{pymdt} is written in Python 2, it could not be integrated directly. The support for control via Telnet was already a feature of \emph{pymdt}, but was slightly altered to only accept local connections from the same machine. The UDP node port and the Telnet control port must be given as arguments when starting \emph{pymdt} and should reflect the values as written in \config{dht\_node\_port} and \config{dht\_control\_port}. The command used in this work to start a \emph{pymdht} node was:
 \begin{lstlisting}
 ./run_pymdht_node.py --port=17000 --telnet-port=17001
 \end{lstlisting}
 
-\paragraph{protocol.py} All communication with other peers is handled in the protocol module. It defines methods for sending and receiving bytes using standard socket programming. Methods for sending and receiving handshakes and messages of the Peer Wire Protocol built upon these. Support for the Extension Protocol as well as the Extension for Peers to Send Metadata Files is also established. Finally routines are defined for evaluating a peers download progress and requesting metadata peers with the mentioned extension.
+\paragraph{protocol.py} All communication with other peers is handled in the protocol module. It defines methods for sending and receiving bytes using standard socket programming. Methods for sending and receiving handshakes and messages of the Peer Wire Protocol built upon these. Support for the Extension Protocol, as well as the Extension for Peers to Send Metadata Files are also established. Finally, routines are defined for receiving all messages from a peer, evaluating the download progress from these, and actually requesting metadata from a peer with the mentioned extension.
 
 \paragraph{storage.py} The possibility to write results to a SQL database is given with this module. It defines table schemata for a torrent table, a request table, a peer table and a statistics table and provides an API for these tables. Additional IP based geolocation with tools provided by \textsc{MaxMind} as described in section \ref{dep} is also performed.
 
-\paragraph{util.py} The util file provides utility methods and classes which are used in all other modules. They are not necessarily specific for the application in this software.
-
-\paragraph{config.py} This config file provides detailed parameters for the performed analysis.
+\paragraph{util.py} The util file provides utility methods and classes which are used in all other modules. They are not necessarily specific for the application in this software. Notable content is a custom queue implementation, which rejects duplicate items even if they were deleted meanwhile, gives feedback whether or not an item was rejected, sorts its content and is thread-safe.
 
 \section{Functionality}
 \label{func}
@@ -673,10 +671,10 @@ Magnet links which should be imported have to be placed in a file as defined by 
 \subsection{Requesting Peers}
 For every registered torrent, an own thread performs announce and scrape requests in an interval defined in \config{tracker\_request\_interval}. While announce requests to collect peers are sent to every tracker of a torrent, scrape requests are only performed on the main tracker from the \texttt{announce} key of the metainfo file. From the scrape request, the three given values of seeders, leechers and completed downloads are recorded. To monitor the operation of the torrent threads, any errors are counted and written in an extra file with the suffix \texttt{\_tracker-error.txt} in the output directory.
 
-Equally, peers are collected from the DHT network, although only in a single thread. As specified in \config{dht\_request\_interval}, requests for peers are sent for each info hash. Peers received from both sources are placed in a peer queue, where they are actively contacted and evaluated later. Only new unique peers are placed in the peer queue. There is only one peer queue for all torrents, but peers are assigned to a certain torrent and may actually be in the queue for multiple torrents. The number of unique and doubly received peers as well as data from scrape requests is stored in the database's \emph{request} table to get statistics about different peer sources.
+Equally, peers are collected from the DHT network, although only in a single thread. As specified in \config{dht\_request\_interval}, requests for peers are sent for each info hash. Peers received from both sources are placed in a \emph{peer queue}, where they are actively contacted and evaluated later. Only new unique peers are placed in the \emph{peer queue}. There is only one \emph{peer queue} for all torrents, but peers are assigned to a certain torrent and may actually be in the queue for multiple torrents. The number of unique and doubly received peers as well as data from scrape requests is stored in the database's \emph{request} table to get statistics about different peer sources.
 
 \subsection{Contact Peers}
-In \config{peer\_revisit\_delay} the time between active visits of a peer from the peer queue is specified. To observe this delay, every peer in the peer queue has a timestamp assigned to it and must not be contacted prior to this time. When a peer is placed in the queue first, the timestamp is set to zero. After a peer was visited and is put back in the peer queue, it is set to the according time in the future. The peer queue is sorted ascending according to the timestamp, so peers with small timestamps are evaluated first. The peers of this queue are contacted in parallel in a number of threads as set in \config{peer\_evaluation\_threads}. If one thread gets a peer with a timestamp in the future despite the ascending timestamps, it sleeps until the attached time is reached. For threads to be able to react to new unique peers from tracker or DHT requests, the sleep duration is capped in \config{evaluator\_reaction}. When this limit is reached, the peer is put back in queue and the next one will be chosen.
+In \config{peer\_revisit\_delay} the time between active visits of a peer from the \emph{peer queue} is specified. To observe this delay, every peer in the \emph{peer queue} has a timestamp assigned to it and must not be contacted prior to this time. When a peer is placed in the queue first, the timestamp is set to zero. After a peer was visited and is put back in the \emph{peer queue}, it is set to the according time in the future. The \emph{peer queue} is sorted ascending according to the timestamp, so peers with small timestamps are evaluated first. The peers of this queue are contacted in parallel in a number of threads as set in \config{peer\_evaluation\_threads}. If one thread gets a peer with a timestamp in the future despite the ascending timestamps, it sleeps until the attached time is reached. For threads to be able to react to new unique peers from tracker or DHT requests, the sleep duration is capped in \config{evaluator\_reaction}. When this limit is reached, the peer is put back in queue and the next one will be chosen.
 
 When a peer is chosen for evaluation, a TCP connection is established and the download progress evaluation initiated. The same download progress evaluation is performed on peers who connect to \config{bittorrent\_listen\_port}, where a TCP server is listening for connections. Incoming peers who send a handshake with an unknown info hash are ignored. All errors from failed peer evaluations, incoming or outgoing, are counted and noted in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory to monitor overall success rates.
 
@@ -686,7 +684,7 @@ Once a connection is established with a peer, its download progress must be dete
 
 The peer contact data and the list of messages and the peer's ID are placed in a tuple and then put in in a separate \emph{visited queue} in order to be processed by another thread. This is the task of the \emph{peer handler} thread from figure \ref{analyzer2}. Using the received messages, it compiles a combined bitfield from these messages and counts the present data pieces. The number of total torrent pieces from in the torrent metadata helps validating the results. The download progress of the peers is then stored in the database, which takes care itself to recognize if a peer was already contacted earlier and can be updated instead.
 
-Finally, the peer is returned to the peer queue. If \config{torrent\_complete\_threshold} is reached the peer will be discarded and not further contacted. Incoming peers, which were placed in the \emph{visited queue} by the server, are not written to the peer queue, as their BitTorrent port is not known.
+Finally, the peer is returned to the \emph{peer queue}. If \config{torrent\_complete\_threshold} is reached the peer will be discarded and not further contacted. Incoming peers, which were placed in the \emph{visited queue} by the server, are not written to the \emph{peer queue}, as their BitTorrent port is not known.
 
 \subsection{Database}
 \begin{lstlisting}[float, language=SQL, caption={[Schema of the peer table]Schema of the peer table in SQL.}, captionpos=b, label=peer-table]
@@ -714,19 +712,6 @@ CREATE TABLE peer (
 When a peer is first stored to the database, an IP address based geolocation lookup is performed using the \emph{GeoLite2 City Database} mentioned in section \ref{dep}. A country and continent codes, and latitude and longitude coordinates are determined. Then a reverse DNS lookup is performed on the peer's IP address to get information about used hosting providers or ISPs. Also the client identifying part of the peer ID is recorded, as defined in \cite{bep20}. Regarding relevant data to count confirmed downloads, time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. The download speed of peers is calculated between each two consecutive contacts, while only the maximum of speeds measured between two contacts is saved. The SQL table schema of the peer database if given in listing \ref{peer-table}.
 
 The database ID as returned by SQLite is used for later reference to the peer by the analyzer module, to enable updates of the entry without storing any IP address or peer IP data. When the program is shut down, there is no way to connect a peer in the database to the original person.
-
-\subsection{Secondary Statistics}
-TODO probably out of date
-
-In order to enable and proof validity of test results some statistics are logged at a certain interval defined in \config{statistic\_interval}. These are the length of the peer queue, length of the queue of visited peers, average workload of peer contact threads, mean time for receiving all messages before timeout. Cumulative values are unique incoming peers, successful initiated contacts, failed initiated contacts at first try, failed initiated contacts at later try and successful evaluated incoming peers.
-
-\dots
-
-\noindent\hrulefill
-
-Explain implementation of the features:
-
-See btda/README.md/Features
 
 \section{Justification of Configuration Values}
 \paragraph{\config{network\_timeout}}
@@ -776,6 +761,8 @@ Restrictions and why this does not invalidate the results (hopefully, TBD):
 Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
 
 [Thread workload and system load were normal as described earlier*.]
+
+TODO In order to enable and proof validity of test results some statistics are logged at a certain interval defined in \config{statistic\_interval}. These are the length of the peer queue, length of the queue of visited peers, average workload of peer contact threads, mean time for receiving all messages before timeout. Cumulative values are unique incoming peers, successful initiated contacts, failed initiated contacts at first try, failed initiated contacts at later try and successful evaluated incoming peers.
 
 \section{Choosing Torrents}
 \begin{table}
@@ -974,6 +961,8 @@ TODO: Table of frequency of BT clients
 
 \subsection{Peer's Host Names}
 TODO: Table: Examine hostnames by ISP or seedbox provicers
+
+Due to the time it takes to perform a reverse DNS lookup, the lookup was disabled in the main analysis run. Same thread database bla bla
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
