@@ -714,7 +714,7 @@ When a peer is first stored to the database, an IP address based geolocation loo
 The database ID as returned by SQLite is used for later reference to the peer by the analyzer module, to enable updates of the entry without storing any IP address or peer IP data. When the program is shut down, there is no way to connect a peer in the database to the original person.
 
 \section{Justification of Configuration Values}
-\paragraph{\config{network\_timeout}}
+\subsection{network\_timeout}
 The timeout for network operations is six seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical since they were observed to be much faster usually. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. Message collection is considered to be complete after the timeout finished without receiving a message.
 
 \begin{figure}
@@ -724,25 +724,25 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 \label{timeout-calibration}
 \end{figure}
 
-To assess a minimum timeout, an analysis with special configuration parameters was performed\footnote{Files: \texttt{2015-08-14\_17-46-44\_faui1-246.sqlite}, \texttt{2015-08-14\_17-46-44\_faui1-246\_timeout.txt}}. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. During this test at \numprint{977301} out of \numprint{1040817} peer contacts the maximum duration for receiving one message was below six seconds, which equals \numprint[\%]{93.9}.
-% TODO config.rec_dur_analysis
+To assess a minimum timeout, an analysis with special configuration parameters was performed\footnote{Files: \texttt{2015-08-14\_17-46-44\_faui1-246.sqlite}, \texttt{2015-08-14\_17-46-44\_faui1-246\_timeout.txt}}. The recording of this value can be enabled with \config{rec\_dur\_analysis}. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. During this test at \numprint{977301} out of \numprint{1040817} peer contacts the maximum duration for receiving one message was below six seconds, which equals \numprint[\%]{93.9}.
 
-\paragraph{\config{torrent\_complete\_threshold}}
-\dots
+\paragraph{torrent\_complete\_threshold}
+This is actually only the threshold, where the analysis module stops to keep track of a peer and will no longer contact him. The threshold used for confirmed download calculation can be chosen separately when compiling download numbers from the database. However, the threshold for download counting must be equal or lower than this threshold, because peers above were not tracked in the first place. The value of \numprint[\%]{98} was chosen, because peer's progress appeared often to stop between \numprint[\%]{98} and \numprint[\%]{100}. So \numprint[\%]{+-2} seems to be the precision of the measured download progress. This suggests, that a threshold above \numprint[\%]{98} only causes pointless traffic.
 
-\paragraph{\config{peer\_evaluation\_threads}}
-\dots
-
-So many, because they are waiting for timeouts the whole time
-
-TODO: Number of threads: workload plot
+\paragraph{peer\_evaluation\_threads}
+This is the number of threads who are contacting peers from the tracker servers and DHT network. In this analysis \numprint{1024} threads were used. Every peer evaluation needs at least six seconds, because the message receiving has to time out. In order to process peers quickly, many threads are needed. Since threads are mostly idle waiting for a timeout, this number of threads is not a problem for system load.
 
 \begin{figure}
 \centering
-%\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_workload}
-\caption[Load parameters during the analysis]{a and b}
-\label{load}
+\includegraphics[width=\textwidth]{graphics/2015-08-26_11-24-21_faui1-246_visits}
+\caption[Number of successful peer visits]{Number of successful peer visits. Outgoing peers are a combination of peers form tracker servers and the DHT network.}
+\label{visits}
 \end{figure}
+
+\paragraph{peer\_revisit\_delay}
+Peers were contacted for their download progress every five minutes. The delay should be as small as possible, to consider peers who stop seeding a torrent instantly after they finished downloading it. Five minutes caused no problem with system resources and peers did not start to block connections due to the frequent contacts.
+
+[Figure \ref{visits} shows the number of visits has no jumps indicating a maximum number of visits]
 
 \section{Restrictions}
 
@@ -765,6 +765,8 @@ Data collection with the BitTorrent Download Analyzer tool was performed on a vi
 [Thread workload and system load were normal as described earlier*.]
 
 TODO In order to enable and proof validity of test results some statistics are logged at a certain interval defined in \config{statistic\_interval}. These are the length of the peer queue, length of the queue of visited peers, average workload of peer contact threads, mean time for receiving all messages before timeout. Cumulative values are unique incoming peers, successful initiated contacts, failed initiated contacts at first try, failed initiated contacts at later try and successful evaluated incoming peers.
+
+[mention the great R scripts!]
 
 \section{Choosing Torrents}
 \begin{table}
@@ -864,6 +866,8 @@ The progression of received peer addresses during the analysis period is shown i
 
 [In general the amount of duplicate received peers is above xx\%*, so presumably many of the addresses known to trackers and the DHT network are collected in this process.]
 
+[view tracker response rates]
+
 \section{Counting Confirmed Downloads}
 \begin{table}
 \centering
@@ -889,6 +893,8 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 [try different thresholds]
 
 [ignore first and last hour]
+
+[reported per hour, confirmed per hour]
 
 \begin{figure}
 \centering
@@ -943,7 +949,7 @@ Incoming peer & Unknown info hash & 399331 & 68.3\% \\
 
 The Evaluation of a peer's download progress was described in section \ref{peer-evaluation}. This process can fail for various reasons. The superficial problems which occurred in this analysis are listed in table \ref{connection-failure}. The table shows every attempt of connecting to a peer and performing the evaluation procedure. Outgoing evaluation attempts were usually* successful. The mainly* appearing error is a timed out peer, which indicates outdated or wrong peer address information. However, the value of failed evaluations on a second or later contact is very low. Regarding incoming peers, most evaluations* failed due to an unknown info hash. This is probably because of other torrents evaluated beforehand from the same IP address and port. The response rate between peers obtained via trackers and peers received through the DHT network was not examined.
 
-The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
+The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee* [see actual incoming dpulicate stats] to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
 
 \section{Further Analysis of Peers}
 \subsection{Download Speed}

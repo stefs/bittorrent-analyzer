@@ -49,11 +49,8 @@ Chapter | Progress
 5 Conclusion and Future Work |
 
 # Todo
-* Compare length with [other](https://www1.cs.fau.de/staff/gruhn)
-* table scheme
+* NEW NEW NEW Discard incoming peers, when they were actively contacted before, to prevent double counting
 * Quantify incoming peers in table `unique-peers` and request history plots
-- change the title to subtitle?
-- github history ok?
 - cite bep 20, bep 29
 - add or remove links from bibliography
 - http scrape in chapter 2?
