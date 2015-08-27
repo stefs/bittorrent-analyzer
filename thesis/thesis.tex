@@ -580,7 +580,7 @@ To count confirmed downloads by peers of one or multiple given torrents over a t
   \end{sdblock}
 \end{messcall}
 \end{sequencediagram}
-\caption[Sequence diagram of the BitTorrent Download Analyzer, part 1]{First part of the sequence diagram of the BitTorrent Download Analyzer. All loops are actually running in parallel. One additional threads which is not shown here writes monitoring statistics such as system load, memory consumption and queue lengths to the database.}
+\caption[Sequence diagram of the BitTorrent Download Analyzer, part 1]{First part of the sequence diagram of the BitTorrent Download Analyzer. All loops are actually running in parallel. One additional thread, which is not shown here, writes monitoring statistics such as system load, memory consumption and queue lengths to the database. Only new unique peers are placed in the peer queue, others are discarded.}
 \label{analyzer1}
 \end{figure}
 
@@ -657,9 +657,9 @@ The BitTorrent Download Analyzer, or BTDA* for short, is structured in the main 
 
 \paragraph{storage.py} The possibility to write results to a SQL database is given with this module. It defines table schemata for a torrent table, a request table, a peer table and a statistics table and provides an API for these tables. Additional IP based geolocation with tools provided by \textsc{MaxMind} as described in section \ref{dep} is also performed.
 
-\paragraph{util.py} The util file provides utility methods which are used in all other modules. They are not specific for the application in this software.
+\paragraph{util.py} The util file provides utility methods and classes which are used in all other modules. They are not necessarily specific for the application in this software.
 
-\paragraph{config.py} The config file provides detailed parameters for the performed analysis.
+\paragraph{config.py} This config file provides detailed parameters for the performed analysis.
 
 \section{Functionality}
 \label{func}
@@ -670,28 +670,33 @@ Beforehand, the torrents to be analyzed are imported. The torrent files are read
 
 Magnet links which should be imported have to be placed in a file as defined by \config{magnet\_file}. There must be on magnet link per line. Since magnet links do not contain the amount and size of the torrent's pieces, but only their info hash, this information must be retrieved from the swarm of other peers. A few peer addresses are gathered with a DHT lookup, then peers are contacted sequentially until the info dictionary could be received using the Extension Protocol and the Extension for Peers to Send Metadata Files. The metadata and source of each imported torrent is stored in the \emph{torrent} table of the database for later reference.
 
-\section{Requesting Peers}
-For every registered torrent, an own thread performs announce and scrape requests in an interval defined in \config{tracker\_request\_interval}. While announce requests to collect peers are sent to every tracker of a torrent, scrape requests are only performed on the main tracker from the \texttt{announce} key of the metainfo file. From the scrape request, the three given values of seeders, leechers and completed downloads are recorded. To monitor the operation of the torrent threads, any errors are written in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory.
+\subsection{Requesting Peers}
+For every registered torrent, an own thread performs announce and scrape requests in an interval defined in \config{tracker\_request\_interval}. While announce requests to collect peers are sent to every tracker of a torrent, scrape requests are only performed on the main tracker from the \texttt{announce} key of the metainfo file. From the scrape request, the three given values of seeders, leechers and completed downloads are recorded. To monitor the operation of the torrent threads, any errors are counted and written in an extra file with the suffix \texttt{\_tracker-error.txt} in the output directory.
 
-Equally are peers collected from the DHT network, although only in a single thread. As specified in \config{dht\_request\_interval}, requests for peers are sent for each info hash. Peers received from both sources are placed in a peer queue, where they are actively evaluated later. Only new unique peers are placed in the peer queue. The number of unique and doubly received peers as well as data from scrape requests is stored in the database's \emph{request} table.
+Equally, peers are collected from the DHT network, although only in a single thread. As specified in \config{dht\_request\_interval}, requests for peers are sent for each info hash. Peers received from both sources are placed in a peer queue, where they are actively contacted and evaluated later. Only new unique peers are placed in the peer queue. There is only one peer queue for all torrents, but peers are assigned to a certain torrent and may actually be in the queue for multiple torrents. The number of unique and doubly received peers as well as data from scrape requests is stored in the database's \emph{request} table to get statistics about different peer sources.
 
 \subsection{Contact Peers}
-Sources for peer's IP addresses and port numbers include announce requests to the tracker server as well as lookups in the BitTorrent DHT network. Both are done in dedicated threads and periodically as defined by \config{tracker\_request\_interval} and \config{dht\_request\_interval}. The received peer addresses are filtered for duplicates and placed in a common queue. Each request procedure is recorded in the database with the number of received peers, duplicate peers and duration for further analysis.
+In \config{peer\_revisit\_delay} the time between active visits of a peer from the peer queue is specified. To observe this delay, every peer in the peer queue has a timestamp assigned to it and must not be contacted prior to this time. When a peer is placed in the queue first, the timestamp is set to zero. After a peer was visited and is put back in the peer queue, it is set to the according time in the future. The peer queue is sorted ascending according to the timestamp, so peers with small timestamps are evaluated first. The peers of this queue are contacted in parallel in a number of threads as set in \config{peer\_evaluation\_threads}. If one thread gets a peer with a timestamp in the future despite the ascending timestamps, it sleeps until the attached time is reached. For threads to be able to react to new unique peers from tracker or DHT requests, the sleep duration is capped in \config{evaluator\_reaction}. When this limit is reached, the peer is put back in queue and the next one will be chosen.
 
-Every peer in the queue has a timestamp assigned and must not be contacted prior to this time. When placed in the queue first, the timestamp is set to the current time. Peers in the queue are visited in parallel, whereby the number of threads can be set in \config{peer\_evaluation\_threads}. The queue is sorted ascending, so if timestamps lie in the past the peer which is due the longest time is chosen, if timestamps lie in the future the thread will wait until the attached time is reached. For threads to be able to react to new peers, waiting is capped to \config{evaluator\_reaction}. When the limit is reached, the peer is put back in queue and another one will be chosen.
+When a peer is chosen for evaluation, a TCP connection is established and the download progress evaluation initiated. The same download progress evaluation is performed on peers who connect to \config{bittorrent\_listen\_port}, where a TCP server is listening for connections. Incoming peers who send a handshake with an unknown info hash are ignored. All errors from failed peer evaluations, incoming or outgoing, are counted and noted in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory to monitor overall success rates.
 
-When a peer with permitted* timestamp is picked, a TCP connection is established and the download progress evaluation initiated. Additionally, incoming connections from peers trying to download pieces are used to gather their download status. Therefore a TCP server is listening on the the port defined in \config{bittorrent\_listen\_port}. On successful download progress extraction results are written to the database and IP address port tuples are linked to their database ID in internal memory for later database updates. Failed contacts or peers with unknown info hashes are ignored.
-
-\subsection{Evaluate Download Progress}
+\subsection{Extracting the Download Progress}
 \label{peer-evaluation}
-Once a connection is established with a peer, its download progress must be determined only using peer messages as defined by the BitTorrent Protocol \cite{bep3}. Since there is no dedicated request command for the number of available pieces, we depend on peer messages sent voluntary by the remote peer. Fortunately it is common to advertise available pieces right after the BitTorrent Protocol handshake with \texttt{bitfield} and \texttt{have} messages. These are stored for every peer contact in a separate queue and processed by another thread. Messages are received until a timeout defined by \config{network\_timeout} hits, which is restarted after every message. Additionally there is a limit on the number of messages named \config{receive\_message\_max} to prevent infinite sessions.
+Once a connection is established with a peer, its download progress must be determined only using peer messages as defined by the BitTorrent Protocol \cite{bep3}. Since there is no dedicated request command for the number of available pieces, we depend on peer messages sent voluntary by the remote peer. Fortunately it is common to advertise available pieces right after the BitTorrent Protocol handshake with \emph{bitfield} and \emph{have} messages. These messages are received until there is no message for a certain amount of time as defined by \config{network\_timeout}. So the timeout is restarted after every message. To prevent potentially infinite sessions, there is a limit on the number of messages named \config{receive\_message\_max}.
 
-Now the only possible approach to acquire the download progress is to compile a combined bitfield from these messages and count the present pieces. The number of total torrent pieces from in the info dictionary helps validating the results.
+The peer contact data and the list of messages and the peer's ID are placed in a tuple and then put in in a separate \emph{visited queue} in order to be processed by another thread. This is the task of the \emph{peer handler} thread from figure \ref{analyzer2}. Using the received messages, it compiles a combined bitfield from these messages and counts the present data pieces. The number of total torrent pieces from in the torrent metadata helps validating the results. The download progress of the peers is then stored in the database, which takes care itself to recognize if a peer was already contacted earlier and can be updated instead.
 
-\subsection{Peer Database}
+Finally, the peer is returned to the peer queue. If \config{torrent\_complete\_threshold} is reached the peer will be discarded and not further contacted. Incoming peers, which were placed in the \emph{visited queue} by the server, are not written to the peer queue, as their BitTorrent port is not known.
+
+\subsection{Database}
+ On successful download progress extraction results are written to the database and IP address port tuples are linked to their database ID in internal memory for later database updates. 
+
 With reference to the peer's database identifier, the IP address and port number are saved in the internal memory in order to update an already stored peer entry in the database at later contact. Time and pieces count only of the first* and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. Additionally the download speed is calculated between each two consecutive contacts, whereby only an overall maximum is kept.
 
-Other information about peers stored in the database include an anonymized IP address, the BitTorrent Protocol peer ID, top and second level domain of the hostname, IP geolocation with city, country and continent as determined by the \emph{GeoIP2 API} \cite{geoip2-api}, number of contacts and the original source of the peer's IP address. Afterwards the peer's queue timestamp is updated with the current time plus \config{peer\_revisit\_delay} and it is returned to the queue if \config{torrent\_complete\_threshold} is not reached.
+Other information about peers stored in the database include an anonymized IP address, the BitTorrent Protocol peer ID, top and second level domain of the hostname, IP geolocation with city, country and continent as determined by the \emph{GeoIP2 API} \cite{geoip2-api}, number of contacts and the original source of the peer's IP address.
+
+
+nonono Afterwards the peer's queue timestamp is updated with the current time plus \config{peer\_revisit\_delay} and it is
 
 \subsection{Secondary Statistics}
 TODO probably out of date

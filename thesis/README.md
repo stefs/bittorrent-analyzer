@@ -30,11 +30,12 @@ Chapter | Progress
 – 3.1 Dependencies | ★★★
 – 3.2 Architecture | ★★ (read)
 – 3.3 Functionality | ★★
-– 3.3.1 Import Torrents | ★
-– 3.3.2 Contact Peers | ★
-– 3.3.3 Evaluate Download Progress | ★
-– 3.3.4 Peer Database| ★
-– 3.3.5 Secondary Statistics | ★
+– 3.3.1 Import Torrents | ★★
+– 3.3.2 Requesting Peers | ★★
+– 3.3.3 Contact Peers | ★★
+– 3.3.4 Extracting the Download Progress | ★★
+– 3.3.5 Peer Database| ★
+– 3.3.6 Secondary Statistics | ★
 – 3.4 Justification of Configuration Values |
 – 3.5 Restrictions |
 4 Evaluation | ★

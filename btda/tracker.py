@@ -75,7 +75,7 @@ class TrackerCommunicator:
 					response_bencoded = http_response.read()
 				else:
 					raise TrackerError('HTTP response status code is {}'.format(http_response.status))
-		except (urllib.error.URLError, http.client.HTTPException) as err:
+		except (urllib.error.URLError, http.client.HTTPException, OSError) as err:
 			raise TrackerError('Get request failed: ' + str(err))
 
 		# Decode response
@@ -215,7 +215,7 @@ class TrackerCommunicator:
 					response_bencoded = http_response.read()
 				else:
 					raise TrackerError('HTTP response status code is {}'.format(http_response.status))
-		except (urllib.error.URLError, http.client.HTTPException) as err:
+		except (urllib.error.URLError, http.client.HTTPException, OSError) as err:
 			raise TrackerError('Get request failed: ' + str(err))
 
 		# Decode response
