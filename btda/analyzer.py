@@ -44,7 +44,8 @@ class SwarmAnalyzer:
 		# Smart queue for peer management
 		self.peers = PrioritySetQueue()
 		self.visited_peers = queue.Queue()
-		self.all_incoming_peers = dict() # equality check
+		self.all_incoming_ips = dict()
+		self.all_outgoing_ips = set()
 
 		# Create torrent dictionary
 		self.torrents = dict()
@@ -416,12 +417,18 @@ class SwarmAnalyzer:
 			remaining = self.torrents[peer.torrent].pieces_count - downloaded_pieces
 			logging.debug('Peer reports to have {} pieces, {} remaining, equals {}%'.format(downloaded_pieces, remaining, percentage))
 
-			# Retrieve key for reoccurred incoming peers
+			# Recognize reconnecting peers, port may differ
+			equality = (peer.ip_address, peer.torrent)
 			if peer.source is Source.incoming:
+				# Discard incoming peers, when they were actively contacted before, to prevent double counting
+				if equality in self.all_outgoing_ips:
+					self.visited_peers.task_done()
+					continue
+
+				# Retrieve key for reoccurred incoming peers
 				self.incoming_total.count(peer.torrent)
-				equality = (peer.ip_address, peer.torrent) # Port differs every time
 				try:
-					peer.key = self.all_incoming_peers[equality]
+					peer.key = self.all_incoming_ips[equality]
 				except KeyError:
 					pass
 				else:
@@ -441,10 +448,15 @@ class SwarmAnalyzer:
 			if peer.key is None and new_peer_key is None:
 				logging.critical('No peer id from database')
 
-			# Remember equality information of new incoming peers and discard all incoming
+			# Remember equality information of new incoming peers
+			if new_peer_key:
+				if peer.source is Source.incoming:
+					self.all_incoming_ips[equality] = new_peer_key
+				else:
+					self.all_outgoing_ips.add(equality)
+
+			# Discard all incoming
 			if peer.source is Source.incoming:
-				if peer.key is None:
-					self.all_incoming_peers[equality] = new_peer_key
 				self.visited_peers.task_done()
 				continue
 
@@ -545,7 +557,7 @@ class SwarmAnalyzer:
 				self.database.store_statistic(
 						peer_queue=len(self.peers),
 						visited_queue=self.visited_peers.qsize(),
-						unique_incoming=len(self.all_incoming_peers),
+						unique_incoming=len(self.all_incoming_ips),
 						success_active=self.active_success.get(),
 						thread_workload=self.timer.read(),
 						server_threads=self.server_threads.get(),
@@ -663,8 +675,6 @@ class PeerEvaluationServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 	def __init__(self, server_address, RequestHandlerClass, **server_args):
 		# Parent class parameter
 		self.allow_reuse_address = True
-		self.all_incoming_ips = set()
-		self.all_incoming_ips_lock = threading.Lock()
 
 		# Call base constructor
 		socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
