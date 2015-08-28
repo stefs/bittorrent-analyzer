@@ -90,7 +90,7 @@
 
 \maketitle
 \end{titlepage}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \vspace*{\fill}
 \noindent
@@ -101,7 +101,7 @@
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.\\
 To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/4.0/}.
 \cleardoublepage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \pagestyle{plain}
 \pagenumbering{roman}
@@ -145,7 +145,7 @@ Erlangen, \today
 Stefan Schindler \quad\null
 \end{flushright}
 \cleardoublepage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \vspace*{\fill}
 \begin{center}
@@ -165,16 +165,16 @@ Zusammenfassung auf Deutsch
 Zusammenfassung auf Englisch
 \end{quote}
 \vspace*{\fill}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \tableofcontents
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \listoffigures
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \listoftables
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Some general information on the context and setting
 \chapter{Introduction}
@@ -255,7 +255,7 @@ Further notable related research areas concentrate on extent \cite{locher2006fre
 % A big thank you for the support to
 \section{Acknowledgments}
 I want to thank Philipp Klein for discussing methods and implementation as well as troubleshooting the virtual machine used for data collection, Michael Gruhn for discussing ideas, and the RRZE for providing the virtual machine and handling any unjustified copyright warning letters.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Background}
 This chapter explaines technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} file to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed concerning relevant German copyright and privacy laws in section \ref{law}.
@@ -518,7 +518,7 @@ Even more serious is the upload process always involved in BitTorrent. Illegitim
 
 \subsection{Collecting IP addresses}
 Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. It introduces a concept of personal data which includes ``any information [...] of an [...] identifiable individual'' \cite[sec.~3\,(1)]{bdsg}. The collection of personal data is inadmissible without consent of the concerned person \cite[sec.~4]{bdsg}; other exceptions permitted by this Act do not apply. It is disputed whether IP addresses are within the definition of personal data \cite{ip}, so to comply with the law by all means, the IP addresses of peers were not collected during this work.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Implementation}
 The software tool written for this thesis was developed using the version control system \emph{Git} \cite{git} in conjunction with a private online repository provided by \textsc{GitHub}. The source code will be published \cite{btda} under the license GNU GPLv3 on a later date.
@@ -742,19 +742,16 @@ This is actually only the threshold, where the analysis module stops to keep tra
 This is the number of threads who are contacting peers from the tracker servers and DHT network. In this analysis \numprint{1024} threads were used. Every peer evaluation needs at least six seconds, because the message receiving has to time out. In order to process peers quickly, many threads are needed. Since threads are mostly idle waiting for a timeout, this number of threads is not a problem for system load.
 
 \section{Restrictions}
-
-Restrictions and why this does not invalidate the results (hopefully, TBD):
-
+To get most complete results, the BitTorrent Download Analyzer aims to collect data from as many peers as possible. Unfortunately, there are still a few restrictions for peer sources in comparison to real BitTorrent clients. This is due to the high implementation and development effort which would be necessary to integrate each of those. For each restriction it will be discussed shortly, why it does not harm this work at large.
 \begin{itemize}
-  \item No support for IPv6 on HTTP, UDP or DHT requests
-  \item No support for the Micro Transport Protocol ($\mu$TP)
-  \item No support for Peer exchange (PeX)
-  \item No support for the Tracker exchange extension (BEP 28)
-  \item No support for the BitTorrent Local Tracker Discovery Protocol (BEP 22)
-  \item No BitTrorrent Protocol support for getting download progress info
-  \item Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol
+\item No support for IPv6 addresses from HTTP announce requests \cite{bep7} or the separate IPv6 DHT network \cite{bep32}. A measurement study \cite[sec.~4.2.]{vyncke2012measuring} from 2011 for IPv6 traffic in BitTorrent networks found between \numprint[\%]{1} and \numprint[\%]{4} of peers using IPv6.
+\item No support for the Micro Transport Protocol ($\mu$TP or uTP) \cite{bep29}, which enables UDP communication between peers. Peers can support this in addition to the Peer Wire Protocol for better bandwidth management. Users can configure clients to only use uTP, but this may limit download speeds.
+\item No support for peer exchange (PeX). This enables peers to exchange peer lists among each with simple messages. Currently there are different implementations in use, an official BEP does not yet exist.
+\item No support for the Tracker exchange extension \cite{bep28}, which enables peers to exchange announce URLs of tracker servers. This is useful for magnet links without any trackers or torrent files with missing important trackers. All torrents investigated in this work have at least *\numprint{0} trackers, see section \ref{addr}.
+\item No support for the Azureus DHT network, which is a separate DHT network from Mainline DHT. Peer numbers in the Azureus DHT network are significantly lower \cite[table~5]{drachen2011distribution}.
 \end{itemize}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
 Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
@@ -949,6 +946,12 @@ The Evaluation of a peer's download progress was described in section \ref{peer-
 
 The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee* [see actual incoming dpulicate stats] to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
 
+[No BitTrorrent Protocol support for getting download progress info]
+
+[Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol]
+
+[maybe move this whole section to Conclusion]
+
 \section{Further Analysis of Peers}
 \subsection{Download Speed}
 filter peers for visits
@@ -969,7 +972,7 @@ TODO: Table of frequency of BT clients
 TODO: Table: Examine hostnames by ISP or seedbox provicers
 
 Due to the time it takes to perform a reverse DNS lookup, the lookup was disabled in the main analysis run. Same thread database bla bla
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
 \begin{figure}
@@ -981,8 +984,9 @@ Due to the time it takes to perform a reverse DNS lookup, the lookup was disable
 
 The number of successful revisits of peers is often too low, as shown in figure \ref{visits}. This could indicate, that peers only participate very shortly in a torrent. However, this could also suggest a problem in the process of recontacting peers.
 
+
 \dots
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \printbibheading[heading=bibintoc]
 \begingroup

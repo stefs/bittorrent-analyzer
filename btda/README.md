@@ -29,7 +29,7 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * No support for encrypted peer connections.
 
 ## Known Issues
-* Despite using the supposedly *scoped\_session* of SQLAlchemy, "database is locked" errors are reported for an unknown reason. This occurs when storing requests or statistics, not when storing peers. The current workaroud is to apply faild SQL statements, which are all recorded in the logfile, to the database afterwards.
+* Despite using the supposedly *scoped\_session* of SQLAlchemy, "database is locked" errors are reported for an unknown reason. This occurs when storing requests or statistics, not when storing peers. The current workaroud is to apply faild SQL statements, which are all recorded in the logfile, to the database afterwards with the `evaluation/sql_from_log.py` script.
 * The coude base could use a major refactoring pass. For instane, the starter functions of the analyzer module should be converted in some kind of analysis units as classes with a common interface. 
 
 ## Installation
@@ -73,7 +73,7 @@ Beware, that peers from earlier evaluations with other torrents may cause unnece
     source ve/bin/activate
     ./main.py -apd
 
-Usage hints can be viewed with flag `-h`. The analysis can be stopped with Ctrl+C. Results are saved in `output/<time_host>.sqlite`. Check if all torrents were imported as expected in the `torrent` table of the database. Check log file with `grep "ERROR\|CRITICAL" <time_host>.log`. Look for unusual errors in the `<time_host>_peer_error.txt` and `<time_host>_tracker_error.txt` outfile. Also, check columns `thread_workload`, `load_average` and `memory_mb` of the `statistic` table in the database with the [evaluation](../evaluation/) script `workload.r`.
+Usage hints can be viewed with flag `-h`. The analysis can be stopped with Ctrl+C. Results are saved in `output/<time_host>.sqlite`. Check if all torrents were imported as expected in the `torrent` table of the database. Check log file with `grep "ERROR\|CRITICAL" <time_host>.log`. Look for unusual errors in the `<time_host>_peer_error.txt` and `<time_host>_tracker_error.txt` outfile. Also, check columns `thread_workload`, `load_average` and `memory_mb` of the `statistic` table in the database with the script `/evaluation/workload.r`.
 
 ## Copyright
 Copyright © 2015 Stefan Schindler  
