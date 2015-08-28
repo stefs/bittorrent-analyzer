@@ -661,7 +661,7 @@ The BitTorrent Download Analyzer is structured in a main script, an application 
 
 \section{Functionality}
 \label{func}
-The main task is the counting confirmed downloads by peers of a given torrent. A download is considered as confirmed, when a peer crosses a threshold of downloaded pieces as defined in \config{torrent\_complete\_threshold}. To count a peer, there must be contact with him at least twice because of this -- with the amount of downloaded pieces once below and once equal or above the threshold. This can be achieved with the BitTorrent Download Analyzer as described in the sequence diagram of figures \ref{analyzer1} and \ref{analyzer2}. Its operation will now be explained in detail.
+The main task is the counting confirmed downloads by peers of a given torrent. A download is considered as confirmed, when a peer crosses a threshold of downloaded pieces as defined in \config{torrent\_complete\_threshold}. To count a peer, there must be contact with him at least twice because of this -- with the amount of downloaded pieces once below and once equal or above the threshold. This can be achieved with the BitTorrent Download Analyzer as described in the sequence diagram of figures \ref{analyzer1} and \ref{analyzer2}. Its operation will now be explained in detail. For all actions the same peer ID was used.
 
 \subsection{Import Torrents}
 Beforehand, the torrents to be analyzed are imported. The torrent files are read from the input directory and are detected by their \texttt{.torrent} file name extension. Following the specification of metainfo files from \cite{bep3}, the announce URL, info hash, pieces count and pieces size are extracted. An additional parameter which may be present in the metainfo file is \texttt{announce-list}, which adds support for torrents with multiple trackers. All of them are stored and later used for getting peers.
@@ -676,7 +676,7 @@ Equally, peers are collected from the DHT network, although only in a single thr
 \subsection{Contact Peers}
 In \config{peer\_revisit\_delay} the time between active visits of a peer from the \emph{peer queue} is specified. To observe this delay, every peer in the \emph{peer queue} has a timestamp assigned to it and must not be contacted prior to this time. When a peer is placed in the queue first, the timestamp is set to zero. After a peer was visited and is put back in the \emph{peer queue}, it is set to the according time in the future. The \emph{peer queue} is sorted ascending according to the timestamp, so peers with small timestamps are evaluated first. The peers of this queue are contacted in parallel in a number of threads as set in \config{peer\_evaluation\_threads}. If one thread gets a peer with a timestamp in the future despite the ascending timestamps, it sleeps until the attached time is reached. For threads to be able to react to new unique peers from tracker or DHT requests, the sleep duration is capped in \config{evaluator\_reaction}. When this limit is reached, the peer is put back in queue and the next one will be chosen.
 
-When a peer is chosen for evaluation, a TCP connection is established and the download progress evaluation initiated. The same download progress evaluation is performed on peers who connect to \config{bittorrent\_listen\_port}, where a TCP server is listening for connections. Incoming peers who send a handshake with an unknown info hash are ignored. *[Also, an incoming peer from an IP address which was successfully actively contacted before is ignored, to not count this peer twice.] All errors from failed peer evaluations, incoming or outgoing, are counted and noted in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory to monitor overall success rates.
+When a peer is chosen for evaluation, a TCP connection is established and the download progress evaluation initiated. The same download progress evaluation is performed on peers who connect to \config{bittorrent\_listen\_port}, where a TCP server is listening for connections. Incoming peers who send a handshake with an unknown info hash are ignored. Also, an incoming peer from an IP address which was successfully actively contacted before is ignored, to not count this peer twice. All errors from failed peer evaluations, incoming or outgoing, are counted and noted in an extra file with the suffix \texttt{\_peer-error.txt} in the output directory to monitor overall success rates.
 
 \subsection{Extracting the Download Progress}
 \label{peer-evaluation}
@@ -714,7 +714,7 @@ When a peer is first stored to the database, an IP address based geolocation loo
 The database ID as returned by SQLite is used for later reference to the peer by the analyzer module, to enable updates of the entry without storing any IP address or peer IP data. When the program is shut down, there is no way to connect a peer in the database to the original person.
 
 \section{Justification of Configuration Values}
-\subsection{network\_timeout}
+\paragraph{network\_timeout}
 The timeout for network operations is six seconds. It is used when asking the BitTorrent tracker or DHT node for peers and when asking other peers for metadata. These cases are uncritical since they were observed to be much faster usually. The important spot of application is during the peer evaluation process. While all messages are received from a peer, the timeout resets after every message. Message collection is considered to be complete after the timeout finished without receiving a message.
 
 \begin{figure}
@@ -726,23 +726,20 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 
 To assess a minimum timeout, an analysis with special configuration parameters was performed\footnote{Files: \texttt{2015-08-14\_17-46-44\_faui1-246.sqlite}, \texttt{2015-08-14\_17-46-44\_faui1-246\_timeout.txt}}. The recording of this value can be enabled with \config{rec\_dur\_analysis}. Here the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. During this test at \numprint{977301} out of \numprint{1040817} peer contacts the maximum duration for receiving one message was below six seconds, which equals \numprint[\%]{93.9}.
 
+\paragraph{receive\_message\_max}
+When collecting all messages from a peer, a maximum of *\numprint{128} are considered. This limit is in place, to prohibit infinite peer sessions. Only *\numprint[\%]{0} of evaluations reached this maximum, others stopped because of the timeout or another error.
+
+\paragraph{peer\_revisit\_delay}
+Peers were contacted for their download progress every five minutes. The delay should be as small as possible, to consider peers who stop seeding a torrent instantly after they finished downloading it. Five minutes caused no problem with system resources.
+
+\paragraph{tracker\_request\_interval and dht\_request\_interval}
+Both request interval were set at five minutes. The high rates of duplicate peers received as discussed later in section \ref{addr}, shows that this is quite enough to cover the majority of peers.
+
 \paragraph{torrent\_complete\_threshold}
 This is actually only the threshold, where the analysis module stops to keep track of a peer and will no longer contact him. The threshold used for confirmed download calculation can be chosen separately when compiling download numbers from the database. However, the threshold for download counting must be equal or lower than this threshold, because peers above were not tracked in the first place. The value of \numprint[\%]{98} was chosen, because peer's progress appeared often to stop between \numprint[\%]{98} and \numprint[\%]{100}. So \numprint[\%]{+-2} seems to be the precision of the measured download progress. This suggests, that a threshold above \numprint[\%]{98} only causes pointless traffic.
 
 \paragraph{peer\_evaluation\_threads}
 This is the number of threads who are contacting peers from the tracker servers and DHT network. In this analysis \numprint{1024} threads were used. Every peer evaluation needs at least six seconds, because the message receiving has to time out. In order to process peers quickly, many threads are needed. Since threads are mostly idle waiting for a timeout, this number of threads is not a problem for system load.
-
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{graphics/2015-08-26_11-24-21_faui1-246_visits}
-\caption[Number of successful peer visits]{Number of successful peer visits. Outgoing peers are a combination of peers form tracker servers and the DHT network.}
-\label{visits}
-\end{figure}
-
-\paragraph{peer\_revisit\_delay}
-Peers were contacted for their download progress every five minutes. The delay should be as small as possible, to consider peers who stop seeding a torrent instantly after they finished downloading it. Five minutes caused no problem with system resources and peers did not start to block connections due to the frequent contacts.
-
-[Figure \ref{visits} shows the number of visits has no jumps indicating a maximum number of visits]
 
 \section{Restrictions}
 
@@ -838,6 +835,7 @@ Popular torrents were often found to be registered on multiple tracker sites, wh
 Popular torrents were chosen regarding leecher numbers, despite the website sorting by the sum of seeders and leechers. Set B only contains only torrent smaller than \numprint[GB]{10} since larger torrents are less pupular in comparision. The 27 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
 
 \section{Getting Addresses of Peers}
+\label{addr}
 \begin{table}
 \centering
 \begin{tabular}{lrrrr}
@@ -974,6 +972,15 @@ Due to the time it takes to perform a reverse DNS lookup, the lookup was disable
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth, page=2]{graphics/2015-08-27_21-03-31_faui1-246_visits}
+\caption[CDF of successful peer visits per source]{CDF of successful peer visits per source. Only peers of which the download progress was evaluated successfully at least once are included in this figure. A lower graph is better as it indicates more visits per peer. Most of the peers who were contacted actively could only visited once. Incoming peers try to get pieces usually a few times, while many of them stop trying after the first or the eighth attempt. Some even never stop trying.}
+\label{visits}
+\end{figure}
+
+The number of successful revisits of peers is often too low, as shown in figure \ref{visits}. This could indicate, that peers only participate very shortly in a torrent. However, this could also suggest a problem in the process of recontacting peers.
+
 \dots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -27,8 +27,6 @@ visits <- ret[[1]]
 
 # Prepare data
 print(head(visits))
-visits$type <- ifelse(visits$source=="incoming", "incoming", "outgoing")
-visits$source <- NULL
 visits_c <- count(visits)
 visits_c <- visits_c[visits_c$visits<=20,]
 print(summary(visits))
@@ -37,16 +35,16 @@ print(summary(visits_c))
 # Create file
 outfile = sub(".sqlite", "_visits.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=10, height=3)
+pdf(outfile, width=8, height=2.5)
 
 # Plot with ggplot2
 print(
-	ggplot(visits_c, aes(x=factor(visits), y=freq, fill=type)) +
+	ggplot(visits_c, aes(x=factor(visits), y=freq, fill=source)) +
 	geom_bar(stat="identity", position="dodge") +
 	labs(x="Visits", y="Peers")
 )
 print(
-	ggplot(visits, aes(x=visits, colour=type)) +
+	ggplot(visits, aes(x=visits, colour=source)) +
 	stat_ecdf(size=1) +
 	scale_x_continuous(breaks=10^(0:3)) +
 	coord_trans(x = "log10", limx=c(1, 1000)) +

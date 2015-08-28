@@ -35,7 +35,7 @@ Chapter | Progress
 – 3.3.3 Contact Peers | ★★
 – 3.3.4 Extracting the Download Progress | ★★
 – 3.3.5 Database | ★★
-– 3.4 Justification of Configuration Values |
+– 3.4 Justification of Configuration Values | ★★
 – 3.5 Restrictions |
 4 Evaluation | ★
 – 4.1 Choosing Torrents | ★★
