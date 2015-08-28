@@ -1,5 +1,37 @@
 # Analysis of BitTorrent Trackers and Peers
-## Progress
+## Abstract
+...
+
+## Todo
+* Quantify incoming peers in table `unique-peers` and request history plots
+* http scrape in chapter 2?
+* Alle Abkürzungne einführen, evtl. Abkverzeichnis
+* Min 24 h laufzeit
+* Send Torrents to RRZE
+
+### Final Reading
+* Roter faden/ einfaches lesen.
+* Begriffserklärung or in place: Dictionary, Cryptographic hash, Leecher / Seeder / Peer
+* Explain all abbreviations
+* No wherby
+* New fact: [Mainline DHT](https://en.wikipedia.org/wiki/Mainline_DHT)
+* New fact: Discard incoming peers, when they were actively contacted before, to prevent double counting
+* Check bibliography file for errors, add or remove links
+* Check spelling with automatic tool
+
+### Time Table
+Today | Date | Task | Done
+--- | --- | --- | ---
+ | 27.8. | Architecture +++ | Test Auswergung, Config ++
+→ | 28.8. | Config +++, Auswertung | Restrictions ++
+ | 29.8. | Restrictions +++, Evaluation ++
+ | 30.8. | Evaluation +++, Results++, Conclusion++
+ | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
+ | 1.9. | Abstract +++, Outline +++, Todos
+ | 2.9. | Tidy readme, Print thesis, burn CD
+ | 3.9. | (unklar)
+
+### Progress
 ★ first pass / ★★ good / ★★★ ready
 
 Chapter | Progress
@@ -13,30 +45,7 @@ Chapter | Progress
 – 1.5 Outline |
 – 1.6 Acknowledgments | ★★★
 2 Background | ★★★
-– 2.1 BitTorrent Protocol | ★★★
-– 2.1.1 Bencoding | ★★★
-– 2.1.2 Metainfo File | ★★★
-– 2.1.3 Tracker Server | ★★★
-– 2.1.4 UDP Tracker Protocol | ★★★
-– 2.1.5 Peer Wire Protocol | ★★★
-– 2.2 DHT Protocol | ★★★
-– 2.3 Magnet Link | ★★★
-– 2.3.1 Extension Protocol | ★★★
-– 2.3.2 Extension for Peers to Send Metadata Files | ★★★
-– 2.4 BitTorrent and German Law | ★★★
-– 2.4.1 Illegal Content | ★★★
-– 2.4.2 Collecting IP addresses | ★★★
 3 Implementation | ★★★
-– 3.1 Dependencies | ★★★
-– 3.2 Architecture | ★★★
-– 3.3 Functionality | ★★
-– 3.3.1 Import Torrents | ★★
-– 3.3.2 Requesting Peers | ★★
-– 3.3.3 Contact Peers | ★★
-– 3.3.4 Extracting the Download Progress | ★★
-– 3.3.5 Database | ★★
-– 3.4 Justification of Configuration Values | ★★
-– 3.5 Restrictions | ★★
 4 Evaluation | ★
 – 4.1 Choosing Torrents | ★★
 – 4.2 Getting Addresses of Peers | ★
@@ -47,38 +56,3 @@ Chapter | Progress
 – 4.4.2 BitTorrent Clients |
 – 4.4.3 Peer's Host Names |
 5 Conclusion and Future Work |
-
-# Todo
-* NEW NEW NEW Discard incoming peers, when they were actively contacted before, to prevent double counting
-* Quantify incoming peers in table `unique-peers` and request history plots
-- cite bep 20, bep 29
-- add or remove links from bibliography
-- http scrape in chapter 2?
-- Roter faden/ einfaches lesen.
-* Alle Abkürzungne einführen, evtl. Abkverzeichnis
-* wherby komisch
-* Min 24 h laufzeit
-* Send Torrents to RRZE
-
-# Begriffserklärung or in place erklärung
-* Dictionary
-* Cryptographic hash
-* Leecher / Seeder / Peer
-
-# Time Table
-* **27.8.:** Test Auswergung, Sec Architecture +++, sec Config ++
-* **28.8.:** Config +++, Restrictions ++, Auswertung
-* **29.8.:** Restrictions +++, Evaluation ++
-* **30.8.:** Evaluation +++, Results++, Conclusion++
-* **31.8.:** Results+++, Conclusion++ Abstract ++, Outline ++
-* **1.9.:** Abstract +++, Outline +++, Todos
-* **2.9.:** Tidy readme, Print thesis, burn CD
-* **3.9.:** (unklar)
-
-## Resourcces BitTorrent
-* http://www.bittorrent.org/beps/bep_0000.html
-* https://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_States
-* https://en.wikipedia.org/wiki/Date_and_time_notation_in_the_United_Kingdom
-* https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Dates_and_numbers#Dates.2C_months_and_years
-* https://wiki.theory.org/BitTorrentSpecification
-* http://people.kth.se/~rauljc/p2p11/
