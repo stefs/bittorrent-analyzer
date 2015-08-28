@@ -58,6 +58,7 @@ Chapter | Progress
 * Alle Abkürzungne einführen, evtl. Abkverzeichnis
 * wherby komisch
 * Min 24 h laufzeit
+* Send Torrents to RRZE
 
 # Begriffserklärung or in place erklärung
 * Dictionary
