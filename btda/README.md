@@ -68,7 +68,7 @@ First, checkout the [pymdht repository](https://github.com/rauljim/pymdht). To h
 Logs are saved in `~/.pymdht/`. If *pymdht* was already running, make sure it is not crashed meanwhile.
 
 ### BitTorrent Download Analyzer
-Beware, that peers from earlier evaluations with other torrents may cause unnecessary load on the server. To prevent this, change the used BitTorrent port in the configuration file. The limit of the virtual machine used in this project was about 2,800 simultaneous server threads.
+Beware, that peers from earlier evaluations with other torrents may cause unnecessary load on the server. To prevent this, change the used BitTorrent port in the configuration file. The limit of the virtual machine used in this project was about 3,000 simultaneous server threads.
 
     source ve/bin/activate
     ./main.py -apd

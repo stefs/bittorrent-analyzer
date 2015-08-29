@@ -49,15 +49,14 @@ print(head(statistic))
 # Create file
 outfile = sub(".sqlite", "_workload.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=8.5, height=10)
+pdf(outfile, width=9, height=12)
 
 # Plot with ggplot2
 print(
-	ggplot(data=statistic, aes(x=timestamp, y=value, group=variable)) +
-    geom_line() +
-    geom_point() +
-    facet_grid(variable ~ ., scales="free_y") +
-    ylim(0, NA) +
+	ggplot(data=statistic, aes(x=timestamp, y=value)) +
+	geom_line(size=1) +
+	facet_grid(variable ~ ., scales="free_y") +
+	ylim(0, NA) +
 	labs(x="Time UTC", y=NULL) +
 	theme(legend.position="none")
 )

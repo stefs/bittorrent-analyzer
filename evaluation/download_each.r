@@ -85,7 +85,7 @@ aggregate_complete <- function(requests) {
 	groups <- list(group_hour=requests$timestamp)
 	requests <- aggregate(values_df, by=groups, FUN=min)
 	# Calculate change per hour
-	requests$downloads <- append(diff(requests$downloads), NA)
+	requests$downloads <- append(NA, diff(requests$downloads))
 	requests <- requests[complete.cases(requests$downloads),]
 	# Return result
 	return(requests)
@@ -124,7 +124,7 @@ print(head(requests))
 # Data per torrent
 outfile = sub(".sqlite", "_download_each.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=10.5, height=3.7)
+pdf(outfile, width=9, height=3.5)
 for (torrent in unique(downloads$group_torrent)) {
 	# Make description
 	info <- torrents[torrents$id==torrent,]
@@ -139,22 +139,22 @@ for (torrent in unique(downloads$group_torrent)) {
 	} else {
 		scrape <- aggregate_complete(filtered)
 	}
-	print(scrape)
+	print(head(scrape))
 
 	# Confirmed data
 	confirmed <- filter_download(downloads, torrent)
-	print(confirmed)
+	print(head(confirmed))
 
 	# Merge on timestamp
 	scrape$category <- "scrape"
 	confirmed$category <- "confirmed"
 	total <- rbind(scrape, confirmed)
 	total <- total[complete.cases(total$group_hour),]
-	print(total)
+	print(head(total))
 
 	# Plot with ggplot2
 	print(
-		ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
+		ggplot(total, aes(x=factor(group_hour), y=downloads, fill=category)) +
 		geom_bar(stat="identity", position="dodge") +
 		theme(axis.text.x=element_text(angle=90, hjust=1)) +
 		labs(title=description, x="Time UTC (day/hour)", y="Downloads")

@@ -66,37 +66,41 @@ merge_peers <- function(request, all_torrents) {
 		group_hour=request$group_hour,
 		group_torrent=gt,
 		peers=request$duplicate,
-		category=paste(request$group_source, "duplicate", sep="-")
+		source=request$group_source,
+		status="duplicate"
 	)
 	# assemble new part
 	new <- data.frame(
 		group_hour=request$group_hour,
 		group_torrent=gt,
 		peers=request$new,
-		category=paste(request$group_source, "unique", sep="-")
+		source=request$group_source,
+		status="unique"
 	)
 	# merge parts vertically
 	request <- rbind(duplicate, new)
-	# factorize category with custom order
-	request$category <- factor(request$category, levels=c(
-		"tracker-unique",
-		"tracker-duplicate",
-		"dht-unique",
-		"dht-duplicate",
-		"incoming-unique",
-		"incoming-duplicate"
+	# factorize for custom order
+	request$source <- factor(request$source, levels=c(
+		"tracker",
+		"dht",
+		"incoming"
+	))
+	request$status <- factor(request$status, levels=c(
+		"unique",
+		"duplicate"
 	))
 	# Return result
 	return(request)
 }
 
-plot_source <- function(data, description) {
+plot_source <- function(data, title=NULL) {
 	# Plot with ggplot2 with bar order according to category
 	print(
-		ggplot(data, aes(factor(group_hour), peers, fill=category, order=as.numeric(category))) +
+		ggplot(data, aes(x=factor(group_hour), y=peers, fill=source, order=as.numeric(source))) +
 		geom_bar(stat="identity", position="stack") +
+		facet_grid(status ~ .) +
 		theme(axis.text.x=element_text(angle=90, hjust=1)) +
-		labs(title=description, x="Time UTC (day/hour)", y="Peers")
+		labs(title=title, x="Time UTC (day/hour)", y="Peers")
 	)
 }
 
@@ -131,11 +135,11 @@ if (all_torrents) {
 }
 outfile = sub(".sqlite", suffix, args[2])
 stopifnot(outfile != args[2])
-pdf(outfile, width=10.5, height=3.7)
+pdf(outfile, width=9, height=4)
 
 # Decide if summary of all torrents or plot per torrent
 if (all_torrents) {
-	plot_source(request, NULL)
+	plot_source(request)
 } else {
 	for (id in unique(request$group_torrent)) {
 		# Make description
@@ -146,7 +150,7 @@ if (all_torrents) {
 		# Plot current torrent
 		filtered <- filter_request(request, id)
 		print(head(filtered))
-		plot_source(filtered, description)
+		plot_source(filtered, title=description)
 	}
 }
 print(paste("Plot written to", outfile))

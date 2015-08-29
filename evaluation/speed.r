@@ -128,7 +128,7 @@ pdf(outfile, width=5, height=4)
 
 # Plot with ggplot2
 print(
-	ggplot(data=peer, aes(x=factor(peer$country), y=kbyteps)) +
+	ggplot(data=peer, aes(x=factor(country), y=kbyteps)) +
 	stat_ydensity(scale="count") +
 	#geom_boxplot() +
 	scale_y_log10() +

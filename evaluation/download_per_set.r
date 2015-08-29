@@ -91,7 +91,7 @@ aggregate_scrape <- function(requests) {
 			next
 		}
 		# Convert downloads from cumulative to difference
-		curr_requests$downloads <- append(diff(curr_requests$completed), NA)
+		curr_requests$downloads <- append(NA, diff(curr_requests$completed))
 		curr_requests$completed <- NULL
 		# Append to result
 		scrape <- rbind(scrape, curr_requests)
@@ -155,7 +155,7 @@ print(description)
 
 # Plot with ggplot2
 print(
-	ggplot(total, aes(factor(total$group_hour), downloads, fill=category)) +
+	ggplot(total, aes(x=factor(group_hour), y=downloads, fill=category)) +
 	geom_bar(stat="identity", position="dodge") +
 	theme(axis.text.x=element_text(angle=90, hjust=1)) +
 	labs(title=description, x="Time UTC (day/hour)", y="Downloads")

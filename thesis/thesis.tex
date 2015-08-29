@@ -26,7 +26,7 @@
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
 
-%\usepackage[section, above, below]{placeins} % TODO use maybe
+\usepackage[section]{placeins} % TODO use maybe
 %\usepackage[noheads]{endfloat} % TODO temporary
 %\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
 
@@ -181,7 +181,7 @@ Zusammenfassung auf Englisch
 \pagestyle{headings}
 \pagenumbering{arabic}
 % BitTorrent by Cohen, a decentralized network
-In 2008*, \textsc{Bram Cohen} published the specification for a decentralized file sharing protocol called \emph{BitTorrent}. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enables software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to distribute manipulated content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
+Bram Cohen published \cite{cohen2003incentives} his idea for a decentralized file sharing protocol called \emph{BitTorrent} in 2003. It soon became the most used file sharing technology, since it enables users to publish and distribute collections of large files easily. The main advantage is the peer-to-peer technology used for data transfer, eliminating the need for central file servers with heavy load or even costly content distribution networks. On top of that, the integrated file validation using the cryptographic hash function SHA-1 enables software clients to verify received data. This makes the protocol robust against transmission errors and malicious peers trying to distribute manipulated content. Finally, BitTorrent can operate over slow and unreliable connections exceptionally well, because the payload is split in small pieces of data which can be sent in arbitrary order and received from different participants.
 
 \begin{table}
 \centering
@@ -751,6 +751,13 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_workload}
+\caption[Monitoring parameters during the analysis]{System parameters and queue lengths for monitoring.}
+\label{workload}
+\end{figure}
+
 Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
 
 [Thread workload and system load were normal as described earlier*.]
@@ -832,25 +839,28 @@ Popular torrents were chosen regarding leecher numbers, despite the website sort
 \label{addr}
 \begin{table}
 \centering
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrr}
 \toprule
-Source & Total & Unique & New & Unique per Hour \\
+Source & Total & Unique & New \\
 \midrule
-Tracker server & 5 & 2 & 3\,\% \\
-DHT network & 10 & 2 & 3\,\% \\
-Incoming peers & 1 & 2 & 3\,\% \\
+Tracker server & \numprint{4575653} & \numprint{494825} & \numprint[\%]{10.81} \\
+DHT network & \numprint{2338442} & \numprint{456241} & \numprint[\%]{19.51} \\
+Incoming peers & \numprint{4765909} & \numprint{174464} & \numprint[\%]{3.66} \\
+\emph{Total} & \numprint{11680004} & \numprint{1125530} & \numprint[\%]{9.64} \\
 \bottomrule
 \end{tabular}
-\caption[Received peer addresses per source]{Total and unique received peer \textbf{addresses} per source. \emph{Tracker server} and the \emph{DHT network} are actively contacted for new peers. Values of \emph{incoming peers} only include peers whose download progress was evaluated successfully. The duration to calculate the \emph{unique per hour} value is \numprint[h]{48}*, as mentioned earlier.}
+\caption[Received peer addresses per source]{Total and unique received peer addresses per source for all torrents. The ratio of new \emph{tracker} and \emph{DHT} peers depends mainly on the request interval for new peers. Numbers of \emph{incoming peers} only include those where the download progress was evaluated successfully. Numbers of \emph{total} received peers may overlap between sources in this table. Numbers of \emph{unique} peers do not overlap between sources, each peer is only counted as unique one time. This is why the distribution between sources may not represent uniqueness per source in general, but only in this data set. Numbers were acquired from the \emph{request} database table.}
 \label{unique-peers}
 \end{table}
+% SQL Total: select sum(received\_peers) from request where source='tracker';
+% SQL Unique: select sum(received\_peers) - sum(duplicate\_peers) from request where source='<source>';
 
 Peers from all sources were considered, namely from the tracker server, the DHT network and incoming connections. The total number collected across all torrents during this analysis in regards to their source is shown in table \ref{unique-peers}. Since the \emph{incoming peers} data point in this table only includes peers when their download progress was successfully evaluated, the ratio of \numprint[\%]{95}* new incoming peers implies that $1-\numprint[\%]{95}=\numprint[\%]{5}$* of unique incoming peers contacted us a second time, despite not receiving any torrent data.
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-19_20-43-43_faui1-246_source_all_torrents}
-\caption[Development of received peer addresses per source]{Development of received peer \textbf{addresses} per source for all torrents, on average. New peers from the tracker server and the DHT network are requested every five minutes. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. The values \emph{incoming-unique} and \emph{incoming-duplicate} only include peers after their download progress was extracted successfully. The analysis lasted \range.}
+\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_source_all_torrents}
+\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with a few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. Values have the same characteristics as described in table \ref{unique-peers}: \emph{Incoming} peers only include successfully evaluated ones, \emph{unique} peers do not overlap between sources, \emph{duplicate} peers may overlap between sources. The analysis lasted \range.}
 \label{request-history}
 \end{figure}
 
@@ -859,6 +869,8 @@ The progression of received peer addresses during the analysis period is shown i
 [In general the amount of duplicate received peers is above xx\%*, so presumably many of the addresses known to trackers and the DHT network are collected in this process.]
 
 [view tracker response rates]
+
+[]
 
 \section{Counting Confirmed Downloads}
 \begin{table}
@@ -887,6 +899,8 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 [ignore first and last hour]
 
 [reported per hour, confirmed per hour]
+
+[scrape only gives hint, only from main tracker, not the truth]
 
 \begin{figure}
 \centering

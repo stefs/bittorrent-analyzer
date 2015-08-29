@@ -35,7 +35,7 @@ print(summary(visits_c))
 # Create file
 outfile = sub(".sqlite", "_visits.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=8, height=2.5)
+pdf(outfile, width=9, height=2.8)
 
 # Plot with ggplot2
 print(
