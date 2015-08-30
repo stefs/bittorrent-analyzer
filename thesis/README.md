@@ -49,7 +49,7 @@ Chapter | Progress
 3 Implementation | ★★★
 4 Evaluation | ★★ (new data: 2015-08-29_17-10)
 – 4.1 Choosing Torrents | ★★
-– 4.2 Getting Addresses of Peers | ★
+– 4.2 Getting Addresses of Peers | ★★
 – 4.3 Counting Confirmed Downloads |
 – 4.3.1 Problems of this Method |
 – 4.4 Further Analysis of Peers |
