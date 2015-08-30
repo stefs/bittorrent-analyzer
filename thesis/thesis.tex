@@ -794,44 +794,42 @@ Rank & Site name & Domain name & Alexa Rank \\
 \label{torrentsites}
 \end{table}
 
-Due to the distributed nature of BitTorrent, there unfortunately is no complete list or for all torrents currently active. Thus external data about popularity of torrents is needed, even if there is no guarantee of correctness. So to determine most popular torrent directory sites the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
+Due to the distributed nature of BitTorrent, there unfortunately is no complete list or for all active torrents. External data about popularity of torrents is needed, even if there is no guarantee of completeness. To get an overview of torrent directory sites and determine the most popular ones, the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
 
 \begin{table}
 \centering
-\begin{tabular}{lrlrrr}
+\begin{tabular}{lrlr}
 \toprule
-Set & ID & Torrent name & Size & Leechers & Seeders \\
+Set & ID & Name & Size \\
 \midrule
-A & 1 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 4 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 8 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 11 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 13 & torrent\_name & 3.0\,GB & 42 & 23 \\
-B & 3 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 6 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 9 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 10 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 14 & torrent\_name & 3.0\,GB & 42 & 23 \\
-C & 5 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 7 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 12 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 15 & torrent\_name & 3.0\,GB & 42 & 23 \\
-& 16 & torrent\_name & 3.0\,GB & 42 & 23 \\
+A & 1 &  & \numprint[GB]{0.00} \\
+& 4 &  & \numprint[GB]{0.00} \\
+& 8 &  & \numprint[GB]{0.00} \\
+& 11 &  & \numprint[GB]{0.00} \\
+& 13 &  & \numprint[GB]{0.00} \\
+B & 3 &  & \numprint[GB]{0.00} \\
+& 6 &  & \numprint[GB]{0.00} \\
+& 9 &  & \numprint[GB]{0.00} \\
+& 10 &  & \numprint[GB]{0.00} \\
+& 14 &  & \numprint[GB]{0.00} \\
+C & 5 &  & \numprint[GB]{0.00} \\
+& 7 &  & \numprint[GB]{0.00} \\
+& 12 &  & \numprint[GB]{0.00} \\
+& 15 &  & \numprint[GB]{0.00} \\
+& 16 &  & \numprint[GB]{0.00} \\
 \bottomrule
 \end{tabular}
-\caption[List of torrent chosen for evaluation]{* List of the 20 most popular torrents according to meta-search engine \textsc{Torrentz} \cite{torrentz}. At the end are five torrents above \numprint[GB]{5} and five recently published torrents . Selection was made on August 42, 2015, 11:00. The \emph{ID} was chosen by the SQLite database used for storage during the analysis.}
+\caption[List of torrent chosen for evaluation]{List of 18 popular torrents according to meta-search engine \textsc{Torrentz} \cite{torrentz}. The selection was made on August 42, 2015, 11:00. The \emph{ID} was chosen by the SQLite database.}
 \label{torrents}
 \end{table}
 
-Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across various torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen:
-
+Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across these torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen, because the torrent size has high influence on further results.
 \begin{itemize}
-  \item Set A: The 8 most popular torrents below \numprint[GB]{1} % (1,4,8,11,13)
-  \item Set B: The 8 most popular torrents above \numprint[GB]{1} % (3,6,9,10,14)
-  \item Set C: The 8 most popular torrents above \numprint[GB]{10} % (5,7,12,15,16)
+  \item Set A: The 6 most popular torrents below \numprint[GB]{1}
+  \item Set B: The 6 most popular torrents between \numprint[GB]{1} and  \numprint[GB]{10}
+  \item Set C: The 6 most popular torrents above \numprint[GB]{10}
 \end{itemize}
-
-Popular torrents were chosen regarding leecher numbers, despite the website sorting by the sum of seeders and leechers. Set B only contains only torrent smaller than \numprint[GB]{10} since larger torrents are less pupular in comparision. The 27 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
+For an indicator of popularity leecher numbers were used, despite the website sorting by the sum of seeders and leechers. The 18 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
 
 \section{Getting Addresses of Peers}
 \label{addr}
