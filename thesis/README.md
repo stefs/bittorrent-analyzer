@@ -25,8 +25,8 @@ Today | Date | Task | Done
 --- | --- | --- | ---
   | 27.8. | | test evaluation, Architecture, Functionallity, Config
   | 28.8. | evaluation | Architecture, Functionallity, Config, Restrictions
-→ | 29.8. | Evaluation ++
-  | 30.8. | Evaluation +++, Results++, Conclusion++
+  | 29.8. | Evaluation ++ | (strange tracker scrape, noticable unique tracker peers)
+→ | 30.8. | Evaluation +++, Results++, Conclusion++
   | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
   |  1.9. | Abstract +++, Outline +++, Todos
   |  2.9. | Tidy readme, Print thesis, burn CD
@@ -55,5 +55,5 @@ Chapter | Progress
 – 4.4 Further Analysis of Peers |
 – 4.4.1 Download Speed |
 – 4.4.2 BitTorrent Clients |
-– 4.4.3 Peer's Host Names |
+– 4.4.3 Peer's Host Names | ★★
 5 Conclusion and Future Work |

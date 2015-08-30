@@ -22,11 +22,11 @@ read_db <- function(path, torrent_set) {
 
 remove_ip <- function(name) {
 	part <- unlist(strsplit(name, "-"))
-	numb <- as.integer(part)
-	keep <- is.na(numb) | numb >= 256
+	number <- as.integer(part)
+	keep <- is.na(number) | number >= 256
 	main <- part[keep]
-	shor <- paste(main, collapse="-")
-	return(shor)
+	short <- paste(main, collapse="-")
+	return(short)
 }
 
 aggregate_host <- function(host) {
@@ -62,13 +62,13 @@ print(host)
 # Create file for ggplot
 outfile = sub(".sqlite", "_hostnames.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=4)
+pdf(outfile, width=9, height=3.75)
 
 # Plot with ggplot2
 print(
 	ggplot(data=host, aes(x=x, y=freq)) +
 	geom_bar(stat="identity") +
-	labs(x="Hostname", y="Count") +
+	labs(x="Hostname", y="Peers") +
 	theme(axis.text.x=element_text(angle=90, hjust=1))
 )
 print(paste("Plot written to", outfile))
