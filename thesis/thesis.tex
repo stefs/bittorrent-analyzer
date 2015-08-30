@@ -67,12 +67,12 @@
 \begin{titlepage}
 \titlehead{
   \begin{tabularx}{\textwidth}{lXr}
-  \parbox{2.5cm}{\includegraphics[width=2.5cm]{graphics/fau-logo}} &
+  \parbox{2.5cm}{\includegraphics[width=2.5cm]{fau-logo}} &
   \parbox{8.5cm}{\centering
   Lehrstuhl für Informatik 1 \\
   Friedrich-Alexander-Universität \\
   Erlangen-Nürnberg} &
-  \parbox{2.5cm}{\includegraphics[width=2.5cm]{graphics/i1-logo}}
+  \parbox{2.5cm}{\includegraphics[width=2.5cm]{i1-logo}}
   \end{tabularx}
 }
 \subject{Bachelor Thesis}
@@ -94,7 +94,7 @@
 
 \vspace*{\fill}
 \noindent
-\raisebox{-0.07cm}{\includegraphics[width=2.3cm]{graphics/by-sa}}\quad Copyright © 2015 Stefan Schindler
+\raisebox{-0.07cm}{\includegraphics[width=2.3cm]{by-sa}}\quad Copyright © 2015 Stefan Schindler
 \medskip
 
 \noindent
@@ -717,7 +717,7 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-14_17-46-44_faui1-246_timeout}
+\includegraphics[width=\textwidth]{../result/2015-08-14_17-46-44_faui1-246_timeout}
 \caption{Duration of receiving one peer message}
 \label{timeout-calibration}
 \end{figure}
@@ -753,7 +753,7 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 \chapter{Evaluation}
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_workload}
+\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_workload}
 \caption[Monitoring parameters during the analysis]{System parameters and queue lengths for monitoring.}
 \label{workload}
 \end{figure}
@@ -862,7 +862,7 @@ Peers from all sources were considered, namely from the tracker server, the DHT 
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_source_all_torrents}
+\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_source_all_torrents}
 \caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with a few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. Values have the same characteristics as described in table \ref{unique-peers}: \emph{Incoming} peers only include successfully evaluated ones, \emph{unique} peers do not overlap between sources, \emph{duplicate} peers may overlap between sources. The analysis lasted \range.}
 \label{request-history}
 \end{figure}
@@ -905,9 +905,9 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_download_set_A_(7,8,15)}
-\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_download_set_B_(1,2,3,6,14)}
-\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_download_set_C_(4,10,12,13)}
+\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_download_set_A_(7,8,15)}
+\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_download_set_B_(1,2,3,6,14)}
+\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_download_set_C_(4,10,12,13)}
 \caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported downloads per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
 \label{download-history}
 \end{figure}
@@ -985,7 +985,7 @@ The data of hostnames was not extracted from the main analysis pass, but from an
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../results/2015-08-26_11-24-21_faui1-246_hostnames}
+\includegraphics[width=\textwidth]{../result/2015-08-26_11-24-21_faui1-246_hostnames}
 \caption[Most observed ISPs by hostnames]{Top 50 hostnames of all unique observed peers. Only the SLD and TLD of hostnames were considered. The majority of hostnames represent used ISPs or seedbox providers. Data is taken from a separate examination of twelve torrents which were chosen equivalently to the description of section \ref{cho}.}
 \label{hostname}
 \end{figure}
@@ -1003,7 +1003,7 @@ The data shown in figure \ref{hostname} used the peer contact and server threads
 \chapter{Conclusion and Future Work}
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth, page=2]{graphics/2015-08-27_21-03-31_faui1-246_visits}
+\includegraphics[width=\textwidth, page=2]{../result/2015-08-27_21-03-31_faui1-246_visits}
 \caption[CDF of successful peer visits per source]{CDF of successful peer visits per source. Only peers of which the download progress was evaluated successfully at least once are included in this figure. A lower graph is better as it indicates more visits per peer. Most of the peers who were contacted actively could only visited once. Incoming peers try to get pieces usually a few times, while many of them stop trying after the first or the eighth attempt. Some even never stop trying.}
 \label{visits}
 \end{figure}
