@@ -19,8 +19,11 @@ Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version ca
 
 ## Why not to use R
 * Errors without line numbers
-* Bad documentation
-* Implicit dimension reduction
+* Very incomplete documentation
+* Implicit dimension reduction on data types
+* `function(variable) <- assignment`
+* In `function(dataframe, column)`, `column` may refer to `dataframe$column` implicitly
+* Data types not distinguishable when using `print()`, one has to use `typeof()` and `class()`
 
 ## Copyright
 Copyright © 2015 Stefan Schindler  

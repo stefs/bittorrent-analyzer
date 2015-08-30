@@ -434,7 +434,7 @@ port & 9 & UDP DHT port \\
 extended & 20 & extension id, payload \\
 \bottomrule
 \end{tabularx}
-\caption[]{Messages of the Peer Wire Protocol as defined in \cite{bep3}. Port messages are part of the DHT protocol, see section \ref{dht}. Extended messages are described later in section \ref{ep}.}
+\caption[Messages of the Peer Wire Protocol]{Messages of the Peer Wire Protocol as defined in \cite{bep3}. Port messages are part of the DHT protocol, see section \ref{dht}. Extended messages are described later in section \ref{ep}.}
 \label{pwp}
 \end{table}
 
@@ -758,11 +758,13 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 \label{workload}
 \end{figure}
 
-Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \textbf{512 threads}. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
+Data collection with the BitTorrent Download Analyzer tool was performed on a virtual machine running Ubuntu 14.04 LTS with 1.0\,GB of RAM, a 3.4\,GHz processor and an own IPv4 address without NAT. The 15 chosen torrents were analyzed at once concurrently using \numprint{1024} threads. The analysis was performed \range. A time period of \textbf{48 hours} was chosen in order to detect patters during the day-night cycle. Necessary measures to ensure valid results were taken: The DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error message in the logfile.
 
 [Thread workload and system load were normal as described earlier*.]
 
 TODO In order to enable and proof validity of test results some statistics are logged at a certain interval defined in \config{statistic\_interval}. These are the length of the peer queue, length of the queue of visited peers, average workload of peer contact threads, mean time for receiving all messages before timeout. Cumulative values are unique incoming peers, successful initiated contacts, failed initiated contacts at first try, failed initiated contacts at later try and successful evaluated incoming peers.
+
+[port changed to before the analysis to reduce traffic, (only in the new run)]
 
 [mention the great R scripts!]
 
@@ -870,8 +872,6 @@ The progression of received peer addresses during the analysis period is shown i
 
 [view tracker response rates]
 
-[]
-
 \section{Counting Confirmed Downloads}
 \begin{table}
 \centering
@@ -884,7 +884,7 @@ Set B & 10 & 2 & 3\,\% \\
 Set C & 1 & 2 & 3\,\% \\
 \bottomrule
 \end{tabular}
-\caption[Confirmed downloads per torrent set]{Confirmed \textbf{downloads} per torrent set. In comparison, \emph{reported} downloads are responses from scrape requests to the tracker during the analysis. \emph{Unique peers} are all peers successfully evaluated for the torrents in question, although not crossing the confirmed download threshold.}
+\caption[Confirmed downloads per torrent set]{Confirmed downloads per torrent set. In comparison, \emph{reported} downloads are responses from scrape requests to the tracker during the analysis. \emph{Unique peers} are all peers successfully evaluated for the torrents in question, although not crossing the confirmed download threshold.}
 \label{confirmed-downloads}
 \end{table}
 
@@ -904,10 +904,10 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(1,4,8,11,13)}
-\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(3,6,9,10,14)}
-\includegraphics[width=\textwidth]{graphics/2015-08-20_11-52-13_faui1-246_download_set_(5,7,12,15,16)}
-\caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported \textbf{downloads} per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
+\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_download_set_A_(7,8,15)}
+\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_download_set_B_(1,2,3,6,14)}
+\includegraphics[width=\textwidth]{graphics/2015-08-27_21-03-31_faui1-246_download_set_C_(4,10,12,13)}
+\caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported downloads per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
 \label{download-history}
 \end{figure}
 
@@ -994,7 +994,6 @@ TODO: Table: Examine hostnames by ISP or seedbox provicers
 \end{figure}
 
 The number of successful revisits of peers is often too low, as shown in figure \ref{visits}. This could indicate, that peers only participate very shortly in a torrent. However, this could also suggest a problem in the process of recontacting peers.
-
 
 \dots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
