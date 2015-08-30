@@ -5,7 +5,10 @@
 
 -- usage: cat combine.sql | sqlite3 | sqlite3 combined.sqlite
 ATTACH DATABASE 'x/vm1.sqlite' AS vm1;
-ATTACH DATABASE 'x/vm1.sqlite' AS vm2;
+ATTACH DATABASE 'x/vm2.sqlite' AS vm2;
+
+-- use single transaction for performance reasons
+.print 'BEGIN TRANSACTION;'
 
 -- recreate tables
 SELECT sql || ';'
@@ -35,8 +38,11 @@ SELECT NULL, timestamp, source, received_peers, duplicate_peers, seeders, comple
 
 -- table statistic
 .mode insert statistic
-ALTER TABLE statistic ADD COLUMN vm INTEGER;
+.print 'ALTER TABLE statistic ADD COLUMN vm INTEGER;'
 SELECT NULL, timestamp, peer_queue, visited_queue, unique_incoming, success_active, thread_workload, load_average, memory_mb, server_threads, evaluator_threads, 1
 	FROM vm1.statistic;
 SELECT NULL, timestamp, peer_queue, visited_queue, unique_incoming, success_active, thread_workload, load_average, memory_mb, server_threads, evaluator_threads, 2
 	FROM vm2.statistic;
+
+-- end transaction
+.print 'COMMIT;'

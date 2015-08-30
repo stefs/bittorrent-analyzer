@@ -10,7 +10,7 @@ read_db <- function(path) {
 	# Disable auto commit
 	dbBegin(con)
 	# Read peer table
-	sql <- "SELECT timestamp, thread_workload, evaluator_threads, server_threads, peer_queue, visited_queue, memory_mb, load_average FROM statistic"
+	sql <- "SELECT timestamp, thread_workload, evaluator_threads, server_threads, peer_queue, visited_queue, memory_mb, load_average, vm FROM statistic"
 	statistic <- dbGetQuery(con, sql)
 	# Close database connection
 	dbDisconnect(con)
@@ -29,7 +29,7 @@ parse_timestamps <- function(timestamps) {
 
 merge_columns <- function(statistic) {
 	# Construct timestamp-value dataframe with variable column
-	return(melt(statistic, id=c("timestamp")))
+	return(melt(statistic, id=c("timestamp", "vm")))
 }
 
 # Read database
@@ -53,7 +53,7 @@ pdf(outfile, width=9, height=11.5)
 
 # Plot with ggplot2
 print(
-	ggplot(data=statistic, aes(x=timestamp, y=value)) +
+	ggplot(data=statistic, aes(x=timestamp, y=value, color=factor(vm))) +
 	geom_line(size=1) +
 	facet_grid(variable ~ ., scales="free_y") +
 	ylim(0, NA) +

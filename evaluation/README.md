@@ -15,7 +15,7 @@ Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version ca
 :   Plot received peers from DHT network and tracker server, distinguishing unique and duplicate peers. Includes successful evaluated incoming peers. If *mode* is "sum", a summary for all torrents will be plotted. If *mode* is "torrent", the source is plottet for every single torrent.
 
 `cat combine.sql | sqlite3 | sqlite3 <combined.sqlite>`
-:   Combine databases from two analysis passes. Used, because analysis was performed on different VMs for performance reasons. Input database filenames are in-code parameters. Speed is about 2.5 minutes for 10 megabytes.
+:   Combine databases from two analysis passes. Used, because analysis was performed on different VMs for performance reasons. Input database filenames are in-code parameters.
 
 ## Why not to use R
 * Errors without line numbers
