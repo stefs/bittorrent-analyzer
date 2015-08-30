@@ -12,7 +12,7 @@
 
 ### Final Reading
 * Roter faden/ einfaches lesen.
-* Begriffserklärung or in place: Dictionary, Cryptographic hash, Leecher / Seeder / Peer
+* Begriffserklärung or in place: Dictionary, Cryptographic hash, Leecher / Seeder / Peer, NAT, ISP
 * Explain all abbreviations
 * No wherby
 * New fact: [Mainline DHT](https://en.wikipedia.org/wiki/Mainline_DHT)
@@ -47,7 +47,7 @@ Chapter | Progress
 – 1.6 Acknowledgments | ★★★
 2 Background | ★★★
 3 Implementation | ★★★
-4 Evaluation | ★
+4 Evaluation | ★★ (new data: 2015-08-29_17-10)
 – 4.1 Choosing Torrents | ★★
 – 4.2 Getting Addresses of Peers | ★
 – 4.3 Counting Confirmed Downloads |

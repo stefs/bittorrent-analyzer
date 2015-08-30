@@ -14,8 +14,8 @@ Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version ca
 `./source.r <mode> <file.sqlite>`
 :   Plot received peers from DHT network and tracker server, distinguishing unique and duplicate peers. Includes successful evaluated incoming peers. If *mode* is "sum", a summary for all torrents will be plotted. If *mode* is "torrent", the source is plottet for every single torrent.
 
-## Resources
-* [ggplot2: Changing the Default Order of Legend Labels and Stacking of Data | Learning R](https://learnr.wordpress.com/2010/03/23/ggplot2-changing-the-default-order-of-legend-labels-and-stacking-of-data/)
+`cat combine.sql | sqlite3 | sqlite3 <combined.sqlite>`
+:   Combine databases from two analysis passes. Used, because analysis was performed on different VMs for performance reasons. Input database filenames are in-code parameters. Speed is about 2.5 minutes for 10 megabytes.
 
 ## Why not to use R
 * Errors without line numbers

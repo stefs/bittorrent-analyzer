@@ -49,7 +49,7 @@ print(head(statistic))
 # Create file
 outfile = sub(".sqlite", "_workload.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=12)
+pdf(outfile, width=9, height=11.5)
 
 # Plot with ggplot2
 print(
