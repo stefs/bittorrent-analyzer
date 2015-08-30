@@ -17,6 +17,9 @@ Plot received peers from DHT network and tracker server, distinguishing unique a
 * `cat combine.sql | sqlite3 | sqlite3 <combined.sqlite>`  
 Combine databases from two analysis passes. Used, because analysis was performed on different VMs for performance reasons. Input database filenames are in-code parameters.
 
+* `tracker_error.r <file_tracker-error.txt>`  
+Compile plot about tracker responsiveness per torrent. Don't use on invalid CSV with too many commas.
+
 ## Why not to use R
 * Errors without line numbers
 * Very incomplete documentation

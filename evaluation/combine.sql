@@ -4,8 +4,8 @@
 .print '.bail on'
 
 -- usage: cat combine.sql | sqlite3 | sqlite3 combined.sqlite
-ATTACH DATABASE 'x/vm1.sqlite' AS vm1;
-ATTACH DATABASE 'x/vm2.sqlite' AS vm2;
+ATTACH DATABASE 'x/2015-08-29_17-09-13_faui1-246.sqlite' AS vm1;
+ATTACH DATABASE 'x/2015-08-29_17-10-23_faui1-246.sqlite' AS vm2;
 
 -- use single transaction for performance reasons
 .print 'BEGIN TRANSACTION;'
@@ -24,9 +24,9 @@ SELECT id+50, announce_url, info_hash, info_hash_hex, pieces_count, piece_size, 
 
 -- table peer
 .mode insert peer
-SELECT NULL, host, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent
+SELECT NULL, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent
 	FROM vm1.peer;
-SELECT NULL, host, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent+50
+SELECT NULL, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent+50
 	FROM vm2.peer;
 
 -- table request

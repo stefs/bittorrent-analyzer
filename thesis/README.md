@@ -10,6 +10,13 @@
 * Send Torrents to RRZE
 * ggplot2 plots 9 inch width
 
+## New Data
+* Check figures
+* Check tables
+* Check in text data
+* Check discussion
+* Check file footnotes
+
 ### Final Reading
 * Roter faden/ einfaches lesen.
 * Begriffserklärung or in place: Dictionary, Cryptographic hash, Leecher / Seeder / Peer, NAT, ISP

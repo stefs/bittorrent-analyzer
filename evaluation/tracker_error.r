@@ -9,16 +9,23 @@ args <- commandArgs(trailingOnly=TRUE)
 tracker <- read.csv(args[1], header=FALSE)
 names(tracker) <- c("torrent", "tracker", "result", "reason", "count")
 
-# Sum per tracker
-values_df <- data.frame(count=as.integer(tracker$count))
-groups <- list(torrent=tracker$torrent, result=tracker$result)
-tracker <- aggregate(values_df, by=groups, FUN=sum)
-
 # Distinguish between announce vs. scrape
 tracker$event <- unlist(lapply(strsplit(as.character(tracker$result), " "), "[", 1))
 tracker$status <- unlist(lapply(strsplit(as.character(tracker$result), " "), "[", 2))
 tracker$result <- NULL
-print(head(tracker))
+
+# Print main reasons for failure
+values_df <- data.frame(count=as.integer(tracker$count))
+groups <- list(torrent=tracker$torrent, reason=tracker$reason)
+msg <- aggregate(values_df, by=groups, FUN=sum)
+msg$reason <- strtrim(msg$reason, 60)
+msg <- msg[order(msg$torrent),]
+print(msg)
+
+# Sum per tracker
+values_df <- data.frame(count=as.integer(tracker$count))
+groups <- list(torrent=tracker$torrent, event=tracker$event, status=tracker$status)
+tracker <- aggregate(values_df, by=groups, FUN=sum)
 
 # Create file
 outfile = sub(".txt", ".pdf", args[1])

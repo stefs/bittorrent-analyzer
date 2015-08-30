@@ -27,7 +27,7 @@ bittorrent_message_log_length = 80
 # ut_metadata Extension Protocol message id
 extension_ut_metadata_id = 4
 # Evaluate incoming peers at the specified port number
-bittorrent_listen_port = 6883
+bittorrent_listen_port = 6884
 # Output path for log and database, with trailing slash
 output_path = 'output/'
 # Input path for torrent files and magnet file, with trailing slash
