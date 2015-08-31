@@ -4,8 +4,8 @@
 .print '.bail on'
 
 -- usage: cat combine.sql | sqlite3 | sqlite3 combined.sqlite
-ATTACH DATABASE 'x/2015-08-29_17-09-13_faui1-246.sqlite' AS vm1;
-ATTACH DATABASE 'x/2015-08-29_17-10-23_faui1-246.sqlite' AS vm2;
+ATTACH DATABASE 'y/2015-08-30_20-34-06_faui1-246.sqlite' AS vm1;
+ATTACH DATABASE 'y/2015-08-30_20-41-36_faui1-246.sqlite' AS vm2;
 
 -- use single transaction for performance reasons
 .print 'BEGIN TRANSACTION;'
@@ -18,22 +18,25 @@ SELECT sql || ';'
 -- table torrent
 .mode insert torrent
 SELECT id, announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold, filepath, display_name, gigabyte
-	FROM vm1.torrent;
-SELECT id+50, announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold, filepath, display_name, gigabyte
+	FROM vm1.torrent
+	WHERE id!=6;
+SELECT id+10, announce_url, info_hash, info_hash_hex, pieces_count, piece_size, complete_threshold, filepath, display_name, gigabyte
 	FROM vm2.torrent;
 
 -- table peer
 .mode insert peer
 SELECT NULL, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent
-	FROM vm1.peer;
-SELECT NULL, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent+50
+	FROM vm1.peer
+	WHERE torrent!=6;
+SELECT NULL, client, continent, country, latitude, longitude, first_pieces, last_pieces, first_seen, last_seen, max_speed, visits, source, torrent+10
 	FROM vm2.peer;
 
 -- table request
 .mode insert request
 SELECT NULL, timestamp, source, received_peers, duplicate_peers, seeders, completed, leechers, duration_sec, torrent
-	FROM vm1.request;
-SELECT NULL, timestamp, source, received_peers, duplicate_peers, seeders, completed, leechers, duration_sec, torrent+50
+	FROM vm1.request
+	WHERE torrent!=6;
+SELECT NULL, timestamp, source, received_peers, duplicate_peers, seeders, completed, leechers, duration_sec, torrent+10
 	FROM vm2.request;
 
 -- table statistic

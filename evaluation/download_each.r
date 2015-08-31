@@ -85,7 +85,7 @@ aggregate_complete <- function(requests) {
 	groups <- list(group_hour=requests$timestamp)
 	requests <- aggregate(values_df, by=groups, FUN=min)
 	# Calculate change per hour
-	requests$downloads <- append(NA, diff(requests$downloads))
+	requests$downloads <- append(diff(requests$downloads), NA)
 	requests <- requests[complete.cases(requests$downloads),]
 	# Return result
 	return(requests)
