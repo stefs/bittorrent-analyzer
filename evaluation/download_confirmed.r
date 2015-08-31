@@ -142,13 +142,20 @@ stopifnot(outfile != args[1])
 pdf(outfile, width=9, height=3)
 
 # Plot with ggplot2
+b <- c(0.1, 0.32, 1, 3.2, 10, 32, 100)
 print(
-	ggplot(total, aes(x=gigabyte, y=confirmed_per_scrape, group=set, color=set)) +
+	ggplot(total, aes(x=gigabyte, y=confirmed_per_scrape, color=set)) +
 	geom_point(aes(shape=set), size=3) +
+	#geom_text(aes(label=torrent), hjust=-0.7, vjust=0.4, show_guide=FALSE) +
 	geom_smooth(method=lm, se=FALSE, formula=y~x, fullrange=FALSE) + # with origin y~x-1
-	scale_x_continuous(breaks=c(0.1, 1, 10, 100)) +
-	coord_trans(x = "log10", limx=c(0.1, 100)) +
-	labs(x="Gigabyte", y="Confirmed per Scrape")
+	scale_x_continuous(breaks=b, labels=b) +
+	coord_trans(x = "log10", limx=c(0.1, 100))
+)
+print(
+	ggplot(total, aes(x=scrape, y=confirmed, color=set)) +
+	geom_point(aes(size=gigabyte)) +
+	scale_size(breaks=b, labels=b, trans="log10") +
+	geom_smooth(method=lm, se=FALSE, formula=y~x, fullrange=FALSE) # with origin y~x-1
 )
 print(paste("Plot written to", outfile))
 print("*** End ***")
