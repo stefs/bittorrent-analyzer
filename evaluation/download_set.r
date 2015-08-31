@@ -4,24 +4,26 @@ library(DBI)
 library(ggplot2)
 source("util.r")
 
-read_db <- function(path, torrent_set) {
+read_db <- function(path) {
 	# Open raw_peersbase connection
 	con <- dbConnect(RSQLite::SQLite(), path)
 	# Disable auto commit
 	dbBegin(con)
 	# Read peer table
-	sql <- paste("SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer WHERE peer.torrent IN", torrent_set)
+	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
 	sql <- "SELECT id, pieces_count FROM torrent"
 	torrents <- dbGetQuery(con, sql)
 	# Read request table
-	sql <- paste("SELECT timestamp, completed, torrent FROM request WHERE request.torrent IN", torrent_set)
+	sql <- "SELECT timestamp, completed, torrent FROM request"
 	requests <- dbGetQuery(con, sql)
+	# Read torrent set csv
+	sets <- read.csv(paste(path, ".csv", sep=""))
 	# Close database connection
 	dbDisconnect(con)
 	# Combine tables
-	ret <- list(peers, torrents, requests)
+	ret <- list(peers, torrents, requests, sets)
 	# Return result
 	return(ret)
 }
@@ -29,8 +31,6 @@ read_db <- function(path, torrent_set) {
 merge_with_torrents <- function(peers, torrents) {
 	# Inner join
 	peers <- merge(peers, torrents, by.x="torrent", by.y="id")
-	# Delete torrent
-	peers$torrent <- NULL
 	# Return result
 	return(peers)
 }
@@ -61,7 +61,7 @@ filter_peers <- function(peers) {
 aggregate_confirmed <- function(peers) {
 	# Aggregate by torrent id and last seen
 	values_df <- data.frame(downloads=peers$id)
-	groups <- list(group_hour=peers$last_seen)
+	groups <- list(group_hour=peers$last_seen, set=peers$set)
 	ret <- aggregate(values_df, by=groups, FUN=length)
 	# Return result
 	return(ret)
@@ -72,7 +72,7 @@ filter_request <- function(requests) {
 	requests <- requests[complete.cases(requests$completed),]
 	# Keep one value per hour and torrent
 	values_df <- data.frame(completed=requests$completed)
-	groups <- list(group_hour=requests$timestamp, group_torrent=requests$torrent)
+	groups <- list(group_hour=requests$timestamp, group_torrent=requests$torrent, set=requests$set)
 	requests <- aggregate(values_df, by=groups, FUN=min)
 	# Return result
 	return(requests)
@@ -80,7 +80,7 @@ filter_request <- function(requests) {
 
 aggregate_scrape <- function(requests) {
 	# Calculate change per hour per torrent
-	scrape <- data.frame(group_hour=NA, downloads=NA)
+	scrape <- data.frame(group_hour=NA, downloads=NA, set=NA)
 	for (torrent in unique(requests$group_torrent)) {
 		# Filter for current torrent id
 		curr_requests <- requests[requests$group_torrent==torrent,]
@@ -100,7 +100,7 @@ aggregate_scrape <- function(requests) {
 	scrape <- scrape[complete.cases(scrape$downloads),]
 	# Aggregate by hour, sum torrents
 	values_df <- data.frame(downloads=scrape$downloads)
-	groups <- list(group_hour=scrape$group_hour)
+	groups <- list(group_hour=scrape$group_hour, set=scrape$set)
 	scrape <- aggregate(values_df, by=groups, FUN=sum)
 	# Return result
 	return(scrape)
@@ -108,11 +108,11 @@ aggregate_scrape <- function(requests) {
 
 # Read database
 args <- commandArgs(trailingOnly=TRUE)
-torrent_set <- args[1]
-ret <- read_db(args[2], torrent_set)
+ret <- read_db(args[1])
 peers <- ret[[1]]
 torrents <- ret[[2]]
 requests <- ret[[3]]
+sets <- ret[[4]]
 
 # Prepare data
 print(head(peers))
@@ -131,10 +131,18 @@ peers$last_seen <- hour_timestamps(peers$last_seen)
 print(head(peers))
 requests$timestamp <- hour_timestamps(requests$timestamp)
 print(head(requests))
+print("*** Merge with torrent sets ***")
+peers <- merge(peers, sets, by="torrent")
+peers$torrent <- NULL
+requests <- merge(requests, sets, by="torrent")
+print(head(peers))
+print(head(requests))
 print("*** Aggregate downloads ***")
 confirmed <- aggregate_confirmed(peers)
 requests <- filter_request(requests)
+requests$torrent <- NULL
 scrape <- aggregate_scrape(requests)
+print(head(requests))
 print(head(scrape))
 print("*** Merge confirmed and scrape ***")
 scrape$category <- "scrape"
@@ -144,21 +152,18 @@ total <- total[complete.cases(total$group_hour),]
 print(head(total))
 
 # Create file
-filename = paste("_download_set_", torrent_set, ".pdf", sep="")
-outfile = sub(".sqlite", filename, args[2])
-stopifnot(outfile != args[2])
-pdf(outfile, width=9, height=4.2)
-
-# Make description
-description <- paste("Torrent Set:", torrent_set)
-print(description)
+outfile = sub(".sqlite", "_download_set.pdf", args[1])
+stopifnot(outfile != args[1])
+pdf(outfile, width=9, height=7)
 
 # Plot with ggplot2
 print(
 	ggplot(total, aes(x=factor(group_hour), y=downloads, fill=category)) +
 	geom_bar(stat="identity", position="dodge") +
+	facet_grid(set ~ ., scales="free_y") +
 	theme(axis.text.x=element_text(angle=90, hjust=1)) +
-	labs(title=description, x="Time UTC (day/hour)", y="Downloads")
+	labs(x="Time UTC (day/hour)", y="Downloads") +
+	theme(legend.position="top")
 )
 print(paste("Plot written to", outfile))
 print("*** End ***")

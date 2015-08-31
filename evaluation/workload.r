@@ -29,7 +29,11 @@ parse_timestamps <- function(timestamps) {
 
 merge_columns <- function(statistic) {
 	# Construct timestamp-value dataframe with variable column
-	return(melt(statistic, id=c("timestamp", "vm")))
+	statistic <- melt(statistic, id=c("timestamp", "vm"))
+	# Make vm factor
+	statistic$vm <- factor(statistic$vm)
+	# Return result
+	return(statistic)
 }
 
 # Read database
@@ -53,12 +57,12 @@ pdf(outfile, width=9, height=11.5)
 
 # Plot with ggplot2
 print(
-	ggplot(data=statistic, aes(x=timestamp, y=value, color=factor(vm))) +
+	ggplot(data=statistic, aes(x=timestamp, y=value, color=vm)) +
 	geom_line(size=1) +
 	facet_grid(variable ~ ., scales="free_y") +
 	ylim(0, NA) +
 	labs(x="Time UTC", y=NULL) +
-	theme(legend.position="none")
+	theme(legend.position="top")
 )
 print(paste("Plot written to", outfile))
 print("*** End ***")
