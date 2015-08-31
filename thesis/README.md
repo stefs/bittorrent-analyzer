@@ -57,10 +57,10 @@ Chapter | Progress
 4 Evaluation | ★★ (new data: 2015-08-29_17-10)
 – 4.1 Choosing Torrents | ★★
 – 4.2 Getting Addresses of Peers | ★★
-– 4.3 Counting Confirmed Downloads |
-– 4.3.1 Problems of this Method |
+– 4.3 Counting Confirmed Downloads | ★ (waiting for final data)
+– 4.3.1 Problems of this Method | ★ (waiting for final data)
 – 4.4 Further Analysis of Peers |
-– 4.4.1 Download Speed |
+– 4.4.1 Download Speed | ★
 – 4.4.2 BitTorrent Clients |
 – 4.4.3 Peer's Host Names | ★★
 5 Conclusion and Future Work |

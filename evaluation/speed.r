@@ -52,7 +52,7 @@ calc_kbyteps <- function(peer) {
 	return(peer)
 }
 
-minimum_samples <- function(peer, top) {
+top_samples <- function(peer, top) {
 	# Count country frequency
 	values_df <- data.frame(count=peer$kbyteps)
 	groups <- list(country=peer$country)
@@ -81,7 +81,7 @@ country_mean <- function(peer) {
 	# Aggregate speed per country
 	values_df <- data.frame(kbyteps=peer$kbyteps)
 	groups <- list(country=peer$country)
-	ret <- aggregate(values_df, by=groups, FUN=mean)
+	ret <- aggregate(values_df, by=groups, FUN=median)
 	# Return result
 	return(ret)
 }
@@ -103,7 +103,7 @@ print("*** KBytes per second ***")
 peer <- calc_kbyteps(peer)
 print(head(peer))
 print("*** Sample size top x ***")
-peer <- minimum_samples(peer, 10)
+peer <- top_samples(peer, 70) # 70 for boxplot, 100 for map
 print(head(peer))
 print("*** Country mean ***")
 country <- country_mean(peer)
@@ -117,21 +117,33 @@ stopifnot(outfile != args[1])
 mapDevice("pdf", file=outfile)
 
 # Plot with rworldmap
+m_breaks <- round(10^((6:16)*(1/3))/10, digits=0)
+print(m_breaks)
 spdf <- joinCountryData2Map(country, joinCode="ISO2", nameJoinColumn="country")
-mapCountryData(spdf, nameColumnToPlot="kbyteps", catMethod="fixedWidth", mapTitle='Mean Download Speeds', colourPalette="white2Black")
+mapParams <- mapCountryData(
+	spdf,
+	nameColumnToPlot="kbyteps",
+	mapTitle='Median Download Speeds',
+	colourPalette=c("#800000", "#84fbff", "#118000"),
+	catMethod=m_breaks
+)
+do.call(addMapLegend, c(mapParams, legendLabels="all"))
 print(paste("Plot written to", outfile))
 
 # Create file for ggplot
 outfile = sub(".sqlite", "_speed_plot.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=5, height=4)
+pdf(outfile, width=10, height=3)
 
 # Plot with ggplot2
+y_breaks = round(10^((-3:8)*1.0)/10, digits=6)
+f_breaks = round(10^((0:23)*0.25)/10, digits=-1)
 print(
 	ggplot(data=peer, aes(x=factor(country), y=kbyteps)) +
-	stat_ydensity(scale="count") +
-	#geom_boxplot() +
-	scale_y_log10() +
+	scale_y_log10(breaks=y_breaks) +
+	geom_boxplot(aes(fill=count), outlier.size=1) +
+	scale_fill_continuous(trans="log10", breaks=f_breaks, low="#55b1f7", high="#f75555", name="peers") +
+	theme(axis.text.x=element_text(angle=90, hjust=1)) +
 	labs(x="Country", y="Kilobytes per Second")
 )
 print(paste("Plot written to", outfile))

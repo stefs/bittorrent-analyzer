@@ -898,6 +898,8 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 \item For only \numprint[\%]{0}* of tracker reported downloads and for \numprint[\%]{0}* of unique peers a download could be confirmed.
 \end{enumerate}
 
+[try different thresholds]
+
 \begin{figure}
 \centering
 (a) Confirmed downloads by reported downloads.
@@ -926,16 +928,12 @@ Figure \ref{confirmed-scrape} (a) shows a clear positive relation between confir
 \label{confirmed-unique}
 \end{figure}
 
-In figure \ref{confirmed-unique} similar data is shown, but using the number of collected unique peer addresses as a reference. When considering part (a), a correlation between the number of unique peers and the number of confirmed downloads is still recognizable. However, unique peer numbers are way higher than confirmed downloads, which was already apparent from table \ref{confirmed-downloads}. Again, success rates of counting confirmed downloads are given by torrent size in part (b). In this graph, the success rate of set E is noticeable low, which contradicts with the scrape-based success rate discussed above. When the accuracy of scrape requests is not worse for larger torrents, this sample indicates, that received peer addresses are less accurate for torrents above \numprint[GB]{30}. In general between all torrents, the success rate based on unique peers is tiny and varies greatly between \numprint[\%]{0.2} and \numprint[\%]{2}. We ca learn from this data:
+In figure \ref{confirmed-unique} similar data is shown, but using the number of collected unique peer addresses as a reference. When considering part (a), a correlation between the number of unique peers and the number of confirmed downloads is still recognizable. However, unique peer numbers are way higher than confirmed downloads, which was already apparent from table \ref{confirmed-downloads}. Again, success rates of counting confirmed downloads are given by torrent size in part (b). In this graph, the success rate of set E is noticeable low, which contradicts with the scrape-based success rate discussed above. When the accuracy of the data from scrape requests is not worse for larger torrents, this sample indicates, that received peer addresses are *less accurate for torrents above \numprint[GB]{30}. In general between all torrents, the success rate based on unique peers is tiny and varies greatly between \numprint[\%]{0.2} and \numprint[\%]{2}. We can learn from this data:
 \begin{enumerate}
 \item Confirmed download numbers are also heavily correlated with the number of unique peers collected by the BitTorrent Download Analyzer.
-\item The success rate of confirming downloads for unique peers is below \numprint[\%]{2}. Reasons are seeding peers, which are part of the torrent swarm, but do not download any more. Besides this, wrong peer data and other problems when counting confirmed downloads reduce this value.
+\item The success rate of confirming downloads for unique peers is below \numprint[\%]{2}. An important reasons for this are seeding peers, which are part of the torrent swarm, but do not download data any more. Besides this, incorrect peer data and other problems of counting confirmed downloads reduce this value.
 \item Success rate is lowest for torrents above \numprint[GB]{30}. Either, the tracker reported download numbers are disproportional high for these torrents, or peers did actually not download these torrents after announcing their address data to trackers and the DHT network
 \end{enumerate}
-
-[try different thresholds]
-
-[scrape only from main tracker]
 
 \begin{figure}
 \centering
@@ -948,7 +946,9 @@ The history of download numbers during the analysis period is shown in figure \r
 
 [Check single torrents for outliers]
 
-[correlation with scrape bachelor and ieee bt]
+[24-hour cycle?]
+
+[discuss with final data]
 
 \subsection{Problems of this Method}
 \label{problems}
@@ -990,23 +990,25 @@ The Evaluation of a peer's download progress was described in section \ref{peer-
 
 The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee* [see actual incoming dpulicate stats] to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
 
-[No BitTrorrent Protocol support for getting download progress info]
-
-[Drawback: One can only derive lower bounds from observing peers using the standard BitTorrent protocol]
-
 [maybe move this whole section to Conclusion]
 
 \section{Further Analysis of Peers}
 \subsection{Download Speed}
-filter peers for visits
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{../evaluation/y/2015-08-30_20-combined_speed_plot}
+\caption[Download speed per country as box plot]{Download speeds the 70 countries with most recorded unique peers. This graph uses a standard box plot with first and third quartiles as box delimiters and the median inside the box.}
+\label{speed-boxes}
+\end{figure}
 
-filter countries for peers
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{../evaluation/y/2015-08-30_20-combined_speed_map}
+\caption[Download speed per country as map]{Download speed per country as a map. Only countries with a minimum of about \numprint{50} observed peers are shown. Speed is given in kB/s on an logarithmic color scale.}
+\label{speed-map}
+\end{figure}
 
-TODO: Graph of speed per country with standard derivation indicators, n>=10 per country
-
-todo: Map of Distribution of download speeds
-
-Map: Distribution of downloads (TODO)
+[discuss]
 
 \subsection{BitTorrent Clients}
 \label{clients}
