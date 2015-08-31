@@ -28,7 +28,7 @@
 
 %\usepackage[section]{placeins} % TODO use maybe
 \usepackage[noheads]{endfloat} % TODO temporary
-%\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
+\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
 
 \usepackage{pgf-umlsd}
 
@@ -825,9 +825,12 @@ C & 5 &  & \numprint[GB]{0.00} \\
 
 Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across these torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen, because the torrent size has high influence on further results.
 \begin{itemize}
-  \item Set A: The 6 most popular torrents below \numprint[GB]{1}
-  \item Set B: The 6 most popular torrents between \numprint[GB]{1} and  \numprint[GB]{10}
-  \item Set C: The 6 most popular torrents above \numprint[GB]{10}
+%The 4 most popular torrents below \numprint[GB]{1}
+\item Set A: Less than 2
+\item Set B: 2-5
+\item Set C: 5-10
+\item Set D: 10-30
+\item Set E: Larger than 30
 \end{itemize}
 For an indicator of popularity leecher numbers were used, despite the website sorting by the sum of seeders and leechers. The 18 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
 
@@ -848,8 +851,8 @@ Incoming peers & \numprint{4765909} & \numprint{174464} & \numprint[\%]{3.66} \\
 \caption[Received peer addresses per source]{Total and unique received peer addresses per source for all torrents. The ratio of new \emph{tracker} and \emph{DHT} peers depends mainly on the request interval for new peers. Numbers of \emph{incoming peers} only include those where the download progress was evaluated successfully. Numbers of \emph{total} received peers may overlap between sources in this table. Numbers of \emph{unique} peers do not overlap between sources, each peer is only counted as unique one time. This is why the distribution between sources may not represent uniqueness per source in general, but only in this data set. Numbers were acquired from the \emph{request} database table.}
 \label{unique-peers}
 \end{table}
-% SQL Total: select sum(received\_peers) from request where source='tracker';
-% SQL Unique: select sum(received\_peers) - sum(duplicate\_peers) from request where source='<source>';
+% SQL Total: select sum(received_peers) from request where source='tracker';
+% SQL Unique: select sum(received_peers) - sum(duplicate_peers) from request where source='<source>';
 
 Peers from all sources were considered, namely from the tracker server, the DHT network and incoming connections. The total number collected addresses across all torrents during this analysis in regards to their source is shown in table \ref{unique-peers}. Since the \emph{incoming peers} data point in this table only includes peers, when their download progress was successfully evaluated, the ratio of \numprint[\%]{3.66}* new incoming peers implies that \numprint[\%]{96.34}* of all incoming contacts are second or later visits, although peers did not receive any torrent data. Only these later visits allow to determine the crossing of a threshold.
 
@@ -867,7 +870,7 @@ Peers from all sources were considered, namely from the tracker server, the DHT 
 \label{tracker-resp}
 \end{figure}
 
-The progression of received peer addresses during the analysis period is shown in figure \ref{request-history}. Again, this is a summary for all torrents. The ratio between new and duplicate received peer address information is highest in the first few hours* and then settles at a constant value. The overall high rates of duplicate peers indicate that the majority of the peers collectable from theses sources were received. To estimate the success of tracker announce requests, encountered errors were counted. Figure \ref{tracker-resp} shows no problems.
+The progression of received peer addresses during the analysis period is shown in figure \ref{request-history}. Again, this is a summary for all torrents. The ratio between new and duplicate received peer address information is highest in the first few hours* and then settles at a constant value. The overall high rates of duplicate peers indicate that the majority of the peers collectable from theses sources were received. To estimate the success of tracker announce requests, encountered errors were counted\footnote{File: 2015-08-27\_21-03-31\_faui1-246\_tracker-error.txt}. Figure \ref{tracker-resp} shows no problems.
 % TODO discuss final data
 
 \section{Counting Confirmed Downloads}
@@ -875,36 +878,68 @@ The progression of received peer addresses during the analysis period is shown i
 \centering
 \begin{tabular}{lrrrr}
 \toprule
-Torrent & Confirmed & Reported & Confirmed/Reported & Unique Peers \\
+Torrent & Confirmed & Reported & Unique Peers & Some ratios \\
 \midrule
 Set A & 5 & 2 & 3\,\% \\
 Set B & 10 & 2 & 3\,\% \\
 Set C & 1 & 2 & 3\,\% \\
+Set D & \\
+Set E & \\
 \bottomrule
 \end{tabular}
 \caption[Confirmed downloads per torrent set]{Confirmed downloads per torrent set. In comparison, \emph{reported} downloads are responses from scrape requests to the tracker during the analysis. \emph{Unique peers} are all peers successfully evaluated for the torrents in question, although not crossing the confirmed download threshold.}
 \label{confirmed-downloads}
 \end{table}
+% SQL Total: select sum(received_peers) from request where source='tracker';
 
-Table \ref{confirmed-downloads} shows the confirmed download numbers measured during this analysis per torrent set. For comparison, numbers reported by the tracker in scrape requests are given. * [Compare sets and unique peers]
-
-[Note all things in the plots, even the obvious] Scrape is higher than confirmed.
-
-[downloaded (event=complete) vs complete (seeders), \cite{watters2011much} uses seeders]
-
-[try different thresholds]
-
-[ignore first and last hour]
-
-[reported per hour, confirmed per hour]
-
-[scrape only gives hint, only from main tracker, not the truth]
+Table \ref{confirmed-downloads} shows the confirmed download numbers measured during this analysis per torrent set. For comparison, numbers reported by the tracker in scrape requests and the number of unique observed peers are given. Following conclusions are possible:
+\begin{enumerate}
+\item The number of unique peers received from all sources is by factor \numprint{0}* above the tracker reported download numbers.
+\item For only \numprint[\%]{0}* of tracker reported downloads and for \numprint[\%]{0}* of unique peers a download could be confirmed.
+\end{enumerate}
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_download_set_A_(7,8,15)}
-\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_download_set_B_(1,2,3,6,14)}
-\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_download_set_C_(4,10,12,13)}
+(a) Confirmed downloads by reported downloads.
+\includegraphics[width=\textwidth, page=2]{../evaluation/y/2015-08-30_20-combined_download_confirmed_scrape}
+(b) Confirmed ratio regarding reported downloads by torrent size.
+\includegraphics[width=\textwidth, page=1]{../evaluation/y/2015-08-30_20-combined_download_confirmed_scrape}
+\caption[Download numbers: Confirmed vs. scrape request]{Relation between confirmed downloads and tracker reported download numbers from scrape requests per torrent, using a double logarithmic scale. Each point represents a torrent. The black lines mark the identity between confirmed and reported downloads.}
+\label{confirmed-scrape}
+\end{figure}
+% TODO missing gigabyte legend title, maybe reduce sets
+
+Figure \ref{confirmed-scrape} (a) shows a clear positive relation between confirmed downloads numbers and tracker reported numbers, although confirmed numbers are mostly lower. It is also obvious, that large torrents are less downloaded than smaller ones in general. Part (b) plots the success rates of measuring confirmed downloads, using the tracker's scrape numbers as a reference. The chart shows, that for torrents in set A and B with less than \numprint[GB]{5}, the numbers of confirmed downloads are only between \numprint[\%]{3} and \numprint[\%]{20}. Results between \numprint[GB]{5} and \numprint[GB]{30} are all above \numprint[\%]{10}. On two torrents, the measured numbers exceed the tracker reported ones by factor \numprint{1.1} and {3.9}. All four torrents of set E are between \numprint[\%]{40} and \numprint[\%]{60} percent. This graph shows two things:
+\begin{enumerate}
+\item Confirmed download numbers produced by the BitTorrent Download Analyzer are heavily correlated with tracker reported completed downloads.
+\item The method of counting confirmed downloads is heavily dependent on the torrent size. Best results above \numprint[\%]{40} are achieved with torrents above \numprint[GB]{30}. Presumably, the reason for this is the increased likelihood of recording a peer's download progress, when the downloads takes more time. This is given with large torrents.
+\item Scrape requests may not be accurate and indicate too small download numbers. This is understandable, since the tracker relies on every peer to report a finished download. A BitTorrent client may be disconnect without having the chance to send an \emph{completed} event to the server. A client may not have used the main tracker of the torrent in the first place, but another one or none at all.
+\end{enumerate}
+
+\begin{figure}
+\centering
+(a) Confirmed downloads by unique peers.
+\includegraphics[width=\textwidth, page=2]{../evaluation/y/2015-08-30_20-combined_download_confirmed_unique}
+(b) Confirmed ratio regarding unique peers by torrent size.
+\includegraphics[width=\textwidth, page=1]{../evaluation/y/2015-08-30_20-combined_download_confirmed_unique}
+\caption[Download numbers: Confirmed vs. unique peers]{Relation between confirmed downloads and unique observed peers per torrent, using a double logarithmic scale. Each point represents a torrent. The identity between confirmed downloads and unique peers is outside of the plot area.}
+\label{confirmed-unique}
+\end{figure}
+
+In figure \ref{confirmed-unique} similar data is shown, but using the number of collected unique peer addresses as a reference. When considering part (a), a correlation between the number of unique peers and the number of confirmed downloads is still recognizable. However, unique peer numbers are way higher than confirmed downloads, which was already apparent from table \ref{confirmed-downloads}. Again, success rates of counting confirmed downloads are given by torrent size in part (b). In this graph, the success rate of set E is noticeable low, which contradicts with the scrape-based success rate discussed above. When the accuracy of scrape requests is not worse for larger torrents, this sample indicates, that received peer addresses are less accurate for torrents above \numprint[GB]{30}. In general between all torrents, the success rate based on unique peers is tiny and varies greatly between \numprint[\%]{0.2} and \numprint[\%]{2}. We ca learn from this data:
+\begin{enumerate}
+\item Confirmed download numbers are also heavily correlated with the number of unique peers collected by the BitTorrent Download Analyzer.
+\item The success rate of confirming downloads for unique peers is below \numprint[\%]{2}. Reasons are seeding peers, which are part of the torrent swarm, but do not download any more. Besides this, wrong peer data and other problems when counting confirmed downloads reduce this value.
+\item Success rate is lowest for torrents above \numprint[GB]{30}. Either, the tracker reported download numbers are disproportional high for these torrents, or peers did actually not download these torrents after announcing their address data to trackers and the DHT network
+\end{enumerate}
+
+[try different thresholds]
+
+[scrape only from main tracker]
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{../evaluation/y/2015-08-30_20-combined_download_set}
 \caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported downloads per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
 \label{download-history}
 \end{figure}

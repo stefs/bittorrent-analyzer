@@ -156,9 +156,9 @@ x_breaks <- round(10^((5:11)*0.5)/10, digits=0)
 y_breaks <- round(10^((9:17)*0.25)/10, digits=0)
 print(
 	ggplot(total, aes(x=scrape, y=confirmed)) +
+	geom_segment(aes(x=1, y=1, xend=10000, yend=10000)) +
 	geom_point(aes(size=gigabyte, fill=set), colour="black", pch=21) +
 	scale_size(range=c(2.5,8), breaks=gb_breaks, labels=gb_breaks, trans="log10") +
-	geom_abline(intercept=0, slope=1) +
 	scale_x_continuous(breaks=x_breaks, labels=x_breaks) +
 	scale_y_continuous(breaks=y_breaks) +
 	coord_trans(x="log10", limx=c(min(x_breaks), max(x_breaks)), y="log10", limy=c(min(y_breaks), max(y_breaks)))
