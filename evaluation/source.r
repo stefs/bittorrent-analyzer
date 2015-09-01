@@ -100,7 +100,7 @@ plot_source <- function(data, title=NULL) {
 		geom_bar(stat="identity", position="stack") +
 		facet_grid(status ~ .) +
 		theme(axis.text.x=element_text(angle=90, hjust=1)) +
-		labs(title=title, x="Time UTC (day/hour)", y="Peers")
+		labs(title=title, x="Time UTC (month/day/hour)", y="Peers")
 	)
 }
 

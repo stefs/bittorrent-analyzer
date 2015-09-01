@@ -152,8 +152,8 @@ print(
 	scale_y_continuous(breaks=y_breaks) +
 	coord_trans(x="log10", limx=c(min(gb_breaks), max(gb_breaks)), y="log10", limy=c(min(y_breaks), max(y_breaks)))
 )
-x_breaks <- round(10^((5:11)*0.5)/10, digits=0)
-y_breaks <- round(10^((9:17)*0.25)/10, digits=0)
+x_breaks <- round(10^((5:12)*0.5)/10, digits=0)
+y_breaks <- round(10^((4:10)*0.5)/10, digits=0)
 print(
 	ggplot(total, aes(x=scrape, y=confirmed)) +
 	geom_segment(aes(x=1, y=1, xend=10000, yend=10000)) +

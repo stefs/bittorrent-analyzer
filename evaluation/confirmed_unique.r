@@ -125,7 +125,7 @@ pdf(outfile, width=9, height=2.5)
 
 # Plot with ggplot2
 gb_breaks <- c(1, 3.2, 10, 32, 100)
-y_breaks <- round(10^((-7:-2)*0.25)/10, digits=4)
+y_breaks <- round(10^((-8:-2)*0.25)/10, digits=4)
 print(
 	ggplot(total, aes(x=gigabyte, y=confirmed_per_unique)) +
 	geom_segment(x=min(gb_breaks),xend=max(gb_breaks),y=1,yend=1, show_guide=FALSE, color="black") +
@@ -134,8 +134,8 @@ print(
 	scale_y_continuous(breaks=y_breaks) +
 	coord_trans(x="log10", limx=c(min(gb_breaks), max(gb_breaks)), y="log10", limy=c(min(y_breaks), max(y_breaks)))
 )
-x_breaks <- round(10^((24:31)*0.2)/10, digits=-2)
-y_breaks <- round(10^((9:17)*0.25)/10, digits=0)
+x_breaks <- round(10^((26:32)*0.2)/10, digits=-2)
+y_breaks <- round(10^((9:19)*0.25)/10, digits=0)
 print(
 	ggplot(total, aes(x=unique, y=confirmed)) +
 	#geom_segment(aes(x=1, y=1, xend=10000, yend=10000)) +

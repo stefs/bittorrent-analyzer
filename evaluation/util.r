@@ -4,7 +4,7 @@ hour_timestamps <- function(timestamps) {
 	# Truncate to hours
 	timestamps <- trunc(timestamps, units="hours")
 	# Revert to strings
-	timestamps <- strftime(timestamps, format="%d/%H")
+	timestamps <- strftime(timestamps, format="%m/%d/%H")
 	# Return result
 	return(timestamps)
 }

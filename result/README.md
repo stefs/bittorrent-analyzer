@@ -4,18 +4,18 @@ This are the file produced by the BitTorrent Download Analyzer, which were used 
 ## Timeout parameter
 Only used in chapter 3.4 *Justification of Configuration values*.
 
-* Files: 2015-08-14_17-46-44_faui1-246*
+* Files: `2015-08-14_17-46-44_faui1-246*`
 
 ## Hostname collection
 Only used in chapter 4.4.3 *Peer's Hostnames*.
 
-* Files: 2015-08-26_11-24-21_faui1-246*
+* Files: `2015-08-26_11-24-21_faui1-246*`
 
 ## Main evaluation
 This are the files used for chapter 4 *Evaluation*.
 
-* Files VM1: 2015-08-30_20-34-06_faui1-246*  
-  The tracker requestor thread of torrent 6 crashed after four hours due to an invalid tracker response. The exception is printed below. Despite this, the analysis was successfull and can be used excluding torrent 6. At the end, the analysis had to be shutdown with multiple Ctrl+C, since the program tries to wait for all tracker threads. The resulting SQLite journal file was removed using `sqlite3 2015-08-30_20-34-06_faui1-246.sqlite vacuum`.
+* Files VM1: `2015-08-30_20-34-06_faui1-246*`  
+  The tracker requestor thread of torrent 6 crashed after four hours due to an invalid tracker response. The exception is printed below. Despite this, the analysis was successfull and can be used excluding torrent 6. At the end, the analysis had to be shutdown with multiple Ctrl+C, since the program tries to wait for all tracker threads. The resulting SQLite journal file was removed using the SQLite vacuum command.
 
         Exception in thread Thread-6:
         Traceback (most recent call last):
@@ -31,15 +31,16 @@ This are the files used for chapter 4 *Evaluation*.
             interval = response[b'interval']
         TypeError: tuple indices must be integers, not bytes
 
-* Files VM2: 2015-08-30_20-41-36_faui1-246*
+* Files VM2: `2015-08-30_20-41-36_faui1-246*`
 
-* Files, combined: 2015-08-30_20-combined*
+* Files, combined: `2015-08-30_20-combined*`  
+The file `2015-08-30_20-combined.sqlite.csv` was manually created and assigns each torrent file to a set, which is used in the evaluation of the thesis.
 
-As explained in the BitTorrent Download Analyzer's [README.md](../btda/README.md#known-issues), SQLAlchemy did refuse to store some entries in the request and statistic table, not the peer table. These entries were logged instead and were extracted with the `sql_from_log.py` script and applied to the database afterwards.
+As explained in the BitTorrent Download Analyzer's [README.md](../btda/README.md#known-issues), SQLAlchemy did refuse to store some entries in the request and statistic table. These entries were logged instead and were extracted with the `sql_from_log.py` script and applied to the database afterwards.
 
-Finally, the databases of the two VMs were combined, using the `combine.sql` scripts.
+Finally, the databases of the two VMs were combined, using the `combine.sql` script. This script does exclude torrent 6 from VM1.
 
-Following command were used to create the final database:
+Following commands were used to create the final database:
 
     scp torrent-vm1:bittorrent-analyzer/btda/output/2015-08-30_20-34-06_faui1-246* .
     scp torrent-vm2:bittorrent-analyzer/btda/output/2015-08-30_20-41-36_faui1-246* .

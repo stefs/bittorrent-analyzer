@@ -162,7 +162,7 @@ print(
 	geom_bar(stat="identity", position="dodge") +
 	facet_grid(set ~ ., scales="free_y") +
 	theme(axis.text.x=element_text(angle=90, hjust=1)) +
-	labs(x="Time UTC (day/hour)", y="Downloads") +
+	labs(x="Time UTC (month/day/hour)", y="Downloads") +
 	theme(legend.position="top")
 )
 print(paste("Plot written to", outfile))
