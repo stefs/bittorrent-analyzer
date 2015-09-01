@@ -1,4 +1,6 @@
 # Result
+This are the file produced by the BitTorrent Download Analyzer, which were used for the thesis.
+
 ## Timeout parameter
 * Files: 2015-08-14_17-46-44_faui1-246*
 
@@ -27,3 +29,17 @@
         TypeError: tuple indices must be integers, not bytes
 
 * Files VM2: 2015-08-30_20-41-36_faui1-246*
+
+As mentioned in the BitTorrent Download Analyzer's [README.md](../btda/README.md), SQLAlchemy did refuse to store some entries in the request and statistic table, not the peer table. These entries were logged instead and were extracted with the `sql_from_log.py` script and applied to the database afterwards.
+
+Further approach for creating the final database:
+
+    scp torrent-vm1:bittorrent-analyzer/btda/output/2015-08-30_20-34-06_faui1-246* .
+    scp torrent-vm2:bittorrent-analyzer/btda/output/2015-08-30_20-41-36_faui1-246* .
+    sqlite3 2015-08-30_20-34-06_faui1-246.sqlite vacuum
+    sqlite3 2015-08-30_20-41-36_faui1-246.sqlite vacuum
+    ./sql_from_log.py 2015-08-30_20-34-06_faui1-246.log
+    ./sql_from_log.py 2015-08-30_20-41-36_faui1-246.log
+    cat 2015-08-30_20-34-06_faui1-246.log.sql | sqlite3 2015-08-30_20-34-06_faui1-246.sqlite
+    cat 2015-08-30_20-41-36_faui1-246.log.sql | sqlite3 2015-08-30_20-41-36_faui1-246.sqlite
+    cat combine.sql | sqlite3 | sqlite3 2015-08-30_20-combined.sqlite
