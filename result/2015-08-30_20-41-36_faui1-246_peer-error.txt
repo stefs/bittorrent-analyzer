@@ -1,0 +1,20 @@
+First contact,[Errno 101] Network is unreachable,458
+First contact,[Errno 104] Connection reset by peer,8865
+Later contact,[Errno 101] Network is unreachable,1
+Later contact,[Errno 113] No route to host,283
+Later contact,[Errno 104] Connection reset by peer,704
+Incoming peer,Unknown info hash,3598534
+Incoming peer,[Errno 32] Broken pipe,2
+First contact,[Errno 111] Connection refused,124699
+Later contact,timed out,4484
+Incoming peer,Socket connection broken,6645
+First contact,Peer speaks unknown protocol,16
+Incoming peer,Already in outgoing,1214747
+First contact,timed out,491857
+Incoming peer,timed out,517889
+Incoming peer,[Errno 104] Connection reset by peer,13743
+Incoming peer,Peer speaks unknown protocol,1054610
+First contact,Socket connection broken,97097
+Later contact,[Errno 111] Connection refused,717
+First contact,[Errno 113] No route to host,11230
+Later contact,Socket connection broken,17341

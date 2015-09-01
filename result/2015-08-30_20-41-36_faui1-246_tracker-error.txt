@@ -1,0 +1,159 @@
+1,udp://9.rarbg.com:2710/announce,announce success,,356
+10,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,18
+4,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: timed out,145
+2,udp://open.demonii.com:1337/announce,scrape success,,388
+4,udp://tracker.trackerfix.com:80/announce,announce fail,UDP tracker request failed: timed out,1
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 87, got -1215929082,1
+9,udp://tracker.openbittorrent.com:80/announce,announce success,,380
+2,udp://9.rarbg.com:2710/announce,announce success,,368
+3,http://tracker.aletorrenty.pl:2710/announce,announce fail,Get request failed: <urlopen error timed out>,4
+5,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,390
+1,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,382
+8,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,398
+9,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,399
+9,udp://open.demonii.com:1337/announce,announce success,,399
+1,udp://tracker4.piratux.com:6969/announce,announce fail,UDP tracker request failed: timed out,1
+7,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,1
+1,http://tracker.pubt.net:2710/announce,announce fail,Get request failed: <urlopen error timed out>,71
+10,udp://open.demonii.com:1337/announce,scrape success,,401
+5,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 7, got -1409348636,1
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 219, got -1341235776,1
+5,udp://open.demonii.com:1337/announce,scrape success,,388
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 238, got -803515328,1
+4,udp://tracker.trackerfix.com:80/announce,announce success,,387
+2,udp://glotorrents.pw:6969/announce,announce success,,389
+10,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,401
+3,http://tracker.aletorrenty.pl:2710/announce,announce fail,Get request failed: timed out,1
+5,udp://open.demonii.com:1337/announce,announce success,,389
+4,udp://tracker.leechers-paradise.org:6969/announce,announce success,,240
+4,http://tracker.trackerfix.com/announce,announce success,,388
+10,udp://tracker.openbittorrent.com:80/announce,announce success,,383
+7,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,380
+1,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+1,udp://open.demonii.com:1337/announce,announce success,,381
+5,udp://eddie4.nl:6969/announce,announce success,,242
+1,http://tracker.pubt.net:2710/announce,announce success,,308
+6,udp://open.demonii.com:1337/announce,scrape success,,393
+10,http://retracker.local/announce,announce fail,Get request failed: <urlopen error [Errno -2] Name or service not known>,401
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 235, got -1101603948,1
+10,udp://open.demonii.com:1337/announce,announce success,,401
+2,udp://coppersurfer.tk:6969/announce,announce success,,356
+5,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,2
+9,udp://tracker.coppersurfer.tk:6969/announce,announce fail,UDP tracker request failed: timed out,29
+7,udp://open.demonii.com:1337/announce,announce success,,379
+1,udp://open.demonii.com:1337/announce,scrape success,,381
+3,udp://tracker4.piratux.com:6969/announce,announce fail,UDP tracker request failed: timed out,1
+3,http://tracker.pubt.net:2710/announce,announce success,,310
+7,udp://tracker.ccc.de:80/announce,announce fail,UDP tracker request failed: timed out,380
+5,udp://tracker.coppersurfer.tk:6969/announce,announce fail,UDP tracker request failed: timed out,32
+8,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,25
+5,udp://9.rarbg.to:2710/announce,announce success,,378
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 39, got -1547545604,1
+4,http://tracker.pubt.net:2710/announce,announce success,,308
+8,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,398
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: timed out,141
+6,udp://open.demonii.com:1337/announce,announce success,,393
+4,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,388
+7,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,380
+4,udp://open.demonii.com:1337/announce,announce success,,388
+7,udp://open.demonii.com:1337/announce,scrape success,,379
+8,udp://open.demonii.com:1337/announce,scrape success,,397
+3,udp://torrent.gresille.org:80/announce,announce fail,UDP tracker request failed: timed out,1
+3,udp://tracker.openbittorrent.com:80/announce,announce success,,361
+1,http://tracker.aletorrenty.pl:2710/announce,announce success,,374
+3,udp://torrent.gresille.org:80/announce,announce success,,381
+4,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 22, got 592907538,1
+3,udp://9.rarbg.com:2710/announce,announce fail,UDP tracker request failed: timed out,16
+6,udp://tracker.ccc.de:80/announce,announce fail,UDP tracker request failed: timed out,394
+3,http://tracker.pubt.net:2710/announce,announce fail,Get request failed: <urlopen error timed out>,71
+4,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,20
+1,udp://tracker4.piratux.com:6969/announce,announce success,,381
+3,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,382
+5,udp://tracker.leechers-paradise.org:6969/announce,announce success,,234
+3,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,1
+5,udp://9.rarbg.to:2710/announce,announce fail,UDP tracker request failed: timed out,12
+1,http://tracker.pubt.net:2710/announce,announce fail,Get request failed: timed out,3
+2,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,389
+4,http://tracker.pubt.net:2710/announce,announce fail,Get request failed: <urlopen error timed out>,77
+8,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,1
+5,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: timed out,152
+7,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,16
+4,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 33, got -2066299312,1
+1,udp://torrent.gresille.org:80/announce,announce fail,UDP tracker request failed: timed out,1
+7,udp://12.rarbg.me:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,380
+5,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 163, got 141095670,1
+1,udp://tracker.openbittorrent.com:80/announce,announce success,,363
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 22, got -1933839580,1
+1,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,1
+4,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,388
+2,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,17
+4,udp://tracker.openbittorrent.com:80/announce,announce success,,368
+4,http://tracker.pubt.net:2710/announce,announce fail,Get request failed: timed out,3
+2,udp://explodie.org:6969/announce,announce fail,UDP tracker request failed: timed out,389
+7,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+1,http://tracker.nwps.ws:6969/announce,announce fail,Get request failed: <urlopen error [Errno 113] No route to host>,382
+3,udp://open.demonii.com:1337/announce,announce success,,381
+9,udp://open.demonii.com:1337/announce,scrape success,,399
+5,udp://p4p.arenabg.ch:1337/announce,announce fail,UDP tracker request failed: timed out,18
+5,udp://tracker.coppersurfer.tk:6969/announce,announce success,,358
+2,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,389
+7,udp://tracker.openbittorrent.com:80/announce,announce success,,364
+1,udp://torrent.gresille.org:80/announce,announce success,,381
+4,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Wrong length announce response: 16,1
+9,udp://tracker.coppersurfer.tk:6969/announce,announce success,,370
+3,udp://open.demonii.com:1337/announce,scrape success,,381
+1,http://tracker.aletorrenty.pl:2710/announce,announce fail,Get request failed: <urlopen error timed out>,8
+2,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,1
+8,udp://open.demonii.com:1337/announce,announce success,,397
+3,udp://9.rarbg.com:2710/announce,announce success,,366
+4,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 87, got -19184658,1
+5,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Wrong length announce response: 16,1
+4,udp://eddie4.nl:6969/announce,announce success,,243
+2,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+6,udp://tracker.publicbt.com:80/announce,announce fail,UDP tracker request failed: timed out,394
+8,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+7,http://announce.torrentsmd.com:6969/announce,announce fail,Get request failed: <urlopen error [Errno 111] Connection refused>,380
+4,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 73, got 1863760088,1
+5,udp://tracker.openbittorrent.com:80/announce,announce success,,373
+1,udp://9.rarbg.com:2710/announce,announce fail,UDP tracker request failed: timed out,26
+6,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,12
+5,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,390
+5,udp://9.rarbg.com:2710/announce,announce success,,384
+2,udp://tracker4.piratux.com:6969/announce,announce success,,389
+8,udp://tracker.openbittorrent.com:80/announce,announce success,,373
+6,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,394
+8,http://bt.3dmgame.com:2710/announce,announce success,,397
+10,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,401
+1,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,19
+2,udp://tracker.blackunicorn.xyz:6969/announce,announce success,,389
+2,udp://9.rarbg.com:2710/announce,announce fail,UDP tracker request failed: timed out,21
+1,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,382
+5,udp://9.rarbg.com:2710/announce,announce fail,UDP tracker request failed: timed out,6
+8,http://bt.3dmgame.com:2710/announce,announce fail,Get request failed: <urlopen error timed out>,1
+4,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Wrong length announce response: 16,1
+3,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+5,udp://tracker.leechers-paradise.org:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 148, got 1046345110,1
+7,udp://fr33domtracker.h33t.com:3310/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,380
+2,udp://tracker.openbittorrent.com:80/announce,announce success,,372
+3,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,382
+5,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,17
+7,udp://tracker.ilibr.org:6969/announce,announce fail,UDP tracker request failed: timed out,380
+2,udp://open.demonii.com:1337/announce,announce success,,388
+9,udp://tracker.istole.it:80/announce,announce fail,UDP tracker request failed: [Errno -2] Name or service not known,399
+4,udp://open.demonii.com:1337/announce,scrape success,,388
+9,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,19
+3,udp://tracker.openbittorrent.com:80/announce,announce fail,UDP tracker request failed: timed out,21
+2,udp://coppersurfer.tk:6969/announce,announce fail,UDP tracker request failed: timed out,33
+6,udp://tracker.openbittorrent.com:80/announce,announce success,,382
+5,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+3,http://tracker.pubt.net:2710/announce,announce fail,Get request failed: timed out,1
+4,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: timed out,142
+6,udp://open.demonii.com:1337/announce,announce fail,UDP tracker request failed: timed out,1
+3,http://tracker.aletorrenty.pl:2710/announce,announce success,,377
+6,udp://open.demonii.com:1337/announce,scrape fail,UDP tracker request failed: timed out,1
+7,udp://tracker.zond.org:80/announce,announce fail,UDP tracker request failed: timed out,380
+4,udp://tracker4.piratux.com:6969/announce,announce success,,388
+5,udp://eddie4.nl:6969/announce,announce fail,UDP tracker request failed: Transaction ID doesn't match in connection response! Expected 225, got -1254807544,1
+5,udp://p4p.arenabg.ch:1337/announce,announce success,,372
+3,udp://tracker4.piratux.com:6969/announce,announce success,,381
+3,http://tracker.nwps.ws:6969/announce,announce fail,Get request failed: <urlopen error [Errno 113] No route to host>,382
