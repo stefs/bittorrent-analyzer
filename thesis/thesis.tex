@@ -856,7 +856,7 @@ Torrents of various sizes between \numprint[GB]{1.5} and \numprint[GB]{65} were 
 \item Set C: Between \numprint[GB]{30} and \numprint[GB]{70}
 \end{itemize}
 
-In order to observe many downloads, torrents with high amount of leechers were used. Initially \numprint{20} torrents were chosen, but one tracker the torrent with ID 6 sent a bencoded value, which was not standard conform as described in section \ref{bittorrent}. This crashed the tracker request thread for this torrent, which is why this torrent is excluded from the evaluation. The 19 remaining torrents are listed in table \ref{torrents}.
+In order to observe many downloads, torrents with high amount of leechers were used. Initially \numprint{20} torrents were chosen, but one tracker the torrent with ID 6 sent a bencoded value, which was not standard conform as described in section \ref{bittorrent}. This crashed the tracker request thread for this torrent, which is why this torrent is excluded from the evaluation. The 19 remaining torrents are listed in table \ref{torrents} For all torrents a metainfo file was available.
 
 \section{Getting Addresses of Peers}
 \label{addr}
@@ -966,45 +966,50 @@ In figure \ref{confirmed-unique} similar data is shown, but using the number of 
 \paragraph{Downloads per Hour}
 The history of download numbers over time in figure \ref{download-history} once more illustrates the relation between measured download numbers and torrent size. Unfortunately in retrospect, the timestamp when a peer crossed the download threshold was not recorded, but only one from the first and the last contact. In this plot, the time of first contact is used, which explains the high numbers in the beginning and low values at the end. Likewise to the received peer addresses in figure \ref{request-history}, downloads settle after a few hours.
 
-\subsection{Problems of this Method}
+\section{Problems}
 \label{problems}
 \begin{table}
 \centering
 \begin{tabular}{llrr}
 \toprule
-Event & Error & Quantity & Share per Event \\
+Event & Result & Frequency & Share per Event \\
 \midrule
-First contact & timed out & 182209 & 63.8\% \\
-& Socket connection broken & 47690 & 16.7\% \\
- & Connection refused & 47028 & 16.5\% \\
- & No route to host & 4938 & 1.7\% \\
- & Connection reset by peer & 3330 & 1.2\% \\
- &  Network is unreachable & 213 & 0.1\% \\
- & Peer speaks unknown protocol & 5 & 0.0\% \\
- & \textit{Total} & 285413 &  \\
+First contact & timed out & \numprint{978505} & \numprint[\%]{61.40} \\
+ & Connection refused & \numprint{242616} & \numprint[\%]{15.22} \\
+ & Socket connection broken & \numprint{177833} & \numprint[\%]{11.16} \\
+ & Success & \numprint{149608} & \numprint[\%]{9.39} \\
+ & No route to host & \numprint{22042} & \numprint[\%]{1.38} \\
+ & Connection reset by peer & \numprint{21512} & \numprint[\%]{1.35} \\
+ & Network is unreachable & \numprint{1446} & \numprint[\%]{0.09} \\
+ & Peer speaks unknown protocol & \numprint{24} & \numprint[\%]{0.00} \\
+ & \emph{Total} & \numprint{1593586} & \\
 \midrule
-Later contact & Socket connection broken & 3847 & 55.9\% \\
- & timed out & 2244 & 32.6\% \\
- &  No route to host & 369 & 5.4\% \\
- & Connection refused & 249 & 3.6\% \\
- &  Connection reset by peer & 176 & 2.6\% \\
- & \textit{Total} & 6885 &  \\
+Later contact & Success & \numprint{166174} & \numprint[\%]{81.74} \\
+ & Socket connection broken & \numprint{26559} & \numprint[\%]{13.06} \\
+ & timed out & \numprint{7203} & \numprint[\%]{3.54} \\
+ & Connection reset by peer & \numprint{1725} & \numprint[\%]{0.85} \\
+ & Connection refused & \numprint{1252} & \numprint[\%]{0.62} \\
+ & No route to host & \numprint{390} & \numprint[\%]{0.19} \\
+ & Network is unreachable & \numprint{5} & \numprint[\%]{0.00} \\
+ & \emph{Total} & \numprint{203308} & \\
 \midrule
-Incoming peer & Unknown info hash & 399331 & 68.3\% \\
- & Peer speaks unknown protocol & 124794 & 21.4\% \\
- & timed out & 57021 & 9.8\% \\
- & Connection reset by peer & 1821 & 0.3\% \\
- & Socket connection broken & 1427 & 0.2\% \\
- & \textit{Total} & 584394 &  \\
+Incoming peer & Unknown info hash & \numprint{7187788} & \numprint[\%]{37.26} \\
+ & Already in outgoing & \numprint{6572026} & \numprint[\%]{34.07} \\
+ & Peer speaks unknown protocol & \numprint{2283818} & \numprint[\%]{11.84} \\
+ & timed out & \numprint{2144463} & \numprint[\%]{11.12} \\
+ & Success & \numprint{1059055} & \numprint[\%]{5.49} \\
+ & Connection reset by peer & \numprint{26330} & \numprint[\%]{0.14} \\
+ & Socket connection broken & \numprint{16266} & \numprint[\%]{0.08} \\
+ & Broken pipe & \numprint{2} & \numprint[\%]{0.00} \\
+ & \emph{Total} & \numprint{19289748} & \\
 \bottomrule
 \end{tabular}
-\caption[Reasons for failure of peer evaluation]{Outcome of peer evaluations during the analysis process with error and success rates. \emph{Event} describes the point in the evaluation process, when the problem occurred. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses, while a peer must be contacted once successfully to be contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port.} % TODO* add success (maybe all_incoming_peers, unique success)
+\caption[Reasons for failure of peer evaluation]{Outcome of peer evaluations for different events. An \emph{event} describes the point in the evaluation process. \emph{First} and \emph{later contact} are performed when actively contacting collected peer addresses. After an evaluation of a peer fails, the peer is not contacted another time. An \emph{incoming peer} represents an incoming connection on the BitTorrent listening port. Error data is from the \texttt{2015-08-30\_20-combined\_peer-error.txt} file as written by the analyzer tool, success count is from the \emph{visits} column of the \emph{peer} table.}
 \label{connection-failure}
 \end{table}
-
-The Evaluation of a peer's download progress was described in section \ref{peer-evaluation}. This process can fail for various reasons. The superficial problems which occurred in this analysis are listed in table \ref{connection-failure}. The table shows every attempt of connecting to a peer and performing the evaluation procedure. Outgoing evaluation attempts were usually* successful. The mainly* appearing error is a timed out peer, which indicates outdated or wrong peer address information. However, the value of failed evaluations on a second or later contact is very low. Regarding incoming peers, most evaluations* failed due to an unknown info hash. This is probably because of other torrents evaluated beforehand from the same IP address and port. The response rate between peers obtained via trackers and peers received through the DHT network was not examined.
-
-The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee* [see actual incoming dpulicate stats] to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
+% SQL success first: select count(visits) from peer where source='tracker' or source='dht';
+% SQL success later: select sum(visits-1) from peer where source='tracker' or source='dht';
+% SQL success incoming: select count(visits) from peer where source='incoming';
 
 \begin{figure}
 \centering
@@ -1013,9 +1018,11 @@ The search for more fundamental explanations for errors merely speculation. Peer
 \label{visits}
 \end{figure}
 
-The number of successful revisits of peers is often too low, as shown in figure \ref{visits}. This could indicate, that peers only participate very shortly in a torrent. However, this could also suggest a problem in the process of recontacting peers.
+The Evaluation of a peer's download progress was described in section \ref{peer-evaluation}. This process can fail for various reasons. The superficial problems which occurred in this analysis are listed in table \ref{connection-failure}. The table shows every attempt of connecting to a peer and performing the evaluation procedure. It shows, that the chance of successfully evaluating a peer's download progress on first contact is \numprint[\%]{9.4}. The majority of connection attempts timed out. The number of \numprint[\%]{82} succeeded later evaluation attempts seems to indicate a high success rate when contacting a peer a second time. However, one has to consider, that a peer is not contacted ever again after a failed attempt. This means every error on a later contact is a lost peer, successful evaluations were performed multiple times per peer. The effect is obvious when viewing figure \ref{visits}: After one successful visit, the chance of a second successful visit is only about \numprint[\%]{15}.
 
-[maybe move this whole section to Conclusion]
+Regarding incoming connections, most evaluations failed due to an unknown info hash. Before the data of this evaluation was collected, the analysis tool was tested with different torrents on BitTorrent port \numprint{6883}. Before the analysis started it was changed to \numprint{6884} to reduce unrelated traffic. Peers obviously tried to connect to the next higher port number, successfully. Since these info hashes then were not analyzed, the evaluation failed.
+
+The search for explanations of these errors is largely speculation. Peers may blacklist the IP or used peer ID of the analysis program, since they do not receive any data at all. When peers have no free upload capacity, they may block all incoming connections. If a peer has a temporary network connectivity problem and the evaluation fails because of this, no second try will be made.
 
 \section{Further Analysis of Peers}
 \subsection{Download Speed}

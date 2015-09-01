@@ -10,7 +10,7 @@ read_db <- function(path) {
 	# Disable auto commit
 	dbBegin(con)
 	# Read peer table
-	sql <- "SELECT id, first_pieces, last_pieces, last_seen, torrent FROM peer"
+	sql <- "SELECT id, first_pieces, last_pieces, first_seen, torrent FROM peer"
 	peers <- dbGetQuery(con, sql)
 	# Read torrent table
 	sql <- "SELECT id, pieces_count FROM torrent"
@@ -61,7 +61,7 @@ filter_peers <- function(peers) {
 aggregate_confirmed <- function(peers) {
 	# Aggregate by torrent id and last seen
 	values_df <- data.frame(downloads=peers$id)
-	groups <- list(group_hour=peers$last_seen, set=peers$set)
+	groups <- list(group_hour=peers$first_seen, set=peers$set)
 	ret <- aggregate(values_df, by=groups, FUN=length)
 	# Return result
 	return(ret)
@@ -127,7 +127,7 @@ peers <- filter_peers(peers)
 print(head(peers))
 stopifnot(nrow(peers) > 0)
 print("*** Parse timesamps ***")
-peers$last_seen <- hour_timestamps(peers$last_seen)
+peers$first_seen <- hour_timestamps(peers$first_seen)
 print(head(peers))
 requests$timestamp <- hour_timestamps(requests$timestamp)
 print(head(requests))
@@ -154,7 +154,7 @@ print(head(total))
 # Create file
 outfile = sub(".sqlite", "_download_set.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=7)
+pdf(outfile, width=9, height=9)
 
 # Plot with ggplot2
 print(
