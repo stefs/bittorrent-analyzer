@@ -1,13 +1,14 @@
 # Analysis of BitTorrent Trackers and Peers
-Work in progress.
-
 This is a Bachelor thesis written at the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 
-[BitTorrent Download Analyzer](btda/)
-:   Software tool written in Python 3 which is able to count confirmed downloads in a BitTorrent swarm.
+* [BitTorrent Download Analyzer](btda/)  
+Python 3 software tool, which is able to count confirmed downloads in a BitTorrent swarm and collect other data
 
-[Evaluation scripts](evaluation/)
-:   Create diagrams from the SQLite database using the R programming language.
+* [Result](result/)  
+Files produced by the BitTorrent Download Analyzer
 
-[Bachelor thesis](thesis/)
-:   Extensive text containing an intruductino into the subject, background information about the BitTorrent technology, implementation details about the software tool, evaluation of research results and a conclusion on the topic.
+* [Evaluation scripts](evaluation/)  
+Create diagrams from the SQLite database using the R statistical programming language.
+
+* [Bachelor thesis](thesis/)  
+The thesis about counting confirmed downloads in BitTorrent

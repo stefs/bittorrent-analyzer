@@ -14,9 +14,6 @@ Compile number or confirmed downloads and scrape download numbers from tracker. 
 * `./source.r <mode> <file.sqlite>`  
 Plot received peers from DHT network and tracker server, distinguishing unique and duplicate peers. Includes successful evaluated incoming peers. If *mode* is "sum", a summary for all torrents will be plotted. If *mode* is "torrent", the source is plottet for every single torrent.
 
-* `cat combine.sql | sqlite3 | sqlite3 <combined.sqlite>`  
-Combine databases from two analysis passes. Used, because analysis was performed on different VMs for performance reasons. Input database filenames are in-code parameters.
-
 * `tracker_error.r <file_tracker-error.txt>`  
 Compile plot about tracker responsiveness per torrent. Don't use on invalid CSV with too many commas.
 
