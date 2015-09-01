@@ -9,6 +9,7 @@
 * Min 24 h laufzeit
 * Send Torrents to RRZE
 * ggplot2 plots 9 inch width
+* Mention every logarithmic axis
 
 ## New Data
 * Check figures
@@ -33,8 +34,8 @@ Today | Date | Task | Done
   | 27.8. | | test evaluation, Architecture, Functionallity, Config
   | 28.8. | evaluation | Architecture, Functionallity, Config, Restrictions
   | 29.8. | Evaluation ++ | (strange tracker scrape, noticable unique tracker peers)
-→ | 30.8. | Evaluation +++, Results++, Conclusion++
-  | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
+  | 30.8. | Evaluation +++, Results++, Conclusion++
+→ | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
   |  1.9. | Abstract +++, Outline +++, Todos
   |  2.9. | Tidy readme, Print thesis, burn CD
   |  3.9. | (unklar)
@@ -54,7 +55,7 @@ Chapter | Progress
 – 1.6 Acknowledgments | ★★★
 2 Background | ★★★
 3 Implementation | ★★★
-4 Evaluation | ★★ (new data: 2015-08-29_17-10)
+4 Evaluation | ★★
 – 4.1 Choosing Torrents | ★★
 – 4.2 Getting Addresses of Peers | ★★
 – 4.3 Counting Confirmed Downloads | ★ (waiting for final data)

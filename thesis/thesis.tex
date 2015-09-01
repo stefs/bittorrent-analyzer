@@ -27,8 +27,8 @@
 \SetWatermarkLightness{0.9}
 
 %\usepackage[section]{placeins} % TODO use maybe
-\usepackage[noheads]{endfloat} % TODO temporary
-\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
+%\usepackage[noheads]{endfloat} % TODO temporary
+%\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
 
 \usepackage{pgf-umlsd}
 
@@ -59,7 +59,7 @@
 \let\origunderscore\_
 \renewcommand{\_}{\origunderscore\allowbreak}
 \newcommand{\config}[1]{\texttt{config.\allowbreak #1}}
-\newcommand{\range}{from August 20 9:52 to August 22 10:04 UTC, 2015} % *
+\newcommand{\range}{from August 30 18:40 to September 1 5:10 UTC, 2015}
 
 \begin{document}
 \pagestyle{empty}
@@ -726,7 +726,7 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 To assess a minimum timeout, an analysis with special configuration parameters was performed\footnote{Files: \texttt{2015-08-14\_17-46-44\_faui1-246.sqlite}, \texttt{2015-08-14\_17-46-44\_faui1-246\_timeout.txt}}. Here, the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. During this test at \numprint{977301} out of \numprint{1040817} peer contacts the maximum duration for receiving one message was below six seconds, which equals \numprint[\%]{93.9}. The recording of this value can be enabled with \config{rec\_dur\_analysis}.
 
 \paragraph{receive\_message\_max}
-When collecting all messages from a peer, a maximum of *\numprint{128} messages are considered. This limit is in place, to prohibit infinite peer sessions. Only *\numprint[\%]{0} of evaluations reached this maximum on the main analysis pass, others stopped because of the timeout or another error.
+When collecting all messages from a peer, a maximum of \numprint{256} messages are considered. This limit is in place, to prohibit infinite peer sessions. Only *\numprint[\%]{0} of evaluations reached this maximum on the main analysis pass, others stopped because of the timeout or another error.
 
 \paragraph{peer\_revisit\_delay}
 Peers were contacted for their download progress every five minutes. This delay should be as small as possible, to also consider peers who stop seeding a torrent immediately after they finished downloading it. Five minutes caused no problem with system resources.
@@ -752,16 +752,27 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
-Data collection with the BitTorrent Download Analyzer tool was performed simultaneously on two identical virtual machines running Ubuntu 14.04 LTS with 2.0\,GB of RAM, a 3.4\,GHz processor and own IPv4 addresss without NAT. \numprint{18} torrents were chosen for evaluation. The analysis was performed \range. During this period no patterns of a 24-hour cycle were visible. It was ensured, that the DHT node provided by \emph{pymdht} did not crash before or during the analysis. The BitTorrent Download Analyzer or any of its threads did not crash during the analysis and gave no relevant error messages in the logfile. The used BitTorrent *port was changed right before the evaluation started to decrease system load from peers with an unrelated info hash from earlier evaluations.
+Data collection with the BitTorrent Download Analyzer tool was performed simultaneously on two identical virtual machines running Ubuntu 14.04 LTS with 2.0\,GB of RAM, a 3.4\,GHz dual-core processor and own IPv4 addresses without NAT. The analysis was performed for \numprint{34} hours \range. Each machine was running an own \emph{pymdht} DHT node, which did not crash before or during the analysis. The BitTorrent Download Analyzer gave no relevant error messages in the logfile. The used BitTorrent port was changed right before the evaluation started, in order to decrease system load from peers with an unrelated info hash from earlier evaluations.
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_workload}
-\caption[Monitoring parameters during the analysis]{System parameters and queue lengths for monitoring. The \emph{thread workload} is a time based value between \numprint{0} and {1}, stating the average uptime of the peer contact threads, not the server threads. A thread is only considered as inactive when waiting on an empty \emph{peer queue} or waiting for the revisiting timestamp of a peer, see section \ref{cont}. \emph{Evaluator threads} gives the same value as an absolute number while using the same constraints. \emph{Server threads} is the number of active server threads, which is not limited. \emph{Peer queue} and \emph{visited queue} are the lengths of the queues. \emph{Memory MB} specifies RAM usage, \emph{load average} is the standard Unix processor load parameter.}
+\includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_workload}
+\caption[Monitoring parameters during the analysis]{System parameters and queue lengths for monitoring. The \emph{thread workload} is a time based value between \numprint{0} and {1}, stating the average uptime of the peer contact threads, not the server threads. A thread is only considered as inactive when waiting on an empty \emph{peer queue} or waiting for the revisiting timestamp of a peer, see section \ref{cont}. The \emph{evaluator threads} graph gives the same value as an absolute number while using the same constraints. \emph{Server threads} is the number of active server threads, which is not limited. \emph{Peer queue} and \emph{visited queue} are the lengths of these queues. \emph{Memory MB} specifies RAM usage, \emph{load average} is the standard Unix processor load parameter.}
 \label{workload}
 \end{figure}
 
-In order to support the validity of the test results, some statistics were logged to the database every five minutes. These are shown in figure \ref{workload}. Graphs of a low thread workload and the short length of the peer queue make clear, that the number of \numprint{1024} worker threads was enough. The number of used evaluator threads did actually not surpass \numprint{500}. The *low number of recorded active threads in the first hours could be explained by a coincidence caused by the low sample rate, but is not conclusive. The length of the visited queue is almost always zero, which proves that the database was no bottleneck. A maximum of \numprint[MB]{520} RAM is used, which is way below the available \numprint[GB]{2}. The Unix load-average is below the \numprint{2} mark for two processor cores.
+In order to support the validity of the test results, some statistics were logged to the database with a sample rate of five minutes. These are shown in figure \ref{workload}. Graphs of a low thread workload and the short length of the peer queue make clear, that the number of \numprint{1024} worker threads was enough. The number of used evaluator threads did actually not surpass \numprint{500}. The length of the visited queue is almost always zero, which proves that the database was not a bottleneck. A maximum of \numprint[MB]{300} RAM is used, which is way below the available \numprint[GB]{2}. The Unix load-average is below the \numprint{2} mark for two processor cores.
+
+After the development phase of the BitTorrent Download Analyzer was finished, the \emph{SQLAlchemy} database toolkit started to report errors about a locked database. This occurred despite using the multi-threading mechanisms provided by SQLAlchemy. The problem surfaced very late and could not be resolved because of this. The errors were only reported for the request table and the statistic table for monitoring values and were few in comparison to the number of successfully stored database rows. The used workaround for this problem was to apply failed SQL statements, which are all recorded in the logfile, to the database afterwards. Finally, the databases of the two virtual machines were combined. The commands used for creating the final database are given in listing \ref{magic}.
+\begin{lstlisting}[language=bash, otherkeywords={scp, sqlite3}, float, caption={[Creating the final database]Steps to create the final database. The \texttt{combine.sql} scripts produces \texttt{INSERT} statments for all table rows of both databases and handles torrent IDs appropriately. Filename timestamps are in CEST, which is UTC+02:00. \texttt{2015-08-30\_20-combined.sqlite} holds the data used for the evaluation.}, captionpos=b, label=magic]
+scp torrent-vm1:bittorrent-analyzer/btda/output/2015-08-30_20-34-06_faui1-246* .
+scp torrent-vm2:bittorrent-analyzer/btda/output/2015-08-30_20-41-36_faui1-246* .
+./sql_from_log.py 2015-08-30_20-34-06_faui1-246.log
+./sql_from_log.py 2015-08-30_20-41-36_faui1-246.log
+cat 2015-08-30_20-34-06_faui1-246.log.sql | sqlite3 2015-08-30_20-34-06_faui1-246.sqlite
+cat 2015-08-30_20-41-36_faui1-246.log.sql | sqlite3 2015-08-30_20-41-36_faui1-246.sqlite
+cat combine.sql | sqlite3 | sqlite3 2015-08-30_20-combined.sqlite
+\end{lstlisting}
 
 \section{Choosing Torrents}
 \label{cho}
@@ -798,41 +809,43 @@ Due to the distributed nature of BitTorrent, there unfortunately is no complete 
 
 \begin{table}
 \centering
-\begin{tabular}{lrlr}
+\begin{tabular}{lrlrrr}
 \toprule
-Set & ID & Name & Size \\
+Set & ID & Name & Pieces & Size & Trackers \\
 \midrule
-A & 1 &  & \numprint[GB]{0.00} \\
-& 4 &  & \numprint[GB]{0.00} \\
-& 8 &  & \numprint[GB]{0.00} \\
-& 11 &  & \numprint[GB]{0.00} \\
-& 13 &  & \numprint[GB]{0.00} \\
-B & 3 &  & \numprint[GB]{0.00} \\
-& 6 &  & \numprint[GB]{0.00} \\
-& 9 &  & \numprint[GB]{0.00} \\
-& 10 &  & \numprint[GB]{0.00} \\
-& 14 &  & \numprint[GB]{0.00} \\
-C & 5 &  & \numprint[GB]{0.00} \\
-& 7 &  & \numprint[GB]{0.00} \\
-& 12 &  & \numprint[GB]{0.00} \\
-& 15 &  & \numprint[GB]{0.00} \\
-& 16 &  & \numprint[GB]{0.00} \\
+Set A & 17 & [ www.CpasBien.pw ] Avengers.Age... & \numprint{5619} & \numprint[GB]{1.47} & 10 \\
+& 8 & Magic.Mike.XXL.2015.HDRip.XViD.A... & \numprint{1426} & \numprint[GB]{1.50} & 10 \\
+& 12 & San.Andreas.2015.HDRip.XviD.AC3-... & \numprint{5880} & \numprint[GB]{1.54} & 10 \\
+& 4 & Minions.2015.720p.HDRip.X264.AAC... & \numprint{3980} & \numprint[GB]{2.09} & 10 \\
+& 13 & San Andreas 2015 720p WEB-DL x26... & \numprint{610} & \numprint[GB]{2.56} & 10 \\
+& 15 & Mission.Impossible.5-Rogue.Natio... & \numprint{11798} & \numprint[GB]{3.09} & 10 \\
+& 3 & Straight.Outta.Compton.2015.1080... & \numprint{4108} & \numprint[GB]{4.31} & 7 \\
+& 5 & Avengers.Age.of.Ultron.2015.720p... & \numprint{4369} & \numprint[GB]{4.58} & 7 \\
+Set B & 11 & Avengers Age of Ultron 2015 1080... & \numprint{1327} & \numprint[GB]{5.57} & 10 \\
+& 9 & F3\_GOTY.iso & \numprint{1848} & \numprint[GB]{7.75} & 5 \\
+& 19 & Game.Of.Thrones.S05.Season.5.COM... & \numprint{2270} & \numprint[GB]{9.52} & 5 \\
+& 18 & 3DMGAME-One.Piece.Pirate.Warrior... & \numprint{2657} & \numprint[GB]{11.14} & 5 \\
+& 16 & DRP\_15.8\_Full.iso & \numprint{10711} & \numprint[GB]{11.23} & 5 \\
+& 2 & Narcos S01 720p WEBRip x264-TAST... & \numprint{1826} & \numprint[GB]{15.32} & 10 \\
+Set C & 1 & Battlefield Hardline by xatab & \numprint{3599} & \numprint[GB]{30.19} & 7 \\
+& 20 & Mortal.Kombat.X.Proper-RELOADED & \numprint{3998} & \numprint[GB]{33.54} & 5 \\
+& 10 & The X-Files S01-S09 WEBRip x264-... & \numprint{12502} & \numprint[GB]{52.44} & 10 \\
+& 14 & Batman.Arkham.Knight-CPY & \numprint{6430} & \numprint[GB]{53.94} & 10 \\
+& 7 & Dexter Season 1, 2, 3, 4, 5, 6, ... & \numprint{7774} & \numprint[GB]{65.21} & 10 \\
 \bottomrule
 \end{tabular}
-\caption[List of torrent chosen for evaluation]{List of 18 popular torrents according to meta-search engine \textsc{Torrentz} \cite{torrentz}. The selection was made on August 42, 2015, 11:00. The \emph{ID} was chosen by the SQLite database.}
+\caption[List of torrent chosen for evaluation]{List of 19 popular torrents according to meta-search engine \textsc{Torrentz} \cite{torrentz}. The selection was made \numprint{30} minutes before the analysis started. The \emph{ID} was chosen by the SQLite database. Some movies are shared in multiple active torrents, but have different sizes or were uploaded by different users.}
 \label{torrents}
 \end{table}
 
-Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across these torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size. Torrents in three size groups were chosen, because the torrent size has high influence on further results.
+Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across these torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size.
+Torrents of various sizes between \numprint[GB]{1.5} and \numprint[GB]{65} were chosen, because the torrent size has high influence on further results. For further reference, three size groups are defined. These three sets will be evaluated separately where appropriate.
 \begin{itemize}
-%The 4 most popular torrents below \numprint[GB]{1}
-\item Set A: Less than 2
-\item Set B: 2-5
-\item Set C: 5-10
-\item Set D: 10-30
-\item Set E: Larger than 30
+\item Set A: Between \numprint[GB]{1} and \numprint[GB]{5}
+\item Set B: Between \numprint[GB]{5} and \numprint[GB]{20}
+\item Set C: Between \numprint[GB]{30} and \numprint[GB]{70}
 \end{itemize}
-For an indicator of popularity leecher numbers were used, despite the website sorting by the sum of seeders and leechers. The 18 chosen torrents are listed in table \ref{torrents}. These three sets will be evaluated separately where appropriate.
+In order to observe many downloads, torrents with high amount of leechers were used. Initially \numprint{20} torrents were chosen, but one tracker the torrent with ID 6 sent a bencoded value, which was not standard conform as described in section \ref{bittorrent}. This crashed the tracker request thread for this torrent, which is why this torrent is excluded from the evaluation. The 19 remaining torrents are listed in table \ref{torrents}.
 
 \section{Getting Addresses of Peers}
 \label{addr}
@@ -842,36 +855,37 @@ For an indicator of popularity leecher numbers were used, despite the website so
 \toprule
 Source & Total & Unique & New \\
 \midrule
-Tracker server & \numprint{4575653} & \numprint{494825} & \numprint[\%]{10.81} \\
-DHT network & \numprint{2338442} & \numprint{456241} & \numprint[\%]{19.51} \\
-Incoming peers & \numprint{4765909} & \numprint{174464} & \numprint[\%]{3.66} \\
-\emph{Total} & \numprint{11680004} & \numprint{1125530} & \numprint[\%]{9.64} \\
+Tracker server & \numprint{5614412} & \numprint{691248} & \numprint[\%]{12.31} \\
+DHT network & \numprint{3546070} & \numprint{856367} & \numprint[\%]{24.15} \\
+Incoming peers & \numprint{6538653} & \numprint{258939} & \numprint[\%]{3.96} \\
+\emph{Total} & \numprint{15699135} & \numprint{1806554} & \numprint[\%]{11.51} \\
 \bottomrule
 \end{tabular}
 \caption[Received peer addresses per source]{Total and unique received peer addresses per source for all torrents. The ratio of new \emph{tracker} and \emph{DHT} peers depends mainly on the request interval for new peers. Numbers of \emph{incoming peers} only include those where the download progress was evaluated successfully. Numbers of \emph{total} received peers may overlap between sources in this table. Numbers of \emph{unique} peers do not overlap between sources, each peer is only counted as unique one time. This is why the distribution between sources may not represent uniqueness per source in general, but only in this data set. Numbers were acquired from the \emph{request} database table.}
 \label{unique-peers}
 \end{table}
-% SQL Total: select sum(received_peers) from request where source='tracker';
+% SQL Total: select sum(received_peers) from request where source='<source>';
 % SQL Unique: select sum(received_peers) - sum(duplicate_peers) from request where source='<source>';
 
-Peers from all sources were considered, namely from the tracker server, the DHT network and incoming connections. The total number collected addresses across all torrents during this analysis in regards to their source is shown in table \ref{unique-peers}. Since the \emph{incoming peers} data point in this table only includes peers, when their download progress was successfully evaluated, the ratio of \numprint[\%]{3.66}* new incoming peers implies that \numprint[\%]{96.34}* of all incoming contacts are second or later visits, although peers did not receive any torrent data. Only these later visits allow to determine the crossing of a threshold.
+Peers from all supported sources were considered, namely from the tracker server, the DHT network and incoming connections. The total number collected addresses across all torrents during this analysis in regards to their source is shown in table \ref{unique-peers}. The overall high rates of duplicate peers reveal, that the majority of peers collectable through these sources was received. The \emph{incoming peers} data point in this table only includes peers, when their download progress was successfully evaluated. Hence, the ratio of \numprint[\%]{3.96} new incoming peers implies that \numprint[\%]{96.04} of all incoming contacts are second or later visits, although peers did not receive any torrent data. Only these later visits allow to determine the crossing of a threshold.
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_source_all_torrents}
-\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with a few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. Values have the same characteristics as described in table \ref{unique-peers}: \emph{Incoming} peers only include successfully evaluated ones, \emph{unique} peers do not overlap between sources, \emph{duplicate} peers may overlap between sources. The analysis lasted \range.}
-\label{request-history}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{../result/2015-08-27_21-03-31_faui1-246_tracker-error}
-\caption[Responsiveness of tracker servers]{Responsiveness of tracker servers per torrent.}
+\includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_tracker-error}
+\caption[Responsiveness of tracker servers]{Responsiveness of tracker servers per torrent. The thread to perform announce requests for torrent 6 crashed after four hours, which is why this torrent is excluded from the analysis. As apparent from table \ref{torrents}, metainfo files for torrents 9, 16 and 18 to 20 had only five announce URLs embedded, explaining the reduced request number. Also torrents 1, 3 and 5 only had seven trackers. Data is taken from the file \texttt{2015-08-30\_20-combined\_tracker-error.txt}, which is written by the analyzer tool.}
 \label{tracker-resp}
 \end{figure}
 
-The progression of received peer addresses during the analysis period is shown in figure \ref{request-history}. Again, this is a summary for all torrents. The ratio between new and duplicate received peer address information is highest in the first few hours* and then settles at a constant value. The overall high rates of duplicate peers indicate that the majority of the peers collectable from theses sources were received. To estimate the success of tracker announce requests, encountered errors were counted\footnote{File: 2015-08-27\_21-03-31\_faui1-246\_tracker-error.txt}. Figure \ref{tracker-resp} shows no problems.
-% TODO discuss final data
+The responsiveness of the trackers per torrent are examined in figure \ref{tracker-resp}. As expected, torrents with less tracker announce URLs embedded in the torrent file show less attempted announce requests. From torrents with ten trackers usually about two third of them respond. On torrents with only five announce URLs about half of them responded. Torrent 17 stands out with a high number of failed requests. Reviewing the logfile reveals that only two out of ten trackers responded. Other trackers may be unreliable or actually removed the torrent due to a DMCA takedown notice by the copyright owner.
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_source_all_torrents}
+\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with a few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. Values have the same characteristics as described in table \ref{unique-peers}: \emph{Incoming} peers only include successfully evaluated ones, \emph{unique} peers do not overlap between sources, \emph{duplicate} peers may overlap between sources. The unique peers diagram uses a smaller scale for peers than the duplicate ones, to increase its readability. A numerical comparison is given in table \ref{unique-peers}. The analysis lasted \range.}
+\label{request-history}
+\end{figure}
+
+The number of new collected unique peer addresses is highest in the first few hours, as shown in the the summary for all torrents  in figure \ref{request-history}. Nearly all peers in the first \numprint{30} minutes are new. The value declines and stays steady at \numprint{50000} unique peers per hour for about \numprint{18} hours. In the last \numprint{15} hours of the analysis, this value declines slowly. The spike at the beginning consists of all peers in the torrent swarm at this point in time. The constant part are new peers who enter the torrent during the analysis period. The decline at the end may be users loosing interest of the torrent's contents, because other torrents raise in popularity. Another valid explanation is a 24-hour cycle, which implies that unique peer numbers would raise again later. The duration of \numprint{34} hours is too short to tell the difference.
 
 \section{Counting Confirmed Downloads}
 \begin{table}
@@ -903,9 +917,9 @@ Table \ref{confirmed-downloads} shows the confirmed download numbers measured du
 \begin{figure}
 \centering
 (a) Confirmed downloads by reported downloads.
-\includegraphics[width=\textwidth, page=2]{../evaluation/y/2015-08-30_20-combined_download_confirmed_scrape}
+\includegraphics[width=\textwidth, page=2]{../result/2015-08-30_20-combined_download_confirmed_scrape}
 (b) Confirmed ratio regarding reported downloads by torrent size.
-\includegraphics[width=\textwidth, page=1]{../evaluation/y/2015-08-30_20-combined_download_confirmed_scrape}
+\includegraphics[width=\textwidth, page=1]{../result/2015-08-30_20-combined_download_confirmed_scrape}
 \caption[Download numbers: Confirmed vs. scrape request]{Relation between confirmed downloads and tracker reported download numbers from scrape requests per torrent, using a double logarithmic scale. Each point represents a torrent. The black lines mark the identity between confirmed and reported downloads.}
 \label{confirmed-scrape}
 \end{figure}
@@ -921,9 +935,9 @@ Figure \ref{confirmed-scrape} (a) shows a clear positive relation between confir
 \begin{figure}
 \centering
 (a) Confirmed downloads by unique peers.
-\includegraphics[width=\textwidth, page=2]{../evaluation/y/2015-08-30_20-combined_download_confirmed_unique}
+\includegraphics[width=\textwidth, page=2]{../result/2015-08-30_20-combined_download_confirmed_unique}
 (b) Confirmed ratio regarding unique peers by torrent size.
-\includegraphics[width=\textwidth, page=1]{../evaluation/y/2015-08-30_20-combined_download_confirmed_unique}
+\includegraphics[width=\textwidth, page=1]{../result/2015-08-30_20-combined_download_confirmed_unique}
 \caption[Download numbers: Confirmed vs. unique peers]{Relation between confirmed downloads and unique observed peers per torrent, using a double logarithmic scale. Each point represents a torrent. The identity between confirmed downloads and unique peers is outside of the plot area.}
 \label{confirmed-unique}
 \end{figure}
@@ -937,7 +951,7 @@ In figure \ref{confirmed-unique} similar data is shown, but using the number of 
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../evaluation/y/2015-08-30_20-combined_download_set}
+\includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_download_set}
 \caption[Development of confirmed and reported downloads per torrent set]{Development of \emph{confirmed} and server reported downloads per torrent set. From top to bottom: Set A ($<\numprint[GB]{1}$), set B (\numprint[GB]{1} to \numprint[GB]{10}) and set C ($>\numprint[GB]{10}$). Server reported numbers are gathered using \emph{scrape} requests. Analysis duration was \range.}
 \label{download-history}
 \end{figure}
@@ -990,20 +1004,29 @@ The Evaluation of a peer's download progress was described in section \ref{peer-
 
 The search for more fundamental explanations for errors merely speculation. Peers may blacklist the IP of the analysis program over time, since the don't receive any data at all. Also, peers could only support the UDP based Micro Transport Protocol ($\mu$TP), which is not supported by this analysis tool. When peers have no free upload capacity, they may block all incoming connections. When the evaluation on a peer failed once, no second try will be made. If this only happens due to a temporary network problem and the peer is in fact downloading, this will not be noticed. Presumably the biggest problem are BitTorrent clients without an exposed port, in other words peers behind a NAT. Since this is the case with a computer behind a standard home router, this setup is very common. Several of these machines will connect to our program after receiving our IP address from a tracker or the DHT network*, but there is no guarantee* [see actual incoming dpulicate stats] to capture all of them. Finally, the BitTorrent client could be terminated immediately after the download finished, leaving no time for us to register any further progress.
 
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth, page=2]{../result/2015-08-30_20-combined_visits}
+\caption[CDF of successful peer visits per source]{CDF of successful peer visits per source. Only peers of which the download progress was evaluated successfully at least once are included in this figure. A lower graph is better as it indicates more visits per peer. Most of the peers who were contacted actively could only visited once. Incoming peers try to get pieces usually a few times, while many of them stop trying after the first or the eighth attempt. Some even never stop trying.}
+\label{visits}
+\end{figure}
+
+The number of successful revisits of peers is often too low, as shown in figure \ref{visits}. This could indicate, that peers only participate very shortly in a torrent. However, this could also suggest a problem in the process of recontacting peers.
+
 [maybe move this whole section to Conclusion]
 
 \section{Further Analysis of Peers}
 \subsection{Download Speed}
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../evaluation/y/2015-08-30_20-combined_speed_plot}
+\includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_speed_plot}
 \caption[Download speed per country as box plot]{Download speeds the 70 countries with most recorded unique peers. This graph uses a standard box plot with first and third quartiles as box delimiters and the median inside the box.}
 \label{speed-boxes}
 \end{figure}
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{../evaluation/y/2015-08-30_20-combined_speed_map}
+\includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_speed_map}
 \caption[Download speed per country as map]{Download speed per country as a map. Only countries with a minimum of about \numprint{50} observed peers are shown. Speed is given in kB/s on an logarithmic color scale.}
 \label{speed-map}
 \end{figure}
@@ -1015,12 +1038,12 @@ The search for more fundamental explanations for errors merely speculation. Peer
 TODO: Table of frequency of BT clients
 
 \subsection{Peer's Hostnames}
-The data of hostnames was not extracted from the main analysis pass, but from an earlier one\footnote{File: 2015-08-26\_11-24-21\_faui1-246.sqlite}. Hostnames of peers were determined by performing a reverse DNS lookup on the IP address. This was performed by the storage module in the same thread that takes results from the \emph{visited queue} and writes them to the database. Since this lookup took about \numprint[ms]{300} on average, this is too slow for the database thread and was disabled during the main analysis run. It was not possible to rewrite this part in time to use an own thread, because the problem was discovered too late.
+The data of hostnames was not extracted from the main analysis pass, but from an earlier one. Hostnames of peers were determined by performing a reverse DNS lookup on the IP address. This was performed by the storage module in the same thread that takes results from the \emph{visited queue} and writes them to the database. Since this lookup took about \numprint[ms]{300} on average, this is too slow for the database thread and was disabled during the main analysis run. It was not possible to rewrite this part in time to use an own thread, because the problem was discovered too late.
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-26_11-24-21_faui1-246_hostnames}
-\caption[Most observed ISPs by hostnames]{Top 50 hostnames of all unique observed peers. Only the SLD and TLD of hostnames were considered. The majority of hostnames represent used ISPs or seedbox providers. Data is taken from a separate examination of twelve torrents which were chosen equivalently to the description of section \ref{cho}.}
+\caption[Most observed ISPs by hostnames]{Top 50 hostnames of all unique observed peers. Only the SLD and TLD of hostnames were considered. The majority of hostnames represent used ISPs or seedbox providers. Data is taken from a separate examination of twelve torrents which were chosen equivalently to the description of section \ref{cho}. Data is taken from the database \texttt{2015-08-26\_11-24-21\_faui1-246.sqlite}}
 \label{hostname}
 \end{figure}
 
@@ -1035,14 +1058,7 @@ The data shown in figure \ref{hostname} used the peer contact and server threads
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth, page=2]{../result/2015-08-27_21-03-31_faui1-246_visits}
-\caption[CDF of successful peer visits per source]{CDF of successful peer visits per source. Only peers of which the download progress was evaluated successfully at least once are included in this figure. A lower graph is better as it indicates more visits per peer. Most of the peers who were contacted actively could only visited once. Incoming peers try to get pieces usually a few times, while many of them stop trying after the first or the eighth attempt. Some even never stop trying.}
-\label{visits}
-\end{figure}
-
-The number of successful revisits of peers is often too low, as shown in figure \ref{visits}. This could indicate, that peers only participate very shortly in a torrent. However, this could also suggest a problem in the process of recontacting peers.
+[other tracker scrapes not included]
 
 \dots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

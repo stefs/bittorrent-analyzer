@@ -1,5 +1,5 @@
 # Result
-This are the file produced by the BitTorrent Download Analyzer, which were used for the thesis.
+This are the file produced by the BitTorrent Download Analyzer, which were used for the thesis. The filenames are using the timezone CEST, which is UTC+02:00.
 
 ## Timeout parameter
 Only used in chapter 3.4 *Justification of Configuration values*.
@@ -15,7 +15,7 @@ Only used in chapter 4.4.3 *Peer's Hostnames*.
 This are the files used for chapter 4 *Evaluation*.
 
 * Files VM1: `2015-08-30_20-34-06_faui1-246*`  
-  The tracker requestor thread of torrent 6 crashed after four hours due to an invalid tracker response. The exception is printed below. Despite this, the analysis was successfull and can be used excluding torrent 6. At the end, the analysis had to be shutdown with multiple Ctrl+C, since the program tries to wait for all tracker threads. The resulting SQLite journal file was removed using the SQLite vacuum command.
+  The tracker requestor thread of torrent 6 crashed after four hours due to an invalid tracker response. The exception is printed below. Despite this, the analysis was successfull and can be used when excluding torrent 6. At the end, the analysis had to be shutdown with multiple Ctrl+C, since the program tries to wait for all tracker threads. The resulting SQLite journal file was resolved using `sqlite3 2015-08-30_20-34-06_faui1-246.sqlite vacuum`.
 
         Exception in thread Thread-6:
         Traceback (most recent call last):
@@ -35,19 +35,3 @@ This are the files used for chapter 4 *Evaluation*.
 
 * Files, combined: `2015-08-30_20-combined*`  
 The file `2015-08-30_20-combined.sqlite.csv` was manually created and assigns each torrent file to a set, which is used in the evaluation of the thesis.
-
-As explained in the BitTorrent Download Analyzer's [README.md](../btda/README.md#known-issues), SQLAlchemy did refuse to store some entries in the request and statistic table. These entries were logged instead and were extracted with the `sql_from_log.py` script and applied to the database afterwards.
-
-Finally, the databases of the two VMs were combined, using the `combine.sql` script. This script does exclude torrent 6 from VM1.
-
-Following commands were used to create the final database:
-
-    scp torrent-vm1:bittorrent-analyzer/btda/output/2015-08-30_20-34-06_faui1-246* .
-    scp torrent-vm2:bittorrent-analyzer/btda/output/2015-08-30_20-41-36_faui1-246* .
-    sqlite3 2015-08-30_20-34-06_faui1-246.sqlite vacuum
-    sqlite3 2015-08-30_20-41-36_faui1-246.sqlite vacuum
-    ./sql_from_log.py 2015-08-30_20-34-06_faui1-246.log
-    ./sql_from_log.py 2015-08-30_20-41-36_faui1-246.log
-    cat 2015-08-30_20-34-06_faui1-246.log.sql | sqlite3 2015-08-30_20-34-06_faui1-246.sqlite
-    cat 2015-08-30_20-41-36_faui1-246.log.sql | sqlite3 2015-08-30_20-41-36_faui1-246.sqlite
-    cat combine.sql | sqlite3 | sqlite3 2015-08-30_20-combined.sqlite

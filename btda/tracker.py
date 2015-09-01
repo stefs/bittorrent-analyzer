@@ -133,7 +133,7 @@ class TrackerCommunicator:
 		action = struct.unpack_from('!i', buf)[0]
 		res_transaction_id = struct.unpack_from('!i', buf, 4)[0]
 		if res_transaction_id != transaction_id:
-			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {}, got {}'.format(
+			raise TrackerError('Transaction ID doesn\'t match in connection response! Expected {} but got {}'.format(
 					transaction_id, res_transaction_id))
 		if action == 0x0:
 			connection_id = struct.unpack_from('!q', buf, 8)[0]

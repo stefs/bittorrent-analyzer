@@ -98,7 +98,7 @@ plot_source <- function(data, title=NULL) {
 	print(
 		ggplot(data, aes(x=factor(group_hour), y=peers, fill=source, order=as.numeric(source))) +
 		geom_bar(stat="identity", position="stack") +
-		facet_grid(status ~ .) +
+		facet_grid(status ~ ., scales="free_y") +
 		theme(axis.text.x=element_text(angle=90, hjust=1)) +
 		labs(title=title, x="Time UTC (month/day/hour)", y="Peers")
 	)

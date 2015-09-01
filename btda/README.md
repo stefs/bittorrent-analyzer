@@ -29,7 +29,7 @@ This tool is aimed at counting confirmed downloads performed via BitTorrent by a
 * No support for encrypted peer connections.
 
 ## Known Issues
-* Despite using the supposedly *scoped\_session* of SQLAlchemy, "database is locked" errors are reported for an unknown reason. This occurs when storing requests or statistics, not when storing peers. The current workaroud is to apply faild SQL statements, which are all recorded in the logfile, to the database afterwards with the `evaluation/sql_from_log.py` script.
+* Despite using the supposedly *scoped\_session* of SQLAlchemy, "database is locked" errors are reported for an unknown reason. This occurs when storing requests or statistics, not when storing peers. The current workaround is to apply failed SQL statements, which are all recorded in the logfile, to the database afterwards with the `evaluation/sql_from_log.py` script.
 * The coude base could use a major refactoring pass. For instane, the starter functions of the analyzer module should be converted in some kind of analysis units as classes with a common interface. 
 
 ## Installation
