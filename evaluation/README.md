@@ -8,7 +8,7 @@ Since the `r-cran-rsqlite` is broken in Debian Jessie, an alternative version ca
     install.packages("RSQLite")
 
 ## Usage
-* `./download_per_set.r "<torrent_set>" <file.sqlite>`  
+* `./download.r <file.sqlite>`  
 Compile number or confirmed downloads and scrape download numbers from tracker. Threshold is independend from data collection phase. *torrent\_set* refers to the torrent id in the database and must be of the form `(1,2,3,4)`.
 
 * `./source.r <mode> <file.sqlite>`  
