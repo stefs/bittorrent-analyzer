@@ -117,6 +117,9 @@ print("*** Merge confirmed and unique ***")
 total <- merge(unique, confirmed, by="torrent")
 total$confirmed_per_unique <- total$confirmed / total$unique
 print(total)
+values_df <- data.frame(unique=total$unique, confirmed=total$confirmed)
+groups <- list(set=total$set)
+print(aggregate(values_df, by=groups, FUN=sum))
 
 # Create file
 outfile = sub(".sqlite", "_download_confirmed_unique.pdf", args[1])

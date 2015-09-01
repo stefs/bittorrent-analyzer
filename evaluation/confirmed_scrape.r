@@ -135,6 +135,9 @@ print("*** Merge confirmed and scrape ***")
 total <- merge(scrape, confirmed, by="torrent")
 total$confirmed_per_scrape <- total$confirmed / total$scrape
 print(total)
+values_df <- data.frame(scrape=total$scrape, confirmed=total$confirmed)
+groups <- list(set=total$set)
+print(aggregate(values_df, by=groups, FUN=sum))
 
 # Create file
 outfile = sub(".sqlite", "_download_confirmed_scrape.pdf", args[1])

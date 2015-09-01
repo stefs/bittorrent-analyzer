@@ -16,7 +16,6 @@
 * Check tables
 * Check in text data
 * Check discussion
-* Check file footnotes
 
 ### Final Reading
 * Roter faden/ einfaches lesen.
