@@ -285,7 +285,7 @@ I want to thank Philipp Klein for discussing methods and implementation as well 
 
 \chapter{Background}
 \label{backgr}
-This chapter explaines technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} file to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed concerning relevant German copyright and privacy laws in section \ref{law}.
+This chapter explains technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} file to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed concerning relevant German copyright and privacy laws in section \ref{law}.
 
 \section{BitTorrent Protocol}
 \label{bittorrent}
@@ -496,7 +496,7 @@ First, a node generates his own random 20 byte identifier, called node ID. Each 
 \end{call}
 \end{messcall}
 \end{sequencediagram}
-\caption[Requesting peers in the DHT network]{A sequence diagram of a request for peers in the DHT network as described in \cite{bep5}. \emph{BTClient} asks its own \emph{DHTNode} for peers for a specific info hash. The DHT node issues a request to remote \emph{Node1}, wich does not know any peers and answers with information about other nodes, including \emph{Node2}, instead. \emph{Node2} knows about peers and delivers the desired information to \emph{DHTNode}. Finally, the participation in downloading the torrent is announced to \emph{Node2}. The variable \emph{values} refers to a list of IP addresses and TCP ports of peers.}
+\caption[Requesting peers in the DHT network]{A sequence diagram of a request for peers in the DHT network as described in \cite{bep5}. \emph{BTClient} asks its own \emph{DHTNode} for peers for a specific info hash. The DHT node issues a request to remote \emph{Node1}, which does not know any peers and answers with information about other nodes, including \emph{Node2}, instead. \emph{Node2} knows about peers and delivers the desired information to \emph{DHTNode}. Finally, the participation in downloading the torrent is announced to \emph{Node2}. The variable \emph{values} refers to a list of IP addresses and TCP ports of peers.}
 \label{dht-sequence}
 \end{figure}
 
@@ -677,7 +677,7 @@ The BitTorrent Download Analyzer is structured in a main script, an application 
 
 \paragraph{tracker.py} This module provides communication methods with tracker serves. It is able to perform announce and scrape requests using standard HTTP Tracker Protocol as well as the UDP Tracker Protocol. Announce statistics from scrape responses and peer lists from announce responses are parsed and returned.
 
-\paragraph{dht.py} The \emph{pymdht} DHT node has to be started separately and is controlled by this module using a localhost Telnet connection. As \emph{pymdt} is written in Python 2, it could not be integrated directly. The support for control via Telnet was already a feature of \emph{pymdt}, but was slightly altered to only accept local connections from the same machine. The UDP node port and the Telnet control port must be given as arguments when starting \emph{pymdt} and should reflect the values as written in \config{dht\_node\_port} and \config{dht\_control\_port}. The command used in this work to start a \emph{pymdht} node was:
+\paragraph{dht.py} The \emph{pymdht} DHT node has to be started separately and is controlled by this module using a localhost Telnet connection. As \emph{pymdht} is written in Python 2, it could not be integrated directly. The support for control via Telnet was already a feature of \emph{pymdht}, but was slightly altered to only accept local connections from the same machine. The UDP node port and the Telnet control port must be given as arguments when starting \emph{pymdht} and should reflect the values as written in \config{dht\_node\_port} and \config{dht\_control\_port}. The command used in this work to start a \emph{pymdht} node was:
 \begin{lstlisting}
 ./run_pymdht_node.py --port=17000 --telnet-port=17001
 \end{lstlisting}
@@ -738,7 +738,7 @@ CREATE TABLE peer (
 );
 \end{lstlisting}
 
-When a peer is first stored to the database, an IP address based geolocation lookup is performed using the \emph{GeoLite2 City Database} mentioned in section \ref{dep}. Two-letter codes of the country and continent, and latitude and longitude coordinates are determined. Then a reverse DNS lookup is performed on the peer's IP address to get information about used hosting providers or ISPs. Also the client identifying part of the peer ID is recorded, as defined in \cite{bep20}. Regarding relevant data to count confirmed downloads, time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the confirmed download's threshold. The download speed of peers is calculated between each two consecutive contacts, while only the maximum of speeds measured between two contacts is saved. The SQL table schema of the peer database if given in listing \ref{peer-table}.
+When a peer is first stored to the database, an IP address based geolocation lookup is performed using the \emph{GeoLite2 City Database} mentioned in section \ref{dep}. Two-letter codes of the country and continent, and latitude and longitude coordinates are determined. Then a reverse DNS lookup is performed on the peer's IP address to get information about used hosting providers or ISPs. Also the client identifying part of the peer ID is recorded, as defined in \cite{bep20}. Regarding relevant data to count confirmed downloads, time and pieces count only of the first and the last peer contact are saved in the database, since this is enough to assess the transition of the threshold for a confirmed download. The download speed of peers is calculated between each two consecutive contacts, while only the maximum of speeds measured between two contacts is saved. The SQL table schema of the peer database if given in listing \ref{peer-table}.
 
 The database ID as returned by SQLite is used for later reference to the peer by the analyzer module, to enable updates of the entry without storing any IP address or peer ID data. When the program is terminated, there is no way to connect a peer in the database to the original person.
 
@@ -1091,7 +1091,7 @@ A solution to this problem, which is not implemented in the analysis tool, would
 The data shown in figure \ref{hostname} used the peer contact and server threads to perform the reverse DNS lookups. However, this was not a reasonable fix for the problem, because as most peer contacts are revisits, this produces too many DNS requests for the university's DNS server. The most common hostnames among peers represent the following organizations:
 \begin{enumerate}
 \item ISP \textsc{Comcast} form the United States
-\item ISP \textsc{Virgin Media} from the United Kindom
+\item ISP \textsc{Virgin Media} from the United Kingdom
 \item ISP \textsc{Philippine Long Distance Telephone} from the Philippines
 \item \texttt{com.br} is a second-level category for the Brazilian TLD
 \item ISP \textsc{Time Warner Cable} from the United States, formerly known as \textsc{Road Runner}
