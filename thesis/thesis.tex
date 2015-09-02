@@ -31,10 +31,6 @@
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
 
-%\usepackage[section]{placeins} % TODO use maybe
-%\usepackage[noheads]{endfloat} % TODO temporary
-%\renewcommand{\efloatseparator}{\mbox{}} % TODO temporary
-
 \usepackage{pgf-umlsd}
 
 \usepackage{listings}
@@ -154,20 +150,38 @@ Stefan Schindler \quad\null
 
 \vspace*{\fill}
 \begin{center}
-{\large\textbf{Zusammenfassung}}
-\end{center}
-
-\begin{quote}
-Zusammenfassung auf Deutsch
-\end{quote}
-
-\vspace*{\fill}
-\begin{center}
 {\large\textbf{Abstract}}
 \end{center}
 
 \begin{quote}
-Zusammenfassung auf Englisch
+% Motivation
+BitTorrent is the most used technology for file sharing to date and discussed to damage the creative industry. However, due to its distributed structure the extent of downloaded copies can only be estimated.
+% Problem statement
+The common method is to collect all IP addresses of a torrent swarm by issuing scrape and announce requests to tracker servers. After testing their reachability, this number is used as an estimation of downloads, but falsely includes peers who did not finish the download.
+% Approach
+This thesis will extend this method by contacting each peer continuously and learning the download progress through the BitTorrent protocol. A tool was written to do this after collecting addresses from trackers and the DHT network, and accepting incoming connections. A confirmed download was registered when a peer crossed the threshold of \numprint[\%]{98}.
+% Results
+For small and large torrents respectively, between \numprint[\%]{9} and \numprint[\%]{55} of the downloads reported by the main trackers in scrape responses could be confirmed over 34 hours and 19 torrents. For less than \numprint[\%]{2} of unique peer addresses a download was confirmed.
+% Conclusions
+Often subsequent progress evaluations of peers failed, which lowers this numbers significantly. Further adjustments to the used implementation are necessary to obtain better results.
+\end{quote}
+
+\vspace*{\fill}
+\begin{center}
+{\large\textbf{Zusammenfassung}}
+\end{center}
+
+\begin{quote}
+% Motivation
+BitTorrent ist die meistgenutzte Filesharing-Technologie, wobei die Schhädlichkeit für die Kreativindustrie diskutiert wird. Jedoch kann man den Umfang an heruntergeladenen Kopien nur abschätzen.
+% Problem statement
+Üblicherweise werden dafür alle IP-Adressen eines Torrent-Schwarms mithilfe von Scrape- und Announce-Anfragen an die Tracker-Server gesammelt. Nachdem deren Erreichbarkeit getestet wurde, wird diese Zahl als Abschätzung der Downloads genutzt, wobei Peers, die den Download nicht abgeschlossen haben, fälschlicherweise mitgezählt werden.
+% Approach
+Diese Arbeit wird diese Methode erweitern, indem jeder Peer wiederhohlt kontaktiert und der Download-Fortschritt mit Hilfe des BitTorrent-Protokolls extraihert wird. Es wurde ein Programm geschrieben, das dies tut, nachdem es Addressen von Trackern und dem DHT-Netzwerk sammelt, und eingehende Verbindungen annimmt. Ein bestätigter Download wurde registriert, wenn ein Peer den Grenzwert von \numprint[\%]{98} überschreitet.
+% Results
+Über 34 Stunden und 19 Torrents konnten für kleine beziehungsweise große Torrents zwischen \numprint[\%]{9} und \numprint[\%]{55} der von Haupttrackern in Scrape-Antworten gemeldeten Downloads bestätigt werden. Für weniger als \numprint[\%]{2} aller eindeutigen Addressen wurde ein Download bestätigt.
+% Conclusions
+Wiederhohlte Auswertungen von Peers sind oft fehlgeschlagen, was diese Zahlnen wesentlich reduziert. Die verwendete Implementierung muss weiter angepast werden, um bessere Ergebnisse zu erhalten.
 \end{quote}
 \vspace*{\fill}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -964,7 +978,7 @@ When viewing data for each torrent in figure \ref{confirmed-scrape} (a), a clear
 \begin{enumerate}
 \item Confirmed download numbers produced by the BitTorrent Download Analyzer are heavily correlated with tracker reported complete downloads.
 \item The method of counting confirmed downloads is heavily dependent on the torrent size. Best results above \numprint[\%]{40} are achieved with torrents above \numprint[GB]{30}. Presumably, the reason for this is the increased likelihood of recording a peer's download progress, when the downloads takes more time. This is given with large torrents.
-\item Scrape requests may not be accurate and indicate too small download numbers. This is understandable, since the tracker relies on every peer to report a finished download. A BitTorrent client may disconnect without sending an \emph{completed} event to the server. A client may not have used the main tracker of the torrent in the first place, but another one or none at all.
+\item Scrape requests are not always accurate and can indicate too small download numbers. This is understandable, since the tracker relies on every peer to report a finished download. A BitTorrent client may disconnect without sending an \emph{completed} event to the server. A client may not have used the main tracker of the torrent in the first place, but another one or none at all.
 \end{enumerate}
 
 \subsection{Comparison with Unique Peers}
