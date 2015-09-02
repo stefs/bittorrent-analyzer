@@ -4,13 +4,18 @@
 \usepackage[english]{babel} % Silbentrennung
 %\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
-\usepackage[vmargin=3.4cm,hmargin=3cm]{geometry}
 %\usepackage{graphicx} % Grafiken
 \usepackage[hidelinks]{hyperref} % Hyperlinks
 \usepackage[dvipsnames]{xcolor} % Farben (goo.gl/sP8iP, S.38)
 %\usepackage[charter]{mathdesign} % Schriftart B. Charter
 %\usepackage{mathptmx} % Schriftart Times
 \usepackage[autolanguage]{numprint} % Zahlen
+
+\usepackage{setspace}
+\usepackage{anysize}
+\marginsize{3cm}{3cm}{2cm}{2cm}
+\setlength{\parskip}{1.3ex plus 0.2ex minus 0.2ex}
+\setlength{\parindent}{0pt}
 
 \usepackage{booktabs, tabularx} % Tabellen spacing/lines, linebreak/width
 %\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
@@ -21,7 +26,7 @@
 \addbibresource{thesis.bib}
 
 \usepackage{caption}
-\captionsetup{labelfont=bf,format=plain}
+\captionsetup{labelfont=bf,format=plain,font=small}
 
 \usepackage[firstpage]{draftwatermark} % [final]
 \SetWatermarkLightness{0.9}
@@ -167,6 +172,7 @@ Zusammenfassung auf Englisch
 \vspace*{\fill}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{onehalfspacing}
 \tableofcontents
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -174,6 +180,7 @@ Zusammenfassung auf Englisch
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \listoftables
+\end{onehalfspacing}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Some general information on the context and setting
@@ -929,16 +936,16 @@ To judge the success of counting confirmed downloads with the planned method, tw
 
 \begin{figure}
 \centering
-(a) Confirmed downloads by reported downloads.
+{\small (a) Confirmed downloads by reported downloads.}
 \includegraphics[width=\textwidth, page=2]{../result/2015-08-30_20-combined_download_confirmed_scrape}
-(b) Confirmed ratio regarding reported downloads by torrent size.
+{\small (b) Confirmed ratio regarding reported downloads by torrent size.}
 \includegraphics[width=\textwidth, page=1]{../result/2015-08-30_20-combined_download_confirmed_scrape}
 \caption[Download numbers: Confirmed vs. scrape request]{Relation between confirmed downloads and tracker reported download numbers from scrape requests per torrent, using a double logarithmic scale. Each point represents a torrent. The black lines mark the identity between confirmed and reported downloads.}
 \label{confirmed-scrape}
 \vspace{1cm}
-(a) Confirmed downloads by unique peers.
+{\small (a) Confirmed downloads by unique peers.}
 \includegraphics[width=\textwidth, page=2]{../result/2015-08-30_20-combined_download_confirmed_unique}
-(b) Confirmed ratio regarding unique peers by torrent size.
+{\small (b) Confirmed ratio regarding unique peers by torrent size.}
 \includegraphics[width=\textwidth, page=1]{../result/2015-08-30_20-combined_download_confirmed_unique}
 \caption[Download numbers: Confirmed vs. unique peers]{Relation between confirmed downloads and unique observed peers per torrent, using a double logarithmic scale. Each point represents a torrent. The identity between confirmed downloads and unique peers is outside of the plot area.}
 \label{confirmed-unique}
@@ -1080,6 +1087,8 @@ The data shown in figure \ref{hostname} used the peer contact and server threads
 \dots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\setcounter{biburllcpenalty}{7000}
+\setcounter{biburlucpenalty}{8000}
 \printbibheading[heading=bibintoc]
 \begingroup
 \setlength\labelnumberwidth{0.57cm}
