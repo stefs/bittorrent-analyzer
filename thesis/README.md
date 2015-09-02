@@ -10,8 +10,9 @@
 * Send Torrents to RRZE
 * ggplot2 plots 9 inch width
 * Mention every logarithmic axis
+* Explain in the beginning, why a threshold is used: 1. Exclude leechers, 2. Count in short range.
 
-## New Data
+### New Data
 * Check figures
 * Check tables
 * Check in text data
@@ -34,8 +35,8 @@ Today | Date | Task | Done
   | 28.8. | evaluation | Architecture, Functionallity, Config, Restrictions
   | 29.8. | Evaluation ++ | (strange tracker scrape, noticable unique tracker peers)
   | 30.8. | Evaluation +++, Results++, Conclusion++
-→ | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
-  |  1.9. | Abstract +++, Outline +++, Todos
+  | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
+→ |  1.9. | Abstract +++, Outline +++, Todos
   |  2.9. | Tidy readme, Print thesis, burn CD
   |  3.9. | (unklar)
 
