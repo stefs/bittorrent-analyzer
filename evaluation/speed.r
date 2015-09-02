@@ -136,7 +136,7 @@ print(paste("Plot written to", outfile))
 # Create file for ggplot
 outfile = sub(".sqlite", "_speed_plot.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=10, height=3)
+pdf(outfile, width=10, height=3.5)
 
 # Plot with ggplot2
 y_breaks = round(10^((-3:8)*1.0)/10, digits=6)

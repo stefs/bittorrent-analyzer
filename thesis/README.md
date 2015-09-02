@@ -61,7 +61,6 @@ Chapter | Progress
 – 4.3 Counting Confirmed Downloads | ★★★
 – 4.4 Problems | ★★★
 – 4.5 Further Analysis of Peers |
-– 4.5.1 Download Speed | ★
-– 4.5.2 BitTorrent Clients |
+– 4.5.1 Download Speed | ★★
 – 4.5.3 Peer's Host Names | ★★
 5 Conclusion and Future Work |

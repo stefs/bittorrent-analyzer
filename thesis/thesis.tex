@@ -1036,26 +1036,22 @@ Regarding incoming connections, most evaluations failed due to an unknown info h
 The search for explanations of these errors is largely speculation. Peers may blacklist the IP or used peer ID of the analysis program, since they do not receive any data at all. When peers have no free upload capacity, they may block all incoming connections. If a peer has a temporary network connectivity problem and the evaluation fails because of this, no second try will be made.
 
 \section{Further Analysis of Peers}
-\subsection{Download Speed}
+\subsection{Download Speed per Country}
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_speed_plot}
-\caption[Download speed per country as box plot]{Download speeds the 70 countries with most recorded unique peers. This graph uses a standard box plot with first and third quartiles as box delimiters and the median inside the box.}
+\caption[Download speed per country as box plot]{Download speeds of the \numprint{70} countries with most recorded unique peers, using a logarithmic scale for speeds and peer count. This graph uses a standard box plot with first and third quartiles as box delimiters and the median inside the box. Countries are sorted descending for the number of observed peers. \numprint{179} other country codes are not represented in this chart.}
 \label{speed-boxes}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_speed_map}
-\caption[Download speed per country as map]{Download speed per country as a map. Only countries with a minimum of about \numprint{50} observed peers are shown. Speed is given in kB/s on an logarithmic color scale.}
+\caption[Download speed per country as map]{Download speed per country as a map. Only countries with a minimum of about \numprint{50} observed peers are shown. Speed is given in kB/s on an logarithmic color scale. \numprint{149} other country codes are not represented in this map.}
 \label{speed-map}
 \end{figure}
 
-[discuss]
-
-\subsection{BitTorrent Clients}
-\label{clients}
-TODO: Table of frequency of BT clients
+When the download progress of a peer changes between two visits, a speed value can be calculated. This has been done for all peers during the analysis, while only keeping the maximum speed measured between too visits per peer. Figure \ref{speed-boxes} shows the results sorted by the number of unique peers. The median speed is mostly about \numprint[kB/s]{100}, while the majority of measurements are lying between \numprint[kB/s]{10} \numprint[MB/s]{1}. Standing out are China and Trinidad and Tobago with a median speed of nearly \numprint[MB/s]{10}. Most peers come from the United States, followed by Russia, the Philippines, the United Kingdom and South Korea. Speed values are drawn in a map in figure \ref{speed-map}.
 
 \subsection{Peer's Hostnames}
 The data of hostnames was not extracted from the main analysis pass, but from an earlier one. Hostnames of peers were determined by performing a reverse DNS lookup on the IP address. This was performed by the storage module in the same thread that takes results from the \emph{visited queue} and writes them to the database. Since this lookup took about \numprint[ms]{300} on average, this is too slow for the database thread and was disabled during the main analysis run. It was not possible to rewrite this part in time to use an own thread, because the problem was discovered too late.
