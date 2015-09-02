@@ -62,6 +62,9 @@ top_samples <- function(peer, top) {
     country_count <- head(country_count, n=top)
 	# Merge with peer
 	peer <- merge(peer, country_count, by="country", all=FALSE)
+	# Order for count, MAY PRODUCE DEPRICATED WARNING
+	peer <- peer[order(-peer$count),]
+	peer$country <- factor(peer$country, peer$country)
 	# Return result
 	return(peer)
 }
@@ -103,7 +106,7 @@ print("*** KBytes per second ***")
 peer <- calc_kbyteps(peer)
 print(head(peer))
 print("*** Sample size top x ***")
-peer <- top_samples(peer, 100) # 70 for boxplot, 100 for map
+peer <- top_samples(peer, 70) # 70 for boxplot, 100 for map
 print(head(peer))
 print("*** Country mean ***")
 country <- country_mean(peer)
@@ -123,7 +126,7 @@ spdf <- joinCountryData2Map(country, joinCode="ISO2", nameJoinColumn="country")
 mapParams <- mapCountryData(
 	spdf,
 	nameColumnToPlot="kbyteps",
-	mapTitle=NA,
+	mapTitle="",
 	colourPalette=c("#800000", "#84fbff", "#118000"),
 	catMethod=m_breaks
 )
@@ -141,7 +144,8 @@ f_breaks = round(10^((0:23)*0.25)/10, digits=-1)
 print(
 	ggplot(data=peer, aes(x=factor(country), y=kbyteps)) +
 	scale_y_log10(breaks=y_breaks) +
-	geom_boxplot(aes(fill=count), outlier.size=1) +
+	stat_boxplot(geom ='errorbar') +
+	geom_boxplot(aes(fill=count), outlier.size=0) +
 	scale_fill_continuous(trans="log10", breaks=f_breaks, low="#55b1f7", high="#f75555", name="peers") +
 	theme(axis.text.x=element_text(angle=90, hjust=1)) +
 	labs(x="Country", y="Kilobytes per Second")
