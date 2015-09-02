@@ -56,11 +56,4 @@ Chapter | Progress
 2 Background | ★★★
 3 Implementation | ★★★
 4 Evaluation | ★★★
-– 4.1 Choosing Torrents | ★★★
-– 4.2 Getting Addresses of Peers | ★★★
-– 4.3 Counting Confirmed Downloads | ★★★
-– 4.4 Problems | ★★★
-– 4.5 Further Analysis of Peers |
-– 4.5.1 Download Speed | ★★
-– 4.5.3 Peer's Host Names | ★★
 5 Conclusion and Future Work |
