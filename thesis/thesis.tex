@@ -252,7 +252,7 @@ Further notable related research areas concentrate on extent \cite{locher2006fre
 \section{Results}
 Depending on torrent size, only between \numprint[\%]{9} and \numprint[\%]{55} of tracker reported downloads could be confirmed (see table \ref{confirmed-downloads}). The value is even worse when compared to unique peer addresses: For less than \numprint[\%]{2} of them a download could be confirmed. These values are too low and are not usable for absolute estimations for this reason. The fundamental method of counting confirmed download works, but succeeds too rarely in its current implementation.
 
-A big problem is the high drop-off rate of \numprint[\%]{85} after the first active visit (see figure \ref{visits}). The fact that a minimum of two successful evaluations is mandatory to decide whether a peer crossed a threshold, makes this value important and problematic.
+A big problem is the high drop-off rate of \numprint[\%]{85} after the first active visit (see figure \ref{visits}). The fact that a minimum of two successful evaluations is mandatory to decide whether a peer crossed a threshold, makes this value important and problematic. In contrast, the drop-off rate for incoming peers is only \numprint[\%]{22} after the first visit.
 
 \section{Outline}
 [How is the thesis structured and why?]
@@ -985,7 +985,7 @@ The history of download numbers over time in figure \ref{download-history} once 
 \toprule
 Event & Result & Frequency & Share per Event \\
 \midrule
-First contact & timed out & \numprint{978505} & \numprint[\%]{61.40} \\
+First contact & Timed out & \numprint{978505} & \numprint[\%]{61.40} \\
  & Connection refused & \numprint{242616} & \numprint[\%]{15.22} \\
  & Socket connection broken & \numprint{177833} & \numprint[\%]{11.16} \\
  & Success & \numprint{149608} & \numprint[\%]{9.39} \\
@@ -997,7 +997,7 @@ First contact & timed out & \numprint{978505} & \numprint[\%]{61.40} \\
 \midrule
 Later contact & Success & \numprint{166174} & \numprint[\%]{81.74} \\
  & Socket connection broken & \numprint{26559} & \numprint[\%]{13.06} \\
- & timed out & \numprint{7203} & \numprint[\%]{3.54} \\
+ & Timed out & \numprint{7203} & \numprint[\%]{3.54} \\
  & Connection reset by peer & \numprint{1725} & \numprint[\%]{0.85} \\
  & Connection refused & \numprint{1252} & \numprint[\%]{0.62} \\
  & No route to host & \numprint{390} & \numprint[\%]{0.19} \\
@@ -1007,7 +1007,7 @@ Later contact & Success & \numprint{166174} & \numprint[\%]{81.74} \\
 Incoming peer & Unknown info hash & \numprint{7187788} & \numprint[\%]{37.26} \\
  & Already in outgoing & \numprint{6572026} & \numprint[\%]{34.07} \\
  & Peer speaks unknown protocol & \numprint{2283818} & \numprint[\%]{11.84} \\
- & timed out & \numprint{2144463} & \numprint[\%]{11.12} \\
+ & Timed out & \numprint{2144463} & \numprint[\%]{11.12} \\
  & Success & \numprint{1059055} & \numprint[\%]{5.49} \\
  & Connection reset by peer & \numprint{26330} & \numprint[\%]{0.14} \\
  & Socket connection broken & \numprint{16266} & \numprint[\%]{0.08} \\
@@ -1077,15 +1077,14 @@ The data shown in figure \ref{hostname} used the peer contact and server threads
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
-[The success rates of confirming downloads are very low.]
+Existing problems of the BitTorrent Download Analyzer were discussed in section \ref{problems}. When encountering an error while evaluating a peer, the peer is excluded from further contacts. The evaluation of a newly collected peer address succeeded in \numprint[\%]{9} of cases. The success rate on the second visit was again only \numprint[\%]{15}, while the delay between two visits is five minutes. These values have to be increased in order to derive conclusive results. The fact that the success rate of a second evaluation for an incoming peers is as high as \numprint[\%]{78}, suggests the presence of a systematic problem.
 
-[other tracker scrapes not included]
+A possible solution is to retry evaluation on failed peers after a longer delay. This could improve the chance of clients allowing a connection after receiving no data in the first session. Other helpful clues could be obtained by directly studying the behavior of common BitTorrent applications and make appropriate adjustments to the analyzer tool.
 
-[other method: responding peers]
+The requirement of two successful evaluations of a peer could be reduced to one, when running the analysis over a longer time. Uploading peers, who finished the download before the analysis was started would then be included in the result. However, after all seeding peers are registered, measured numbers should be comparable. This would reduce the complexity of the analysis method.
+The process can be simplified even further by only sending ping requests to collected peer addresses to test their reachability, but this would defeat the goal of measuring confirmed downloads.
 
-[other method: use progress without threshold crossing]
-
-\dots
+To increase the accuracy of comparison values for the number of downloads, scrape requests from all trackers should be included. The overlapping of peers between these trackers has to be compensated by considering the subset of peers which is known to each tracker. This can be done by requesting all peers through normal announce requests from all trackers.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \setcounter{biburllcpenalty}{7000}
