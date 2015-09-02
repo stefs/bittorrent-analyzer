@@ -763,7 +763,7 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
-Data collection with the BitTorrent Download Analyzer tool was performed simultaneously on two identical virtual machines running Ubuntu 14.04 LTS with 2.0\,GB of RAM, a 3.4\,GHz dual-core processor and own IPv4 addresses without NAT. The analysis was performed for \numprint{34} hours \range. Each machine was running an own \emph{pymdht} DHT node, which did not crash before or during the analysis. The BitTorrent Download Analyzer gave no relevant error messages in the logfile. The used BitTorrent port was changed right before the evaluation started, in order to decrease system load from peers with an unrelated info hash from earlier evaluations.
+Data collection with the BitTorrent Download Analyzer tool was performed simultaneously on two identical virtual machines running Ubuntu 14.04 LTS with 2.0\,GB of RAM, 3.4\,GHz dual-core processors and own IPv4 addresses without NAT. The analysis was performed for \numprint{34} hours \range. Each machine was running an own \emph{pymdht} DHT node, which did not crash before or during the analysis. The BitTorrent Download Analyzer gave no problematic error messages in the logfile. The used BitTorrent port was changed right before the evaluation started, in order to decrease system load from peers with an unrelated info hash from earlier evaluations.
 
 \begin{figure}
 \centering
@@ -774,7 +774,7 @@ Data collection with the BitTorrent Download Analyzer tool was performed simulta
 
 In order to support the validity of the test results, some statistics were logged to the database with a sample rate of five minutes. These are shown in figure \ref{workload}. Graphs of a low thread workload and the short length of the peer queue make clear, that the number of \numprint{1024} worker threads was enough. The number of used evaluator threads did actually not surpass \numprint{500}. The length of the visited queue is almost always zero, which proves that the database was not a bottleneck. A maximum of \numprint[MB]{300} RAM is used, which is way below the available \numprint[GB]{2}. The Unix load-average is below the \numprint{2} mark for two processor cores.
 
-After the development phase of the BitTorrent Download Analyzer was finished, the \emph{SQLAlchemy} database toolkit started to report errors about a locked database. This occurred despite using the multi-threading mechanisms provided by SQLAlchemy. The problem surfaced very late and could not be resolved because of this. The errors were only reported for the request table and the statistic table for monitoring values and were few in comparison to the number of successfully stored database rows. The used workaround for this problem was to apply failed SQL statements, which are all recorded in the logfile, to the database afterwards. Finally, the databases of the two virtual machines were combined. The commands used for creating the final database are given in listing \ref{magic}.
+After the development phase of the BitTorrent Download Analyzer was finished, the \emph{SQLAlchemy} database toolkit started to report errors about a locked database. This occurred despite using the multi-threading mechanisms provided by SQLAlchemy. The problem surfaced very late and could not be resolved because of this. The errors were only reported for the request table and the statistic table for monitoring values and were few in comparison to the number of successfully stored database rows. The used workaround for this problem was to apply failed SQL statements, which were all recorded in the logfile, to the database afterwards. Finally, the databases of the two virtual machines were combined. The commands used for creating the final database are given in listing \ref{magic}.
 \begin{lstlisting}[language=bash, otherkeywords={scp, sqlite3}, float, caption={[Creating the final database]Steps to create the final database. The \texttt{combine.sql} scripts produces \texttt{INSERT} statments for all table rows of both databases and handles torrent IDs appropriately. Filename timestamps are in CEST, which is UTC+02:00. \texttt{2015-08-30\_20-combined.sqlite} holds the data used for the evaluation.}, captionpos=b, label=magic]
 scp torrent-vm1:bittorrent-analyzer/btda/output/2015-08-30_20-34-06_faui1-246* .
 scp torrent-vm2:bittorrent-analyzer/btda/output/2015-08-30_20-41-36_faui1-246* .
@@ -816,7 +816,7 @@ Rank & Site name & Domain name & Alexa Rank \\
 \label{torrentsites}
 \end{table}
 
-Due to the distributed nature of BitTorrent, there unfortunately is no complete list or for all active torrents. External data about popularity of torrents is needed, even if there is no guarantee of completeness. To get an overview of torrent directory sites and determine the most popular ones, the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
+Due to the distributed nature of BitTorrent, there is no complete list of all active torrents. External data about popularity of torrents is needed, even if there is no guarantee of completeness. To get an overview about torrent directory sites and determine the most popular ones, the global traffic rankings by \textsc{Alexa Internet, Inc.} \cite{alexa} were consulted. The websites where \textsc{Alexa}'s ranking was looked up were collected through manual investigation using web search engines, relevant news sites and cross references between torrent sites. Table~\ref{torrentsites} shows the \numprint{17} sites found having an rank below \numprint{5000}.
 
 \begin{table}
 \centering
@@ -849,7 +849,7 @@ Set C & 1 & Battlefield Hardline by xatab & \numprint{3599} & \numprint[GB]{30.1
 \label{torrents}
 \end{table}
 
-Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across these torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sort and filter options by peer count, torrent age and size.
+Popular torrents were often found to be registered on multiple tracker sites, which leads to mostly identical top torrents across these torrent sites. For the definite selection of torrents, the meta-search engine \textsc{Torrentz} \cite{torrentz} was used: It monitors torrents from all other major torrent sites and provides sorting and filter options by peer count, torrent age and size.
 Torrents of various sizes between \numprint[GB]{1.5} and \numprint[GB]{65} were chosen, because the torrent size has high influence on further results. For further reference, three size groups are defined. These three sets will be evaluated separately where appropriate.
 \begin{itemize}
 \item Set A: Between \numprint[GB]{1} and \numprint[GB]{5}
@@ -857,7 +857,7 @@ Torrents of various sizes between \numprint[GB]{1.5} and \numprint[GB]{65} were 
 \item Set C: Between \numprint[GB]{30} and \numprint[GB]{70}
 \end{itemize}
 
-In order to observe many downloads, torrents with high amount of leechers were used. Initially \numprint{20} torrents were chosen, but one tracker the torrent with ID 6 sent a bencoded value, which was not standard conform as described in section \ref{bittorrent}. This crashed the tracker request thread for this torrent, which is why this torrent is excluded from the evaluation. The 19 remaining torrents are listed in table \ref{torrents} For all torrents a metainfo file was available.
+In order to observe many downloads, torrents with high amount of leechers were selected. Initially \numprint{20} torrents were chosen, but one tracker the torrent with ID 6 sent a bencoded value, which was not standard conform as described in section \ref{bittorrent}. This crashed the tracker request thread for this torrent, which is why this torrent is excluded from the evaluation. The 19 remaining torrents are listed in table \ref{torrents}. A metainfo file was available for all torrents.
 
 \section{Getting Addresses of Peers}
 \label{addr}
@@ -884,16 +884,16 @@ Peers from all supported sources were considered, namely from the tracker server
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_tracker-error}
-\caption[Responsiveness of tracker servers]{Responsiveness of tracker servers per torrent. The thread to perform announce requests for torrent 6 crashed after four hours, which is why this torrent is excluded from the analysis. As apparent from table \ref{torrents}, metainfo files for torrents 9, 16 and 18 to 20 had only five announce URLs embedded, explaining the reduced request number. Also torrents 1, 3 and 5 only had seven trackers. Data is taken from the file \texttt{2015-08-30\_20-combined\_tracker-error.txt}, which is written by the analyzer tool.}
+\caption[Responsiveness of tracker servers]{Responsiveness of tracker servers per torrent. The thread to perform announce requests for torrent 6 crashed after four hours, which is why this torrent is excluded from the analysis. As apparent from table \ref{torrents}, metainfo files for torrents 9, 16 and 18 to 20 had only five announce URLs embedded, explaining the reduced request numbers. Also torrents 1, 3 and 5 only had seven trackers. Data is taken from the file \texttt{2015-08-30\_20-combined\_tracker-error.txt}, which is written by the analyzer tool.}
 \label{tracker-resp}
 \end{figure}
 
-The responsiveness of the trackers per torrent are examined in figure \ref{tracker-resp}. As expected, torrents with less tracker announce URLs embedded in the torrent file show less attempted announce requests. From torrents with ten trackers usually about two third of them respond. On torrents with only five announce URLs about half of them responded. Torrent 17 stands out with a high number of failed requests. Reviewing the logfile reveals that only two out of ten trackers responded. Other trackers may be unreliable or actually removed the torrent due to a DMCA takedown notice by the copyright owner.
+The responsiveness of the trackers per torrent is examined in figure \ref{tracker-resp}. As expected, torrents with less tracker announce URLs embedded in the torrent file show less attempted announce requests. From torrents with ten trackers usually about two third of them respond. On torrents with only five announce URLs about half of them responded. Torrent 17 stands out with a high number of failed requests. Reviewing the logfile reveals, that only two out of ten trackers responded. Other trackers may have been unreliable or actually removed the torrent due to a DMCA takedown notice by the copyright owner.
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_source_all_torrents}
-\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with a few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. Values have the same characteristics as described in table \ref{unique-peers}: \emph{Incoming} peers only include successfully evaluated ones, \emph{unique} peers do not overlap between sources, \emph{duplicate} peers may overlap between sources. The unique peers diagram uses a smaller scale for peers than the duplicate ones to increase its readability. A numerical comparison is given in table \ref{unique-peers}.}
+\caption[Development of received peer addresses per source]{Development of received peer addresses per source for all torrents. UDP trackers returned always \numprint{200} addresses per request, trackers with HTTP access \numprint{50}. Torrents are usually registered with a few trackers. DHT request were observed to return between \numprint{100} and \numprint{1300} peers each. Values have the same characteristics as described in table \ref{unique-peers}: \emph{Incoming} peers only include successfully evaluated ones, \emph{unique} peers do not overlap between sources, \emph{duplicate} peers may overlap between sources. The unique peers diagram uses a smaller scale for peers than the duplicate ones to increase its readability.}
 \label{request-history}
 \end{figure}
 
