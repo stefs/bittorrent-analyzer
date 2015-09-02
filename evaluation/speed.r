@@ -103,7 +103,7 @@ print("*** KBytes per second ***")
 peer <- calc_kbyteps(peer)
 print(head(peer))
 print("*** Sample size top x ***")
-peer <- top_samples(peer, 70) # 70 for boxplot, 100 for map
+peer <- top_samples(peer, 100) # 70 for boxplot, 100 for map
 print(head(peer))
 print("*** Country mean ***")
 country <- country_mean(peer)
@@ -123,7 +123,7 @@ spdf <- joinCountryData2Map(country, joinCode="ISO2", nameJoinColumn="country")
 mapParams <- mapCountryData(
 	spdf,
 	nameColumnToPlot="kbyteps",
-	mapTitle='Median Download Speeds',
+	mapTitle=NA,
 	colourPalette=c("#800000", "#84fbff", "#118000"),
 	catMethod=m_breaks
 )

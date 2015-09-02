@@ -154,7 +154,7 @@ print(head(total))
 # Create file
 outfile = sub(".sqlite", "_download_set.pdf", args[1])
 stopifnot(outfile != args[1])
-pdf(outfile, width=9, height=9)
+pdf(outfile, width=9, height=6)
 
 # Plot with ggplot2
 print(
