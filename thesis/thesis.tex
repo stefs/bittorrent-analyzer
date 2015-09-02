@@ -222,16 +222,15 @@ File sharing is reported by music as well as film industry to cause billions of 
 
 % Specific motivation for the problem at hand
 \section{Motivation}
-When assessing popularity or peer numbers, previous studies relied on information reported by tracker servers. So called \emph{scrape requests} allow to ask for statistics about a specific or even all torrents a tracker is managing. When successful, servers answer with the torrent-identifying info hashes together with the number of current downloaders, current uploaders and finished downloads since the torrent was registered with the server. In a second step, one can use the info hashes to crawl peer addresses from tracker servers for further analysis. This data may be to their best knowledge, but there is no possibility for verification.
+When assessing popularity of torrents by peer numbers, previous studies relied on information reported by tracker servers. So called \emph{scrape requests} allow to ask for statistics about a specific or even all torrents managed by a tracker. When successful, servers answer with the torrent-identifying info hashes together with the number of current downloaders, current uploaders and completed downloads since the torrent was registered with the server. In a second step, one can use the info hashes to crawl peer addresses from tracker servers for further analysis. The download number acquired in a scrape request may be to their best knowledge, but can also be flawed. And the peer addresses collectable from tracker servers may be out of date or peers actually never finished the download after joining the torrent swarm.
 
-This thesis will make an attempt to collect confirmed download numbers by contacting every peer of the BitTorrent swarm for a given set of torrents and learning his download progress at first-hand. The download progress is extracted using the standard BitTorrent protocol with various common extensions thereof. This is done repeatedly for all peers over a time period, while a confirmed download is recorded when the peer's download crosses a certain threshold. This method has flaws which will be discussed later, but it gives a fix lower bound for download numbers.
-
-To observe the law in every way, it was important to neither download nor upload any actual content. Luckily, this is not necessary for the task at hand, as it is practice for every peer to inform the opposing peer about its exact presence of downloaded pieces upon connection establishment. This behavior will be exploited by recording this progress in a database.
+This thesis will make an attempt to collect confirmed download numbers by contacting every peer of the BitTorrent swarm for a given set of torrents and learning his download progress at first-hand. The download progress is extracted using the standard BitTorrent protocol with various common extensions thereof. This is done repeatedly for all peers over a time period, while a confirmed download is recorded when the peer's download crosses a certain threshold. A threshold is used to exclude peers who are seeding a torrent and do not complete the download during the period of analysis. This way, a number downloads per hour can be calculated accurately. This method has flaws which will be discussed later, but it gives a fix lower bound for download numbers.
 
 % Concrete task to be solved
 \section{Task}
-Since there is no client or framework for peer communication on BitTorrent protocol level, and every other task is very specific to the requirements of this project, the whole code base used here was written from scratch. The need for communicating with peers without downloading any torrent payload disqualifies other related projects like \emph{libtorrent}. Only exception is the mainline DHT node, which is a foreign project.
-% * and the bencodepy module TODO
+To observe the law in every way, it is important to neither download nor upload any actual content. Luckily, this is not necessary for the task at hand, as it is practice for every peer to inform the opposing peer about its exact presence of downloaded pieces upon connection establishment. This behavior will be exploited by recording this progress in a database.
+
+Since there is no client or framework for peer communication on BitTorrent protocol level, and every other task is very specific to the requirements of this project, the code base used for the analysis routines and peer communication was written from scratch. The need for communicating with peers without downloading any torrent payload disqualifies other related projects like \emph{libtorrent}.
 
 The process of analyzing a torrent should be completely automated. As the most convenient method, input of torrents via \texttt{.torrent} files and magnet links is supported. They must be parsed beforehand and are stored in a SQL database for later reference. Metadata for magnet links is retrieved from other peers using the \emph{Extension for Peers to Send Metadata Files} \cite{bep9}.
 
@@ -249,10 +248,11 @@ The same approach was taken by \textcite{zhang2011unraveling}, also in 2011. The
 
 Further notable related research areas concentrate on extent \cite{locher2006free} and punishment \cite{levin2008bittorrent, bhakuni} of free-riding peers, who do not upload any data after downloading from other peers, or the special implications of private BitTorrent communities \cite{meulpolder2010public}, which promise higher download speeds by enforcing upload to download ratios.
 
+% What has been achieved in this work?
 \section{Results}
-[What has been achieved in this work?]
+Depending on torrent size, only between \numprint[\%]{9} and \numprint[\%]{55} of tracker reported downloads could be confirmed (see table \ref{confirmed-downloads}). The value is even worse when compared to unique peer addresses: For less than \numprint[\%]{2} of them a download could be confirmed. These values are too low and are not usable for absolute estimations for this reason. The fundamental method of counting confirmed download works, but succeeds too rarely in its current implementation.
 
-\dots
+A big problem is the high drop-off rate of \numprint[\%]{85} after the first active visit (see figure \ref{visits}). The fact that a minimum of two successful evaluations is mandatory to decide whether a peer crossed a threshold, makes this value important and problematic.
 
 \section{Outline}
 [How is the thesis structured and why?]
@@ -504,7 +504,7 @@ To expand the functionality of the BitTorrent protocol, the \emph{Extension Prot
 When both peers ascertain support for the Extension Protocol, extended messages containing a second handshake are exchanged. These handshakes include a bencoded dictionary with information about the actually used extensions and assign IDs for every extension dynamically. Additional values as defined by the used extensions are also included. This setup allows for an arbitrary number of extensions with dynamic IDs, without the need for a global registry of extensions. Further extended messages have three parts:
 \begin{enumerate}
   \item The type ID \numprint{20}, indicating that it is an extended message,
-  \item The extension ID, indicating the corresponding extension for this message as defined in the handshake, and
+  \item the extension ID, indicating the corresponding extension for this message as defined in the handshake, and
   \item the payload of the message.
 \end{enumerate}
 
@@ -1077,6 +1077,8 @@ The data shown in figure \ref{hostname} used the peer contact and server threads
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
+[The success rates of confirming downloads are very low.]
+
 [other tracker scrapes not included]
 
 [other method: responding peers]

@@ -3,54 +3,39 @@
 ...
 
 ## Todo
-* Quantify incoming peers in table `unique-peers` and request history plots
-* http scrape in chapter 2?
-* Alle Abkürzungne einführen, evtl. Abkverzeichnis
-* Min 24 h laufzeit
-* Send Torrents to RRZE
-* ggplot2 plots 9 inch width
-* Mention every logarithmic axis
-* Explain in the beginning, why a threshold is used: 1. Exclude leechers, 2. Count in short range.
+0. Sections
+    0. [Abstract](https://www.ece.cmu.edu/~koopman/essays/abstract.html)
+    0. Outline
+    0. Conclusion
+    0. Future Work
+0. Finalize
+    0. Erklären: Leecher, Seeder, Peer
+    0. Check bibliography file for errors, add or remove links
+    0. Check spelling with automatic tool
+0. Final Reading
+    0. Roter faden, einfaches lesen
+    0. Explainen all abbreviations?
+    0. No wherby
+    0. New fact: [Mainline DHT](https://en.wikipedia.org/wiki/Mainline_DHT)
+    0. New fact: Discard incoming peers, when they were actively contacted before, to prevent double counting
+0. Production
+    0. Print 2 times
+    0. Tidy Readmes
+    0. Burn 2 CDs
+0. Other
+    0. Send Torrents to RRZE
 
-### New Data
-* Check figures
-* Check tables
-* Check in text data
-* Check discussion
-
-### Final Reading
-* Roter faden/ einfaches lesen.
-* Begriffserklärung or in place: Dictionary, Cryptographic hash, Leecher / Seeder / Peer, NAT, ISP
-* Explain all abbreviations
-* No wherby
-* New fact: [Mainline DHT](https://en.wikipedia.org/wiki/Mainline_DHT)
-* New fact: Discard incoming peers, when they were actively contacted before, to prevent double counting
-* Check bibliography file for errors, add or remove links
-* Check spelling with automatic tool
-
-### Time Table
-Today | Date | Task | Done
---- | --- | --- | ---
-  | 27.8. | | test evaluation, Architecture, Functionallity, Config
-  | 28.8. | evaluation | Architecture, Functionallity, Config, Restrictions
-  | 29.8. | Evaluation ++ | (strange tracker scrape, noticable unique tracker peers)
-  | 30.8. | Evaluation +++, Results++, Conclusion++
-  | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
-  |  1.9. | Abstract +++, Outline +++, Todos
-→ |  2.9. | Tidy readme, Print thesis, burn CD
-  |  3.9. | (unklar)
-
-### Progress
+## Progress
 ★ first pass / ★★ good / ★★★ ready
 
 Chapter | Progress
 --- | ---
-[Abstract](https://www.ece.cmu.edu/~koopman/essays/abstract.html) |
+Abstract |
 1 Introduction | ★★★
 – 1.1 Motivation | ★★★
 – 1.2 Task | ★★★
 – 1.3 Related Work | ★★★
-– 1.4 Results |
+– 1.4 Results | ★★
 – 1.5 Outline |
 – 1.6 Acknowledgments | ★★★
 2 Background | ★★★
