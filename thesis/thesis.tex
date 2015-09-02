@@ -254,17 +254,23 @@ Depending on torrent size, only between \numprint[\%]{9} and \numprint[\%]{55} o
 
 A big problem is the high drop-off rate of \numprint[\%]{85} after the first active visit (see figure \ref{visits}). The fact that a minimum of two successful evaluations is mandatory to decide whether a peer crossed a threshold, makes this value important and problematic. In contrast, the drop-off rate for incoming peers is only \numprint[\%]{22} after the first visit.
 
+% How is the thesis structured and why?
 \section{Outline}
-[How is the thesis structured and why?]
+Chapter \ref{backgr} explains the background of the BitTorrent technology as it is applied in the written analysis tool. The BitTorrent protocol will be described according to the official BitTorrent Enhancement Proposals (BEPs). This is important to understand how measured values were generated and should be handled. The concept of a DHT network will be introduced and the utilization within BitTorrent demonstrated. Additionally, a short overview about German copyright laws regarding the download of illegal content is given.
 
-\dots
+In chapter \ref{impl}, the data collection tool written for this thesis, called \emph{BitTorrent Download Analyzer}, is introduced. First its dependencies from other software are documented. The modular architecture and the command line interface will be explained. The main part is the description of functionality and implemented features. Some important configuration values for the analysis are explained and also justified. Finally, the restrictions of the tool in comparison to real BitTorrent applications are stated.
+
+Chapter \ref{eval} will present a data set gathered with the analysis tool and evaluate the success of measuring confirmed downloads through various diagrams for data visualization. Beforehand, the selection of the \numprint{19} analyzed torrents is documented. The recognized problems of the implementation are highlighted. The last section provides additional analysis of the collected data, namely measured download speeds per country and a ranking of observed Internet service providers.
+
+The final chapter \ref{conc} will draw conclusions about the performance of the BitTorrent Download Analyzer. Possible solutions for detected problems are suggested.
 
 % A big thank you for the support to
 \section{Acknowledgments}
-I want to thank Philipp Klein for discussing methods and implementation as well as troubleshooting the virtual machine used for data collection, Michael Gruhn for discussing ideas, and the RRZE for providing the virtual machine and handling any unjustified copyright warning letters.
+I want to thank Philipp Klein for discussing methods and implementation as well as managing the virtual machines used for data collection, Michael Gruhn for discussing ideas, and the RRZE for providing the virtual machine and handling any unjustified copyright warning letters.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Background}
+\label{backgr}
 This chapter explaines technologies and specifications utilized during this research project. Section \ref{bittorrent} explains the basic application of BitTorrent principles, from the \texttt{.torrent} file to downloading content. Sections \ref{dht} and \ref{magnet} go into detail about the trackerless operation of BitTorrent with the DHT network and magnet links. Eventually, file sharing will be discussed concerning relevant German copyright and privacy laws in section \ref{law}.
 
 \section{BitTorrent Protocol}
@@ -528,6 +534,7 @@ Privacy is regulated by the Federal Data Protection Act \cite{bdsg} in Germany. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Implementation}
+\label{impl}
 To count confirmed downloads by peers of one or multiple given torrents over a time period, the \emph{BitTorrent Download Analyzer} was written in Python 3. In this chapter, this tool will be discussed in detail. Section \ref{dep} will inform about its dependencies, section \ref{arch} explains structure and usage. The implemented procedures will be described in \ref{func} and \ref{config}, while the latter one will focus on configuration values. In section \ref{rest} some restriction of this implementation will be discussed.
 
 \section{Dependencies}
@@ -763,6 +770,7 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Evaluation}
+\label{eval}
 Data collection with the BitTorrent Download Analyzer tool was performed simultaneously on two identical virtual machines running Ubuntu 14.04 LTS with 2.0\,GB of RAM, 3.4\,GHz dual-core processors and own IPv4 addresses without NAT. The analysis was performed for \numprint{34} hours \range. Each machine was running an own \emph{pymdht} DHT node, which did not crash before or during the analysis. The BitTorrent Download Analyzer gave no problematic error messages in the logfile. The used BitTorrent port was changed right before the evaluation started, in order to decrease system load from peers with an unrelated info hash from earlier evaluations.
 
 \begin{figure}
@@ -1077,6 +1085,7 @@ The data shown in figure \ref{hostname} used the peer contact and server threads
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Conclusion and Future Work}
+\label{conc}
 Existing problems of the BitTorrent Download Analyzer were discussed in section \ref{problems}. When encountering an error while evaluating a peer, the peer is excluded from further contacts. The evaluation of a newly collected peer address succeeded in \numprint[\%]{9} of cases. The success rate on the second visit was again only \numprint[\%]{15}, while the delay between two visits is five minutes. These values have to be increased in order to derive conclusive results. The fact that the success rate of a second evaluation for an incoming peers is as high as \numprint[\%]{78}, suggests the presence of a systematic problem.
 
 A possible solution is to retry evaluation on failed peers after a longer delay. This could improve the chance of clients allowing a connection after receiving no data in the first session. Other helpful clues could be obtained by directly studying the behavior of common BitTorrent applications and make appropriate adjustments to the analyzer tool.

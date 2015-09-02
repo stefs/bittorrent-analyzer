@@ -6,8 +6,6 @@
 0. Sections
     0. [Abstract](https://www.ece.cmu.edu/~koopman/essays/abstract.html)
     0. Outline
-    0. Conclusion
-    0. Future Work
 0. Finalize
     0. Erklären: Leecher, Seeder, Peer
     0. Check bibliography file for errors, add or remove links
@@ -36,7 +34,7 @@ Abstract |
 – 1.2 Task | ★★★
 – 1.3 Related Work | ★★★
 – 1.4 Results | ★★
-– 1.5 Outline |
+– 1.5 Outline | ★★
 – 1.6 Acknowledgments | ★★★
 2 Background | ★★★
 3 Implementation | ★★★
