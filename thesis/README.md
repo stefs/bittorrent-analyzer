@@ -36,8 +36,8 @@ Today | Date | Task | Done
   | 29.8. | Evaluation ++ | (strange tracker scrape, noticable unique tracker peers)
   | 30.8. | Evaluation +++, Results++, Conclusion++
   | 31.8. | Results+++, Conclusion++ Abstract ++, Outline ++
-→ |  1.9. | Abstract +++, Outline +++, Todos
-  |  2.9. | Tidy readme, Print thesis, burn CD
+  |  1.9. | Abstract +++, Outline +++, Todos
+→ |  2.9. | Tidy readme, Print thesis, burn CD
   |  3.9. | (unklar)
 
 ### Progress
@@ -59,7 +59,7 @@ Chapter | Progress
 – 4.1 Choosing Torrents | ★★★
 – 4.2 Getting Addresses of Peers | ★★★
 – 4.3 Counting Confirmed Downloads | ★★★
-– 4.4 Problems | ★★
+– 4.4 Problems | ★★★
 – 4.5 Further Analysis of Peers |
 – 4.5.1 Download Speed | ★
 – 4.5.2 BitTorrent Clients |
