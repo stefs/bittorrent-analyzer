@@ -187,11 +187,11 @@ BitTorrent ist die meistgenutzte Filesharing-Technologie, wobei die Schädlichke
 % Problem statement
 Üblicherweise werden dafür alle IP-Adressen eines Torrent-Schwarms mithilfe von Scrape- und Announce-Anfragen an die Tracker-Server gesammelt. Nachdem deren Erreichbarkeit getestet wurde, wird diese Zahl als Abschätzung der Downloads genutzt, wobei Peers, die den Download nicht abgeschlossen haben, fälschlicherweise mitgezählt werden.
 % Approach
-Diese Arbeit wird diese Methode erweitern, indem jeder Peer wiederhohlt kontaktiert und der Download-Fortschritt mit Hilfe des BitTorrent-Protokolls extraihert wird. Es wurde ein Programm geschrieben, das dies tut, nachdem es Addressen von Trackern und dem DHT-Netzwerk sammelt, und eingehende Verbindungen annimmt. Ein bestätigter Download wurde registriert, wenn ein Peer den Grenzwert von \numprint[\%]{98} überschreitet.
+Diese Arbeit wird diese Methode erweitern, indem jeder Peer wiederholt kontaktiert und der Download-Fortschritt mit Hilfe des BitTorrent-Protokolls extrahiert wird. Es wurde ein Programm geschrieben, das dies tut, nachdem es Adressen von Trackern und dem DHT-Netzwerk sammelt, und eingehende Verbindungen annimmt. Ein bestätigter Download wurde registriert, wenn ein Peer den Grenzwert von \numprint[\%]{98} überschreitet.
 % Results
-Über 34 Stunden und 19 Torrents konnten für kleine beziehungsweise große Torrents zwischen \numprint[\%]{9} und \numprint[\%]{55} der von Haupttrackern in Scrape-Antworten gemeldeten Downloads bestätigt werden. Für weniger als \numprint[\%]{2} aller eindeutigen Addressen wurde ein Download bestätigt.
+Über 34 Stunden und 19 Torrents konnten für kleine beziehungsweise große Torrents zwischen \numprint[\%]{9} und \numprint[\%]{55} der von Haupttrackern in Scrape-Antworten gemeldeten Downloads bestätigt werden. Für weniger als \numprint[\%]{2} aller eindeutigen Adressen wurde ein Download bestätigt.
 % Conclusions
-Wiederhohlte Auswertungen von Peers sind oft fehlgeschlagen, was diese Zahlnen wesentlich reduziert. Die verwendete Implementierung muss weiter angepast werden, um bessere Ergebnisse zu erhalten.
+Wiederholte Auswertungen von Peers sind oft fehlgeschlagen, was diese Zahlen wesentlich reduziert. Die verwendete Implementierung muss weiter angepasst werden, um bessere Ergebnisse zu erhalten.
 \end{quote}
 \vspace*{\fill}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -274,7 +274,7 @@ Further notable related research areas concentrate on extent \cite{locher2006fre
 
 % What has been achieved in this work?
 \section{Results}
-Depending on torrent size, only between \numprint[\%]{9} and \numprint[\%]{55} of tracker reported downloads could be confirmed (see table \ref{confirmed-downloads}). The value is even worse when compared to unique peer addresses: For less than \numprint[\%]{2} of them a download could be confirmed. These values are too low and are not usable for absolute estimations for this reason. The fundamental method of counting confirmed download works, but succeeds too rarely in its current implementation.
+Depending on torrent size, only between \numprint[\%]{9} and \numprint[\%]{55} of tracker reported downloads could be confirmed (see table \ref{confirmed-downloads}). The value is even smaller when compared to unique peer addresses: For less than \numprint[\%]{2} of them a download could be confirmed. These values are too low and are not usable for absolute estimations for this reason. The fundamental method of counting confirmed download works, but succeeds too rarely in its current implementation.
 
 A big problem is the high drop-off rate of \numprint[\%]{85} after the first active visit (see figure \ref{visits}). The fact that a minimum of two successful evaluations is mandatory to decide whether a peer crossed a threshold, makes this value important and problematic. In contrast, the drop-off rate for incoming peers is only \numprint[\%]{22} after the first visit.
 

@@ -18,21 +18,3 @@ BitTorrent is the most used technology for file sharing to date and discussed to
     0. Burn 2 CDs
 0. Other
     0. Send Torrents to RRZE
-
-## Progress
-★ first pass / ★★ good / ★★★ ready
-
-Chapter | Progress
---- | ---
-Abstract | ★★
-1 Introduction | ★★★
-– 1.1 Motivation | ★★★
-– 1.2 Task | ★★★
-– 1.3 Related Work | ★★★
-– 1.4 Results | ★★
-– 1.5 Outline | ★★
-– 1.6 Acknowledgments | ★★★
-2 Background | ★★★
-3 Implementation | ★★★
-4 Evaluation | ★★★
-5 Conclusion and Future Work | ★★
