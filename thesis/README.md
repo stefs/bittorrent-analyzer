@@ -6,7 +6,6 @@ BitTorrent is the most used technology for file sharing to date and discussed to
 0. Finalize
     0. Erklären: Leecher, Seeder, Peer
     0. Check bibliography file for errors, add or remove links
-    0. Check spelling with automatic tool
 0. Final Reading
     0. Roter faden, einfaches lesen
     0. Explainen all abbreviations?

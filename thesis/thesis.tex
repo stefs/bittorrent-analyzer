@@ -85,7 +85,8 @@
   \begin{tabular}{rl}
   Examiner: & Prof. Dr.-Ing. Felix Freiling \\
   Advisor: & Philipp Klein, M.\,Sc. \\
-  & and Michael Gruhn, M.\,Sc.
+  & Michael Gruhn, M.\,Sc. \\
+  & Dr. Werner Massonne
   \end{tabular}
 }
 
@@ -351,7 +352,7 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@7:comment@35:"Debian C
 Key & Explanation \\
 \midrule
 \texttt{info\_hash} & This is the SHA-1 hash of the bencoded info dictionary from the metainfo file. \\
-\texttt{peer\_id} & A string of 20 bytes is chosen by each peer. It contains client software information by convention, see section \ref{clients}. \\
+\texttt{peer\_id} & A string of 20 bytes is chosen by each peer. It contains client software information by convention, see \cite{bep20}. \\
 \texttt{ip} & In case the client uses a proxy, the peer's original routable IP address can be submitted in this optional parameter. \\
 \texttt{port} & This is the port number the peer is listening on for connections from other peers. \cite{bep3} recommends a port between 6881 and 6889. \\
 \texttt{uploaded} & Amount of pieces this peer has uploaded so far. \\
@@ -906,7 +907,7 @@ Peers from all supported sources were considered, namely from the tracker server
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_tracker-error}
-\caption[Responsiveness of tracker servers]{Responsiveness of tracker servers per torrent. The thread to perform announce requests for torrent 6 crashed after four hours, which is why this torrent is excluded from the analysis. As apparent from table \ref{torrents}, metainfo files for torrents 9, 16 and 18 to 20 had only five announce URLs embedded, explaining the reduced request numbers. Also torrents 1, 3 and 5 only had seven trackers. Data is taken from the file \texttt{2015-08-30\_20-combined\_tracker-error.txt}, which is written by the analyzer tool.}
+\caption[Responsiveness of tracker servers per torrent]{Responsiveness of tracker servers per torrent. The thread to perform announce requests for torrent 6 crashed after four hours, which is why this torrent is excluded from the analysis. As apparent from table \ref{torrents}, metainfo files for torrents 9, 16 and 18 to 20 had only five announce URLs embedded, explaining the reduced request numbers. Also torrents 1, 3 and 5 only had seven trackers. Data is taken from the file \texttt{2015-08-30\_20-combined\_tracker-error.txt}, which is written by the analyzer tool.}
 \label{tracker-resp}
 \end{figure}
 
@@ -993,7 +994,7 @@ In figure \ref{confirmed-unique} similar data is shown, but using the number of 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_download_set}
-\caption[Development of confirmed and reported downloads per torrent set]{Development of confirmed and server reported downloads per hour and torrent set. The timestamp for a confirmed download is the time of first contact with the peer. Analysis duration was \range.}
+\caption[Development of confirmed and reported downloads]{Development of confirmed and server reported downloads per hour and torrent set. The timestamp for a confirmed download is the time of first contact with the peer. Analysis duration was \range.}
 \label{download-history}
 \end{figure}
 
@@ -1084,7 +1085,7 @@ A solution to this problem, which is not implemented in the analysis tool, would
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{../result/2015-08-26_11-24-21_faui1-246_hostnames}
-\caption[Most observed ISPs by hostnames]{Top 50 hostnames of all unique observed peers. Only the TLD and SLD of hostnames were recorded. The majority of hostnames represent the used ISPs or seedbox providers, which are rentable servers optimized for usage with BitTorrent. Data is taken from a separate examination of twelve torrents which were chosen equivalently to the description of section \ref{cho}. Data is taken from the database \texttt{2015-08-26\_11-24-21\_faui1-246.sqlite}.}
+\caption[Most observed ISPs by hostname]{Top 50 hostnames of all unique observed peers. Only the TLD and SLD of hostnames were recorded. The majority of hostnames represent the used ISPs or seedbox providers, which are rentable servers optimized for usage with BitTorrent. Data is taken from a separate examination of twelve torrents which were chosen equivalently to the description of section \ref{cho}. Data is taken from the database \texttt{2015-08-26\_11-24-21\_faui1-246.sqlite}.}
 \label{hostname}
 \end{figure}
 
