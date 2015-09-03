@@ -221,7 +221,6 @@ class SwarmAnalyzer:
 				continue
 
 			# Establish connection
-			# TODO use util.TCPConnection
 			self.evaluator_threads.increment()
 			if peer.key is None:
 				logging.info('Connecting to new peer ...')

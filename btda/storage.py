@@ -38,8 +38,8 @@ class Peer(Base):
 	last_seen = sqlalchemy.Column(sqlalchemy.types.Integer)
 	max_speed = sqlalchemy.Column(sqlalchemy.types.Float)
 	visits = sqlalchemy.Column(sqlalchemy.types.Integer)
-	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht')) # TODO database should have enum support
-	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
+	source = sqlalchemy.Column(sqlalchemy.types.Enum('tracker', 'incoming', 'dht'))
+	torrent = sqlalchemy.Column(sqlalchemy.types.Integer)
 
 ## Declarative class for torrent table
 class Torrent(Base):
@@ -69,7 +69,7 @@ class Request(Base):
 	completed = sqlalchemy.Column(sqlalchemy.types.Integer)
 	leechers = sqlalchemy.Column(sqlalchemy.types.Integer)
 	duration_sec = sqlalchemy.Column(sqlalchemy.types.Float)
-	torrent = sqlalchemy.Column(sqlalchemy.types.Integer) # TODO foreign key of torrent
+	torrent = sqlalchemy.Column(sqlalchemy.types.Integer)
 
 ## Declarative class for statistic table
 class Statistic(Base):

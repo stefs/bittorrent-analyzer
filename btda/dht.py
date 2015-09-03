@@ -27,7 +27,7 @@ class DHT:
 		# Receive peers
 		dht_response = list()
 		info_hash_hex = bytes_to_hex(info_hash)
-		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex.upper(), config.bittorrent_listen_port) # TODO use existing channel?
+		request_line = '0 OPEN 0 HASH {} {}\n'.format(info_hash_hex.upper(), config.bittorrent_listen_port)
 		logging.info('DHT lookup request: {}'.format(request_line.rstrip('\n')))
 		with self.lock:
 			try:
