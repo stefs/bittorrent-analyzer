@@ -767,7 +767,7 @@ The timeout for network operations is six seconds. It is used when asking the Bi
 To assess a minimum timeout, an analysis with special configuration parameters was performed. Here, the maximum time used for receiving one message was recorded for every peer contact. These durations were rounded and the number of occurrences plotted in figure \ref{timeout-calibration}. For this task \config{network\_timeout} was set to 30 seconds to achieve most unbiased results. During this test at \numprint{977301} out of \numprint{1040817} peer contacts the maximum duration for receiving one message was below six seconds, which equals \numprint[\%]{93.9}. The recording of this value can be enabled with \config{rec\_dur\_analysis}.
 
 \paragraph{receive\_message\_max}
-When collecting all messages from a peer, a maximum of \numprint{256} messages are considered. This limit is in place, to prohibit infinite peer sessions. Only *\numprint[\%]{0} of evaluations reached this maximum on the main analysis pass, others stopped because of the timeout or another error.
+When collecting all messages from a peer, a maximum of \numprint{256} messages are considered. This limit is in place, to prohibit infinite peer sessions. Only about \numprint[\%]{0.1} of evaluations reached this maximum on the main analysis pass, others stopped because of the timeout or another error.
 
 \paragraph{peer\_revisit\_delay}
 Peers were contacted for their download progress every five minutes. This delay should be as small as possible, to also consider peers who stop seeding a torrent immediately after they finished downloading it. Five minutes caused no problem with system resources.
@@ -788,7 +788,7 @@ To get most complete results, the BitTorrent Download Analyzer aims to collect d
 \item No support for IPv6 addresses from HTTP announce requests \cite{bep7} or the separate IPv6 DHT network \cite{bep32}. A measurement study \cite[sec.~4.2.]{vyncke2012measuring} from 2011 for IPv6 traffic in BitTorrent networks found between \numprint[\%]{1} and \numprint[\%]{4} of peers using IPv6.
 \item No support for the Micro Transport Protocol ($\mu$TP or uTP) \cite{bep29}, which enables UDP communication between peers. Peers can support this in addition to the Peer Wire Protocol for better bandwidth management. Users can configure clients to only use uTP, but this may harm their download speeds.
 \item No support for peer exchange (PeX). This enables peers to exchange peer lists among each other with simple messages. Currently there are different implementations in use, an official BEP does not exist, yet.
-\item No support for the Tracker exchange extension \cite{bep28}, which enables peers to exchange announce URLs of tracker servers. This is useful for magnet links without any trackers or torrent files with missing trackers. All torrents investigated in this work have at least *\numprint{0} trackers, see section \ref{addr}.
+\item No support for the Tracker exchange extension \cite{bep28}, which enables peers to exchange announce URLs of tracker servers. This is useful for magnet links without any trackers or torrent files with missing trackers. All torrents investigated in this work have between 5 and 10 trackers, see section \ref{addr}.
 \item No support for the Azureus DHT network, which is a separate DHT network from \emph{Mainline DHT} described in \cite{bep5}. Peer numbers in the Azureus DHT network are significantly lower \cite[table~5]{drachen2011distribution}.
 \end{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
