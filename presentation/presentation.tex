@@ -1,0 +1,54 @@
+\documentclass{beamer} % [draft/handout] (Schnellübersicht goo.gl/AS72B)
+\mode<presentation>{
+    \useoutertheme{infolines}
+    \usecolortheme{dolphin} % Farbthema ab Besten selbst machen
+    \usecolortheme{orchid}
+}
+\usepackage[T1]{fontenc} % Umlaute
+\usepackage[utf8]{inputenc} % Textcodierung
+\usepackage[ngerman]{babel} % Silbentrennung
+\usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
+\usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
+
+%\includeonlyframes{current} % FIXME
+
+\providecommand{\mm}{\textsc{MinimaxDecicion}} % FIXME
+\DeclareMathOperator*{\argmax}{arg\,max} % FIXME
+
+\title[BitTorrent Downloads]{Analysis of BitTorrent Trackers and Peers}
+\subtitle{Counting Confirmed Downloads in BitTorrent}
+\author{Stefan Schindler}
+\institute[FAU]{Friedrich-Alexander-Universität Erlangen-Nürnberg}
+\date{13. Oktober 2015}
+\subject{Bachelor Thesis}
+
+\AtBeginSection[]{
+    \begin{frame}<beamer>{Agenda}
+        \tableofcontents[currentsection]
+    \end{frame}
+}
+
+\begin{document}
+	\begin{frame}
+		\titlepage
+	\end{frame}
+
+	\begin{frame}{Agenda}
+		\tableofcontents
+	\end{frame}
+
+	% Einleitung, Hintergrund
+	\section{BitTorrent}
+
+	% Implementierung
+	\section{BitTorrent Download Analyzer}
+
+	\section{Auswertung}
+
+	\section{Fazit und Ausblick}
+
+	\begin{frame}{Zusammenfassung}
+		% TODO oder eigene Sätze
+		\tableofcontents
+	\end{frame}
+\end{document}
