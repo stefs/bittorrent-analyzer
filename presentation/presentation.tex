@@ -136,14 +136,32 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 			\item[\alert{bitfield, have}] Angebot an Segmenten
 			\item[request, cancel] Anforderung von Segmenten
 			\item[piece] Nutzdaten
+			\item[port] DHT-Port
 		\end{description}
 	\end{frame}
 
 	\subsection{DHT-Netzwerk}
-	\begin{frame}{DHT-Protokoll}
-	\end{frame}
+	\begin{frame}{Peeranfrage im DHT-Netzwerk}
+		\begin{itemize}
+			\item DHT-Knoten in jedem Client mit eigener ID
+			\begin{itemize}
+				\item \alert{Routingtabelle} mit Nachbar-Knoten
+				\item \alert{Infohash-Tabelle} mit Peeradressen
+			\end{itemize}
+			\item Knoten nahe dem Infohash \alert{iterativ} finden
+			\item Nahe Knoten liefern Peeradressen
+			\item Torrent-Teilnahme anderen Knoten mitteilen
+		\end{itemize} % TODO Magnet-Link aufschreiben oder erwähnen
 
-	\begin{frame}{Magnet-Links}
+		\begin{center}
+			1 \\
+			2 \\
+			3 \\
+			(Illustration Lookup siehe Tafel) \\ % TODO
+			5 \\
+			6 \\
+			7
+		\end{center}
 	\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -151,10 +169,24 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 	\begin{frame}{Abhängigkeiten}
 	\end{frame}
 
-	\begin{frame}{Architektur}
-	\end{frame}
+	\begin{frame}{Arbeitsweise des Analysewerkzeugs}
+		\begin{enumerate}
+			\item \alert{Import} von Torrent-Dateien und Magnet-Links
+			\item \alert{Adressen} in Peer-Warteschlange sammeln
+			\begin{itemize}
+				\item Von Tracker-Server
+				\item Aus DHT-Netzwerk
+			\end{itemize}
+			\item \alert{Download-Fortschritt} in DB-Warteschlange schreiben
+			\begin{itemize}
+				\item Peers aktiv kontaktieren
+				\item Passiv Verbindungen annehmen
+			\end{itemize}
+			\item Peers in \alert{Datenbank} aktualisieren, zurücklegen in Peer-Warteschlange
+		\end{enumerate}
 
-	\begin{frame}{Arbeitsweise}
+		\vspace{0.4cm}
+    \includegraphics[width=\textwidth]{002_Komponenten-crop}
 	\end{frame}
 
 	\begin{frame}{Wichtige Parameter}
