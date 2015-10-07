@@ -23,7 +23,7 @@
 	columns=flexible,
 	breaklines=true,
 	numbers=left,
-	xleftmargin=0.5cm,
+	%xleftmargin=0.5cm,
 	tabsize=4,
 	numberstyle=\scriptsize\color{gray},
 	stringstyle=\color{orange},
@@ -151,7 +151,7 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 			\item Knoten nahe dem Infohash \alert{iterativ} finden
 			\item Nahe Knoten liefern Peeradressen
 			\item Torrent-Teilnahme anderen Knoten mitteilen
-		\end{itemize} % TODO Magnet-Link aufschreiben oder erwähnen
+		\end{itemize} % FIXME Magnet-Link aufschreiben oder erwähnen
 
 		\begin{center}
 			1 \\
@@ -166,9 +166,10 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{BitTorrent Download Analyzer}
-	\begin{frame}{Abhängigkeiten}
-	\end{frame}
+% 	\begin{frame}{Abhängigkeiten} % FIXME
+% 	\end{frame}
 
+	\subsection{Arbeitsweise}
 	\begin{frame}{Arbeitsweise des Analysewerkzeugs}
 		\begin{enumerate}
 			\item \alert{Import} von Torrent-Dateien und Magnet-Links
@@ -185,14 +186,24 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 			\item Peers in \alert{Datenbank} aktualisieren, zurücklegen in Peer-Warteschlange
 		\end{enumerate}
 
-		\vspace{0.4cm}
+		\vspace{0.5cm}
     \includegraphics[width=\textwidth]{002_Komponenten-crop}
 	\end{frame}
 
-	\begin{frame}{Wichtige Parameter}
-	\end{frame}
+% 	\begin{frame}{Wichtige Parameter} % FIXME
+% 	\end{frame}
 
-	\begin{frame}{Einschränkungen}
+	\subsection{Einschränkungen}
+	\begin{frame}{Einschränkungen des Analysewerkzeugs}
+		Nicht unterstützte Technologien:
+
+		\begin{itemize}
+			\item IPv6 bei Tracker-Abfragen und DHT-Netzwerk
+			\item uTP (Micro Transport Protocol)
+			\item PEX (Peer Exchange)
+			\item TEX (Tracker Exchange)
+			\item Azureus-DHT-Netzwerk
+		\end{itemize}
 	\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,7 +220,13 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 	\begin{frame}{Methodische Probleme}
 	\end{frame}
 
-	\begin{frame}{Weitergehende Peeranalyse}
+	\subsection{Geographische Analyse}
+	\begin{frame}{Häufigkeit der Herkunftsländer}
+    \includegraphics[width=\textwidth]{2015-08-30_20-combined_location_map}
+	\end{frame}
+
+	\begin{frame}{Mittlere Download-Geschwindigkeiten}
+    \includegraphics[width=\textwidth]{2015-08-30_20-combined_speed_map}
 	\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
