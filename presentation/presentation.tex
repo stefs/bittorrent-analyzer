@@ -38,7 +38,6 @@
 %\includeonlyframes{current} % FIXME
 
 \providecommand{\attribution}[4]{\textcolor{gray}{\tiny \href{#1}{Illustration} by #2 / \href{#3}{#4}}}
-\providecommand{\mm}{\textsc{MinimaxDecicion}} % FIXME
 \DeclareMathOperator*{\argmax}{arg\,max} % FIXME
 
 \title[BitTorrent-Downloads]{Analysis of BitTorrent Trackers and Peers}
@@ -94,12 +93,12 @@
 		\begin{center}
 			\begin{tabular}{lll}
 				\toprule
-				Typ & Bencoding & Beispiel \\
+				Datentyp & Bencoding & Beispiel \\
 				\midrule
-				String & \texttt{<length>:<string>} & \texttt{3:abc} = \texttt{"abc"} \\
+				String & \texttt{<length>:<string>} & \texttt{3:aaa} = \texttt{"aaa"} \\
 				Integer & \texttt{i<integer>e} & \texttt{i23e} = \texttt{23} \\
-				List & \texttt{l<val1>...e} & \texttt{l3:abci23ee} = \texttt{["abc", 23]} \\
-				Dictionary & \texttt{d<key1><val1>...e} & \texttt{d3:abci23ee} = \texttt{\{"abc": 23\}} \\
+				List & \texttt{l<val1>...e} & \texttt{l3:aaai23ee} = \texttt{["aaa", 23]} \\
+				Dictionary & \texttt{d<key1><val1>...e} & \texttt{d3:aaai23ee} = \texttt{\{"aaa": 23\}} \\
 				\bottomrule
 			\end{tabular}
 		\end{center}
@@ -113,7 +112,15 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 		\end{itemize}
 	\end{frame}
 
-	\begin{frame}{Tracker-Server}
+	\begin{frame}[fragile]{Peeranfrage an Tracker-Server}
+		\begin{itemize}
+			\item Peers anfordern und Teilnahme bekanntgeben
+			\item Mittels HTTP-GET-Methode
+				\begin{lstlisting}
+	http://bttracker.debian.org:6969/announce?@info_hash@=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6&@port@=6881&@peer_id@=hNsfr5PYlFtWO73yvSGX&@event@=started&@downloaded@=1896&@left@=1896&@uploaded@=758
+				\end{lstlisting}
+			\item Antwort enthält Liste von Peer-IPs und -Ports in Bencoding
+		\end{itemize}
 	\end{frame}
 
 	\begin{frame}{Peer-Protokoll}
