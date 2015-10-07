@@ -67,6 +67,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{Einleitung, Motivation und Aufgabe}
 	\begin{frame}{Einleitung, Motivation und Aufgabe}
+		% TODO BEPs
 	\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -114,16 +115,28 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 
 	\begin{frame}[fragile]{Peeranfrage an Tracker-Server}
 		\begin{itemize}
-			\item Peers anfordern und Teilnahme bekanntgeben
-			\item Mittels HTTP-GET-Methode
+			\item Peer-Adressen anfordern und Teilnahme bekanntgeben
 				\begin{lstlisting}
-	http://bttracker.debian.org:6969/announce?@info_hash@=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6&@port@=6881&@peer_id@=hNsfr5PYlFtWO73yvSGX&@event@=started&@downloaded@=1896&@left@=1896&@uploaded@=758
+	http://bttracker.debian.org:6969/@announce@?@info_hash@=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6&@port@=6881&@peer_id@=hNsfr5PYlFtWO73yvSGX&@event@=started&@downloaded@=1896&@left@=1896&@uploaded@=758
 				\end{lstlisting}
-			\item Antwort enthält Liste von Peer-IPs und -Ports in Bencoding
+			\pause
+			\item Statistikabfrage über Leecher, Seeder, abgeschlossene Downloads
+				\begin{lstlisting}
+	http://bttracker.debian.org:6969/@scrape@?@info_hash@=W%E1Y%A5%82a%C8%D2%F4%2Ad%98%0D%2B%80%8E9%01%FC%F6
+				\end{lstlisting}
+			\pause
+			\item UDP-basiertes Protokoll als effizientere Alternative
 		\end{itemize}
 	\end{frame}
 
-	\begin{frame}{Peer-Protokoll}
+	\begin{frame}{Nachrichten im Peer-Protokoll}
+		\begin{description}[(un-)\,choke, (not) interested]
+			\item[handshake] Protokollversion, Infohash, Erweiterungen
+			\item[(un-)\,choke, (not) interested] Bandbreitenverwaltung
+			\item[\alert{bitfield, have}] Angebot an Segmenten
+			\item[request, cancel] Anforderung von Segmenten
+			\item[piece] Nutzdaten
+		\end{description}
 	\end{frame}
 
 	\subsection{DHT-Netzwerk}

@@ -28,8 +28,17 @@
    **P2P:** dezentral, keine Hostingkosten  
    **SHA-1:** robust gegen Übertragungsfehler, Angriffe bösartiger Peers mit
    falschen Daten
-0. **Begrenzung:** Kleinbuchstaben, Zahlen in ASCII, Strings als Dict-Keys  
+0. **Begrenzung:** Kleinbuchstaben  
+   **String:** Zahlen in ASCII, auch Bytestring  
+   **Dicts:** Strings als Dict-Keys  
    **Einfache/zusammengesetzte Typen:** eindeutige Länge durch Präfix/
    Buchstaben  
-   **Beispiel:** Gültige Torrent-Datei im Einzeldatei-Modus  
-   **Hervorhebung:** Keys, geschachtelte Dicts
+   **Beispiel:** Gültige Torrent-Datei im Einzeldatei-Modus, Keys
+   hervorgehoben, Geschachtelte Dicts  
+   **Metainfo:** `length` = Dateigröße, `pieces` = 20 Byte SHA-1, Infohash =
+   Hash des info-Dicts
+0. **Peer-ID:** Wiedererkennung von Tracker/ geänderter IP, unwichtig  
+   **Antwort:** Bencodete Liste von Dicts mit IPs und Ports  
+   **UDP:** 50% Einsparung, wenige Datagramme
+0. **choke/interested:** Bereitschaft Anfragen zu beantworten/ Interesse an
+   `unchoke`
