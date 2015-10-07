@@ -1,4 +1,4 @@
-\documentclass{beamer} % [draft/handout] (Schnellübersicht goo.gl/AS72B)
+\documentclass[dvipsnames]{beamer} % [draft/handout] (Schnellübersicht goo.gl/AS72B)
 \mode<presentation>{
     \useoutertheme{infolines}
     \usecolortheme{dolphin} % Farbthema ab Besten selbst machen
@@ -9,13 +9,39 @@
 \usepackage[ngerman]{babel} % Silbentrennung
 \usepackage{marvosym, amsmath, amssymb} % Symbole, Formeln, amssymb > mathdesign
 \usepackage{lmodern, microtype} % enhanced CM, mikrotypograﬁsche Feinheiten
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks = true,
+	allcolors = ,
+	urlcolor = blue!75
+}
+\usepackage{booktabs, tabularx}
+\usepackage{listings}
+\lstset{
+	basicstyle=\ttfamily,
+	columns=flexible,
+	breaklines=true,
+	numbers=left,
+	xleftmargin=0.5cm,
+	tabsize=4,
+	numberstyle=\scriptsize\color{gray},
+	stringstyle=\color{orange},
+	commentstyle=\color{teal},
+	keywordstyle=\bfseries\color{Blue},
+	backgroundcolor=\color{black!05},
+	% Special
+	breakindent=0cm,
+  moredelim=[is][\bfseries\color{Red}]{@}{@},
+}
 
 %\includeonlyframes{current} % FIXME
 
+\providecommand{\attribution}[4]{\textcolor{gray}{\tiny \href{#1}{Illustration} by #2 / \href{#3}{#4}}}
 \providecommand{\mm}{\textsc{MinimaxDecicion}} % FIXME
 \DeclareMathOperator*{\argmax}{arg\,max} % FIXME
 
-\title[BitTorrent Downloads]{Analysis of BitTorrent Trackers and Peers}
+\title[BitTorrent-Downloads]{Analysis of BitTorrent Trackers and Peers}
 \subtitle{Counting Confirmed Downloads in BitTorrent}
 \author{Stefan Schindler}
 \institute[FAU]{Friedrich-Alexander-Universität Erlangen-Nürnberg}
@@ -29,24 +55,117 @@
 }
 
 \begin{document}
+	\shorthandoff{"}
 	\begin{frame}
 		\titlepage
 	\end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\begin{frame}{Agenda}
 		\tableofcontents
 	\end{frame}
 
-	% Einleitung, Hintergrund
-	\section{BitTorrent}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\section{Einleitung, Motivation und Aufgabe}
+	\begin{frame}{Einleitung, Motivation und Aufgabe}
+	\end{frame}
 
-	% Implementierung
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\section{Funktionsweise von BitTorrent}
+	\subsection{BitTorrent-Protokoll}
+	\begin{frame}{Funktionsweise von BitTorrent}
+		\begin{columns}
+			\column{0.5\textwidth}
+			\begin{itemize}
+				\item Datei oder Verzeichnis
+				\item Einteilung in Segmente
+				\item Peer-to-Peer-Datenübertragung
+				\item Übergang von Leecher zu Seeder
+				\item Integritätsprüfung mit SHA-1
+			\end{itemize}
+			\column{0.5\textwidth}
+			\centering
+	    \includegraphics[width=\textwidth]{001_BitTorrent_network}\\
+	    \attribution{https://commons.wikimedia.org/wiki/File:BitTorrent_network.svg}{Scott Martin}{https://creativecommons.org/licenses/by-sa/3.0/deed.en}{CC SA}
+		\end{columns}
+	\end{frame}
+
+	\begin{frame}[fragile]{Bencoding und Torrent-Datei}
+		\begin{center}
+			\begin{tabular}{lll}
+				\toprule
+				Typ & Bencoding & Beispiel \\
+				\midrule
+				String & \texttt{<length>:<string>} & \texttt{3:abc} = \texttt{"abc"} \\
+				Integer & \texttt{i<integer>e} & \texttt{i23e} = \texttt{23} \\
+				List & \texttt{l<val1>...e} & \texttt{l3:abci23ee} = \texttt{["abc", 23]} \\
+				Dictionary & \texttt{d<key1><val1>...e} & \texttt{d3:abci23ee} = \texttt{\{"abc": 23\}} \\
+				\bottomrule
+			\end{tabular}
+		\end{center}
+
+		\pause
+		\begin{itemize}
+			\item Metainfo-Datei mit \texttt{.torrent} Dateisuffix
+			\begin{lstlisting}
+d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:debian-8.0.0-amd64-DVD-1.iso@6:length@i3976200192e@12:piece length@i1048576e@6:pieces@75840:<hashes>ee
+			\end{lstlisting}
+		\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Tracker-Server}
+	\end{frame}
+
+	\begin{frame}{Peer-Protokoll}
+	\end{frame}
+
+	\subsection{DHT-Netzwerk}
+	\begin{frame}{DHT-Protokoll}
+	\end{frame}
+
+	\begin{frame}{Magnet-Links}
+	\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{BitTorrent Download Analyzer}
+	\begin{frame}{Abhängigkeiten}
+	\end{frame}
 
+	\begin{frame}{Architektur}
+	\end{frame}
+
+	\begin{frame}{Arbeitsweise}
+	\end{frame}
+
+	\begin{frame}{Wichtige Parameter}
+	\end{frame}
+
+	\begin{frame}{Einschränkungen}
+	\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{Auswertung}
+	\begin{frame}{Auswahl von Torrents}
+	\end{frame}
 
+	\begin{frame}{Adresssammlung}
+	\end{frame}
+
+	\begin{frame}{Bestätigte Downloads}
+	\end{frame}
+
+	\begin{frame}{Methodische Probleme}
+	\end{frame}
+
+	\begin{frame}{Weitergehende Peeranalyse}
+	\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{Fazit und Ausblick}
+	\begin{frame}{Fazit und Ausblick}
+	\end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\begin{frame}{Zusammenfassung}
 		% TODO oder eigene Sätze
 		\tableofcontents
