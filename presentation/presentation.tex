@@ -34,11 +34,9 @@
 	breakindent=0cm,
   moredelim=[is][\bfseries\color{Red}]{@}{@},
 }
-
-%\includeonlyframes{current} % FIXME
+\usepackage{numprint}
 
 \providecommand{\attribution}[4]{\textcolor{gray}{\tiny \href{#1}{Illustration} by #2 / \href{#3}{#4}}}
-\DeclareMathOperator*{\argmax}{arg\,max} % FIXME
 
 \title[BitTorrent-Downloads]{Analysis of BitTorrent Trackers and Peers}
 \subtitle{Counting Confirmed Downloads in BitTorrent}
@@ -151,7 +149,7 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 			\item Knoten nahe dem Infohash \alert{iterativ} finden
 			\item Nahe Knoten liefern Peeradressen
 			\item Torrent-Teilnahme anderen Knoten mitteilen
-		\end{itemize} % FIXME Magnet-Link aufschreiben oder erwähnen
+		\end{itemize}
 
 		\begin{center}
 			\includegraphics[height=3.3cm]{dht_lookup-crop}
@@ -160,32 +158,21 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{BitTorrent Download Analyzer}
-% 	\begin{frame}{Abhängigkeiten} % FIXME
-% 	\end{frame}
-
 	\subsection{Arbeitsweise}
 	\begin{frame}{Arbeitsweise des Analysewerkzeugs}
 		\begin{enumerate}
 			\item \alert{Import} von Torrent-Dateien und Magnet-Links
-			\item \alert{Adressen} in Peer-Warteschlange sammeln
-			\begin{itemize}
-				\item Von Tracker-Server
-				\item Aus DHT-Netzwerk
-			\end{itemize}
-			\item \alert{Download-Fortschritt} in DB-Warteschlange schreiben
-			\begin{itemize}
-				\item Peers aktiv kontaktieren
-				\item Passiv Verbindungen annehmen
-			\end{itemize}
+			\item \alert{Adressen} in von Trackern und DHT sammeln
+			\item \alert{Download-Fortschritt} erfahren durch Empfangen aller Nachrichten
 			\item Peers in \alert{Datenbank} aktualisieren, zurücklegen in Peer-Warteschlange
+			\begin{itemize}
+				\item Bestätigter Download beim Überschreiten von \numprint[\%]{0,98}
+			\end{itemize}
 		\end{enumerate}
 
-		\vspace{0.5cm}
+		\vspace{0.7cm}
     \includegraphics[width=\textwidth]{components-crop}
 	\end{frame}
-
-% 	\begin{frame}{Wichtige Parameter} % FIXME
-% 	\end{frame}
 
 	\subsection{Einschränkungen}
 	\begin{frame}{Einschränkungen des Analysewerkzeugs}
@@ -202,25 +189,69 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{Auswertung}
-	\begin{frame}{Auswahl von Torrents}
-	\end{frame}
+	\subsection{Bestätigte Downloads}
+	\begin{frame}{Sammlung von Peer-Adressen}
+		\begin{itemize}
+			\item 19 populäre Torrents von Suchmaschine \glqq Torrentz\grqq
+			\item 34 Stunden Analysedauer
+		\end{itemize}
 
-	\begin{frame}{Adresssammlung}
+		\vspace{0.5cm}
+    \includegraphics[width=\textwidth]{2015-08-30_20-combined_source_all_torrents-crop}
 	\end{frame}
 
 	\begin{frame}{Bestätigte Downloads}
+		\begin{center}
+			\begin{tabular}{lrrrrr}
+				\toprule
+				Gruppe (Anzahl) & Bestätigt & Scrape & Peers & \alert{B./S.} & B./P. \\
+				\midrule
+				A: 1\,--\,5\,GB (8) & \numprint{14632} & \numprint{150629} &
+				\numprint{1264472} & \alert{\numprint[\%]{9.7}} & \numprint[\%]{1.2} \\
+				B: 5\,--\,20\,GB (6) & \numprint{4505} & \numprint{17872} &
+				\numprint{383420} & \alert{\numprint[\%]{25.2}} & \numprint[\%]{1.2} \\
+				C: 30\,--\,70\,GB (5) & \numprint{713} & \numprint{1299} &
+				\numprint{158662} & \alert{\numprint[\%]{54.9}} & \numprint[\%]{0.4} \\
+				\bottomrule
+			\end{tabular}
+		\end{center}
+
+		\vspace{0.5cm}
+		\begin{itemize}
+			\item Kleine Torrents beliebter
+			\item Höhere Erfolgsrate bei großen Torrents
+			\item Inaktive Peers bei großen Torrents
+		\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Bestätigte Downloads}
+    \includegraphics[width=\textwidth]{2015-08-30_20-combined_download_set-crop}
 	\end{frame}
 
 	\begin{frame}{Methodische Probleme}
+		\begin{itemize}
+			\item Torrentgröße beeinflusst gemessene Downloadzahlen
+			\item Kein erfolgreicher Besuch bei \numprint[\%]{90,61} aller Peer-Adressen
+			\item Hohe Fehlerrate nach erstem aktiven Besuch
+		\end{itemize}
+
+		\vspace{0.7cm}
+    \includegraphics[page=2, width=\textwidth]{2015-08-30_20-combined_visits-crop}
 	\end{frame}
 
 	\subsection{Geographische Analyse}
 	\begin{frame}{Häufigkeit der Herkunftsländer}
-    \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_location_map}
+		\begin{center}
+	    \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_location_map}\\
+	    {\small Eindeutige Peers}
+	  \end{center}
 	\end{frame}
 
 	\begin{frame}{Mittlere Download-Geschwindigkeiten}
-    \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_speed_map}
+		\begin{center}
+	    \includegraphics[width=\textwidth]{../result/2015-08-30_20-combined_speed_map}\\
+	    {\small kB\,/\,s}
+	  \end{center}
 	\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

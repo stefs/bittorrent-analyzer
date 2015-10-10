@@ -7,12 +7,12 @@
 
 ## Todo
 ### Zeitplan
-* **5.10.:** Bis Folie 1
+* **5.10.:** 1 Folie
 * **6.10.:** —
-* **→ 7.10.:** Bis Folie 2
-* **8.10.:** Folien
-* **9.10.:** Folien
-* **10.10.:** Vortrag üben
+* **7.10.:** 7 Folien
+* **8.10.:** —
+* **9.10.:** —
+* **→ 10.10.:** 4 Folien, Überarbeitungen
 * **11.10.:** Vortrag üben
 * **12.10.:** Vortrag üben
 * **13.10.:** Vortrag um 15:00 Uhr
@@ -42,3 +42,38 @@
    **UDP:** 50% Einsparung, wenige Datagramme
 0. **choke/interested:** Bereitschaft Anfragen zu beantworten/ Interesse an
    `unchoke`
+0. **DHT:** Um sich Tracker-Server zu sparen (Ausfallsicherheit, Kosten)  
+   **ID:** Im gleichen Adressraum wie Infohash, Interpretation als *unsigned
+   integer*  
+   (Magnet-Links nicht erwähnen)
+0. 
+0. **Adressen:** Abfrage alle 5 Minuten, 200 Peers pro UDP-Abfrage, DHT 100-
+   1300  
+   **Fortschritt:** Client sendet nach BitTorrent-Protokoll *bitfield*/ *have*
+   Nach Verbindungsaufbau  
+   **Schema Peer-Tabelle:** Segmente erster/letzter Besuch, Zeitstempel,
+   IP-Adressen-basierte Ortsangabe  
+   **Threshold:** Relativ egal
+0. **IPv6:** 2011 unter 4%  
+   **PEX/TEX:** Eher bei kleinen Torrents von Bedeutung  
+   **Azureus:** Wesentlich kleinere Nutzerbasis
+0. 
+0. **Duplikate:** Quelle ausgeschöpft  
+   **Eingehend:** Nur erfolgreich ausgewertete  
+   **Spitze:** Alle Peers zu diesem Zeitpunkt, Start 18:40 UTC  
+   **Konstant:** Neue Peers während der Analyse
+0. **Scrape:** Nur von Haupt-Tracker, daher evtl. zu niedrig  
+   **Peers:** Entält Seeder und falsche Adressen, daher evtl. zu hoch  
+0. **Besätigt:** Zeitstempel bei erstem Kontakt  
+   **Scrape:** Hoch bei jeweils 19 Uhr UTC
+0. **Zweitversuch:** 15% Erfolg, 85% Misserfolg  
+   **Ursache:** Keine Wiederholung nach (temporärem) Fehler, Peer Blacklist
+   weil keine Daten, Peer ausgelastet
+0. **Methode:** Differenz im Download-Fortschritt zwischen zwei Versuchen,
+   Maximum aus allen Differenzen  
+   **Logarithmische** Skala  
+   **Verteilung:** BitTorrent überall genutzt, beachte Einwohnerzahlen  
+   **Maximum:** USA, Russland, Philippinen, Vereinigtes Königreich, Südkorea
+0. **Weiß:** Nur Länder ab 50 Peers  
+   **Median:** Meistens um die 100 kB/s  
+   **10 MB/s:** China, Trinidad und Tobago
