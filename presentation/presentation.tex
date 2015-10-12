@@ -122,7 +122,7 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 
 	\begin{frame}{Nachrichten im Peer-Protokoll}
 		\begin{description}[(un-)\,choke, (not) interested]
-			\item[handshake] Protokollversion, Infohash, Erweiterungen
+			\item[handshake] Protokollversion, Infohash
 			\item[(un-)\,choke, (not) interested] Bandbreitenverwaltung
 			\item[\alert{bitfield, have}] Angebot an Segmenten
 			\item[request, cancel] Anforderung von Segmenten
@@ -134,7 +134,7 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 	\subsection{DHT-Netzwerk}
 	\begin{frame}{Peeranfrage im DHT-Netzwerk}
 		\begin{itemize}
-			\item DHT-Knoten in jedem Client mit eigener ID
+			\item DHT-Knoten in jedem Client mit eigener \alert{ID}
 			\begin{itemize}
 				\item \alert{Routingtabelle} mit Nachbar-Knoten
 				\item \alert{Infohash-Tabelle} mit Peeradressen
@@ -173,7 +173,6 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 
 		\begin{itemize}
 			\item IPv6 bei Tracker-Abfragen und DHT-Netzwerk
-			\item uTP (Micro Transport Protocol)
 			\item PEX (Peer Exchange)
 			\item TEX (Tracker Exchange)
 			\item Azureus-DHT-Netzwerk
@@ -225,10 +224,11 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 		\begin{itemize}
 			\item Torrentgröße beeinflusst gemessene Downloadzahlen
 			\item Kein erfolgreicher Besuch bei \numprint[\%]{90,61} aller Peer-Adressen
-			\item Hohe Fehlerrate nach erstem aktiven Besuch
+			\item Hohe \alert{Fehlerrate} nach erstem aktiven Besuch
+			\item Lösungsvorschlag: \alert{Wiederholung} nach Fehlschlag
 		\end{itemize}
 
-		\vspace{0.7cm}
+		\vspace{0.5cm}
     \includegraphics[page=2, width=\textwidth]{2015-08-30_20-combined_visits-crop}
 	\end{frame}
 
@@ -250,7 +250,6 @@ d@8:announce@41:http://bttracker.debian.org:6969/announce@4:info@d@4:name@28:deb
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\section{}
 	\begin{frame}{Zusammenfassung}
-		% TODO oder eigene Sätze
 		\tableofcontents
 	\end{frame}
 \end{document}
