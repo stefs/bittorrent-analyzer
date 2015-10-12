@@ -4,18 +4,7 @@
 * In deutscher Sprache
 * 30 Minuten
 * Keine Vorkenntnisse über BitTorrent oder die Arbeit
-
-## Todo
-### Zeitplan
-* **5.10.:** 1 Folie
-* **6.10.:** —
-* **7.10.:** 7 Folien
-* **8.10.:** —
-* **9.10.:** —
-* **10.10.:** 4 Folien, Überarbeitungen
-* **→ 11.10.:** Vortrag üben
-* **12.10.:** Vortrag üben
-* **13.10.:** Vortrag um 15:00 Uhr
+* 13.10. um 15:00 Uhr, i1 Seminarraum
 
 ## Miscellaneous
 * Swap Page Up / Page Down:  
